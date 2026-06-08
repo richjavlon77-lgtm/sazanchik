@@ -16,6 +16,21 @@ export function Hero() {
 
   return (
     <header className="relative overflow-hidden pt-7 pb-14 md:pt-12 md:pb-20">
+      {/* Khiva sunset backdrop — subtle, melts into the page */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-top opacity-[0.14] dark:opacity-[0.28]"
+          style={{ backgroundImage: "url(/images/khiva.jpg)" }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, color-mix(in oklab, var(--background) 35%, transparent) 0%, color-mix(in oklab, var(--background) 70%, transparent) 55%, var(--background) 92%)",
+          }}
+        />
+      </div>
+
       {/* Soft gold radial glow */}
       <div
         className="pointer-events-none absolute inset-x-0 -top-40 h-[520px] opacity-50"
