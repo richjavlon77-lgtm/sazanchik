@@ -192,6 +192,21 @@
     background-color: var(--gold);
     color: var(--background);
   }
+
+  /* Premium admin form controls — consistent gold focus ring + smooth feel */
+  .admin-shell input:not([type="checkbox"]):not([type="radio"]),
+  .admin-shell select,
+  .admin-shell textarea {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .admin-shell input:not([type="checkbox"]):not([type="radio"]):focus,
+  .admin-shell select:focus,
+  .admin-shell textarea:focus {
+    border-color: color-mix(in oklab, var(--gold) 55%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--gold) 22%, transparent);
+    outline: none;
+  }
 }
 
 @layer utilities {
