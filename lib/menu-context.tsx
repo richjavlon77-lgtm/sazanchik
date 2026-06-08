@@ -15,6 +15,7 @@ import { useLocale } from "@/lib/i18n";
 type MenuContextValue = {
   query: string;
   setQuery: (q: string) => void;
+  menu: MenuCategory[];
   filteredMenu: MenuCategory[];
   totalShown: number;
   totalAll: number;
@@ -76,6 +77,7 @@ export function MenuProvider({
       value={{
         query,
         setQuery,
+        menu,
         filteredMenu,
         totalShown,
         totalAll,

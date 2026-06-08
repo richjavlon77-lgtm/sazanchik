@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useLocale, t, UI_STRINGS } from "@/lib/i18n";
 import { useContent } from "@/lib/content-context";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -12,14 +13,41 @@ export function Hero() {
   const { locale } = useLocale();
   const { restaurant } = useContent();
   const RESTAURANT = restaurant;
+  const parallaxRef = useRef<HTMLDivElement>(null);
+
+  // Parallax: photo drifts slower than the page for depth
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY;
+        if (y < window.innerHeight * 1.2 && parallaxRef.current) {
+          parallaxRef.current.style.transform = `translate3d(0, ${y * 0.28}px, 0)`;
+        }
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   return (
     <header className="relative flex min-h-[100svh] flex-col overflow-hidden bg-[#0d0b08] text-white">
-      {/* Full-bleed Khiva sunset — cinematic, always present */}
+      {/* Parallax layer */}
       <div
-        className="kenburns absolute inset-0 bg-cover bg-center will-change-transform motion-reduce:animate-none"
-        style={{ backgroundImage: "url(/images/khiva.jpg)" }}
-      />
+        ref={parallaxRef}
+        className="absolute inset-x-0 -top-[25%] h-[150%] will-change-transform"
+      >
+        {/* Full-bleed Khiva sunset — cinematic, always present */}
+        <div
+          className="kenburns absolute inset-0 bg-cover bg-center will-change-transform motion-reduce:animate-none"
+          style={{ backgroundImage: "url(/images/khiva.jpg)" }}
+        />
+      </div>
       {/* Dramatic darkening + fade into the page background at the bottom */}
       <div
         className="absolute inset-0"

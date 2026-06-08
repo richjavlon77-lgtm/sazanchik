@@ -3,6 +3,7 @@ import { RESTAURANT as STATIC_RESTAURANT } from "@/data/restaurant";
 import { STORY as STATIC_STORY } from "@/data/story";
 import { Hero } from "@/components/Hero";
 import { CategoryNav } from "@/components/CategoryNav";
+import { FeaturedDishes } from "@/components/FeaturedDishes";
 import { MenuList } from "@/components/MenuList";
 import { Footer } from "@/components/Footer";
 import { OrnamentBackground } from "@/components/Ornament";
@@ -56,6 +57,7 @@ export default async function Home() {
           {/* Constrained menu column */}
           <main className="relative z-10 mx-auto w-full max-w-3xl px-6">
             <CategoryNav />
+            <FeaturedDishes />
             <MenuList />
             <Footer />
           </main>
