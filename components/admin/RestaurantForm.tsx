@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { saveRestaurant } from "@/lib/admin-actions";
 
 type RestaurantInput = Parameters<typeof saveRestaurant>[0];
@@ -23,9 +24,11 @@ export function RestaurantForm({ initial }: { initial: RestaurantInput }) {
       try {
         await saveRestaurant(form);
         setSavedAt(new Date());
+        toast.success("Данные ресторана сохранены");
         router.refresh();
       } catch (err) {
         setError((err as Error).message);
+        toast.error("Не удалось сохранить");
       }
     });
   };

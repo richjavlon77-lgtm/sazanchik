@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function DishActions({ id, slug }: { id: string; slug: string }) {
   const router = useRouter();
@@ -11,13 +12,21 @@ export function DishActions({ id, slug }: { id: string; slug: string }) {
   const handleDelete = async () => {
     if (!confirm(`Удалить блюдо "${slug}"?`)) return;
     setBusy(true);
-    try {
-      const res = await fetch(`/admin/api/dishes/${id}`, { method: "DELETE" });
-      if (res.ok) {
+    const p = fetch(`/admin/api/dishes/${id}`, { method: "DELETE" }).then(
+      (res) => {
+        if (!res.ok) throw new Error("delete failed");
         router.refresh();
-      } else {
-        alert("Ошибка удаления");
       }
+    );
+    toast.promise(p, {
+      loading: "Удаляем…",
+      success: "Блюдо удалено",
+      error: "Ошибка удаления",
+    });
+    try {
+      await p;
+    } catch {
+      /* handled by toast */
     } finally {
       setBusy(false);
     }

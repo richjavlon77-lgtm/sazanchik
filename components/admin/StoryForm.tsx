@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { saveStory } from "@/lib/admin-actions";
 
 type Chapter = {
@@ -27,9 +28,14 @@ export function StoryForm({ initial }: { initial: Chapter[] }) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     startTransition(async () => {
-      await saveStory(chapters);
-      setSavedAt(new Date());
-      router.refresh();
+      try {
+        await saveStory(chapters);
+        setSavedAt(new Date());
+        toast.success("История сохранена");
+        router.refresh();
+      } catch {
+        toast.error("Не удалось сохранить");
+      }
     });
   };
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
 import { LogoutButton } from "@/components/admin/LogoutButton";
+import { Toaster } from "@/components/ui/sonner";
 
 const NAV = [
   { href: "/admin", label: "Меню" },
@@ -17,11 +18,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   // Login page renders bare — no authenticated chrome
   if (pathname === "/admin/login") {
-    return <div className="admin-shell min-h-screen bg-background">{children}</div>;
+    return (
+      <div className="admin-shell min-h-screen bg-background">
+        {children}
+        <Toaster position="top-center" />
+      </div>
+    );
   }
 
   return (
     <div className="admin-shell min-h-screen bg-background">
+      <Toaster position="top-center" />
       <header className="sticky top-0 z-40 border-b border-border bg-card/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <Link href="/admin" className="flex items-center gap-3">

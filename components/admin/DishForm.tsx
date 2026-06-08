@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { saveDish, deleteDish, type DishFormInput } from "@/lib/admin-actions";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { DishPreview } from "@/components/admin/DishPreview";
 
 const DIET_OPTIONS: { value: string; label: string }[] = [
   { value: "veg", label: "🌱 Вегетарианское" },
@@ -67,12 +69,13 @@ export function DishForm({
 
     startTransition(async () => {
       try {
-        const { id } = await saveDish(dishId, form);
+        await saveDish(dishId, form);
+        toast.success(dishId ? "Блюдо обновлено" : "Блюдо создано");
         router.push("/admin");
         router.refresh();
-        void id;
       } catch (err) {
         setError((err as Error).message);
+        toast.error("Не удалось сохранить");
       }
     });
   };
@@ -81,9 +84,14 @@ export function DishForm({
     if (!dishId) return;
     if (!confirm("Удалить это блюдо?")) return;
     startTransition(async () => {
-      await deleteDish(dishId);
-      router.push("/admin");
-      router.refresh();
+      try {
+        await deleteDish(dishId);
+        toast.success("Блюдо удалено");
+        router.push("/admin");
+        router.refresh();
+      } catch {
+        toast.error("Ошибка удаления");
+      }
     });
   };
 
@@ -94,6 +102,9 @@ export function DishForm({
           {error}
         </div>
       )}
+
+      {/* Live preview */}
+      <DishPreview form={form} />
 
       {/* Category + slug + sort */}
       <div className="grid gap-4 md:grid-cols-3">

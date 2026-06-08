@@ -205,6 +205,32 @@ export async function saveStory(
 }
 
 // ============================================================================
+// Reordering (drag-n-drop)
+// ============================================================================
+
+export async function reorderDishes(orderedIds: string[]) {
+  for (let i = 0; i < orderedIds.length; i++) {
+    await db
+      .update(dishes)
+      .set({ sortOrder: i, updatedAt: sql`now()` })
+      .where(eq(dishes.id, orderedIds[i]));
+  }
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
+export async function reorderCategories(orderedIds: string[]) {
+  for (let i = 0; i < orderedIds.length; i++) {
+    await db
+      .update(categories)
+      .set({ sortOrder: i, updatedAt: sql`now()` })
+      .where(eq(categories.id, orderedIds[i]));
+  }
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
+// ============================================================================
 // Fetch helpers for forms
 // ============================================================================
 

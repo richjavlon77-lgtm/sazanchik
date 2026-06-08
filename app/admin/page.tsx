@@ -1,11 +1,35 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { categories, dishes } from "@/db/schema";
-import { asc, eq, count } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { formatPrice } from "@/lib/i18n-core";
-import { DishActions } from "@/components/admin/DishActions";
+import { DishSortList } from "@/components/admin/DishSortList";
 
 export const dynamic = "force-dynamic";
+
+function StatCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card/40 p-5">
+      <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-2 font-heading text-3xl tabular-nums text-gold">
+        {value}
+      </div>
+      {hint && (
+        <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div>
+      )}
+    </div>
+  );
+}
 
 export default async function AdminMenuPage() {
   const cats = await db
@@ -18,9 +42,17 @@ export default async function AdminMenuPage() {
     .from(dishes)
     .orderBy(asc(dishes.categoryId), asc(dishes.sortOrder));
 
-  const [{ count: totalDishes }] = await db
-    .select({ count: count() })
-    .from(dishes);
+  // Stats
+  const totalDishes = allDishes.length;
+  const published = allDishes.filter((d) => d.isPublished).length;
+  const hidden = totalDishes - published;
+  const priced = allDishes.filter((d) => d.price !== null) as {
+    price: number;
+  }[];
+  const avgPrice =
+    priced.length > 0
+      ? Math.round(priced.reduce((s, d) => s + d.price, 0) / priced.length)
+      : 0;
 
   const dishesByCat = new Map<string, typeof allDishes>();
   for (const d of allDishes) {
@@ -35,17 +67,32 @@ export default async function AdminMenuPage() {
         <div>
           <h1 className="font-heading text-3xl">Меню</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {cats.length} категорий · {totalDishes} блюд
+            Перетаскивай блюда за <span className="text-gold">⠿</span> для
+            сортировки
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link
-            href="/admin/dishes/new"
-            className="rounded-full bg-gold px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            + Новое блюдо
-          </Link>
-        </div>
+        <Link
+          href="/admin/dishes/new"
+          className="rounded-full bg-gold px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          + Новое блюдо
+        </Link>
+      </div>
+
+      {/* Stats */}
+      <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard label="Категорий" value={String(cats.length)} />
+        <StatCard
+          label="Блюд"
+          value={String(totalDishes)}
+          hint={`${published} опубл. · ${hidden} скрыто`}
+        />
+        <StatCard label="Средний чек" value={formatPrice(avgPrice, "ru")} />
+        <StatCard
+          label="Опубликовано"
+          value={`${totalDishes ? Math.round((published / totalDishes) * 100) : 0}%`}
+          hint={`${hidden} скрытых`}
+        />
       </div>
 
       <div className="space-y-8">
@@ -82,48 +129,17 @@ export default async function AdminMenuPage() {
                   </Link>
                 </div>
               ) : (
-                <ul>
-                  {items.map((d) => (
-                    <li
-                      key={d.id}
-                      className="flex items-center gap-4 border-b border-border/50 px-5 py-3 last:border-b-0 hover:bg-card/60"
-                    >
-                      <Link
-                        href={`/admin/dishes/${d.id}/edit`}
-                        className="min-w-0 flex-1"
-                      >
-                        <div className="flex items-baseline gap-3">
-                          <span className="truncate font-heading text-base">
-                            {d.nameRu}
-                          </span>
-                          {!d.isPublished && (
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
-                              hidden
-                            </span>
-                          )}
-                          {d.spicy && (
-                            <span className="text-[9px] uppercase text-red-400">
-                              {"🌶".repeat(d.spicy)}
-                            </span>
-                          )}
-                        </div>
-                        {d.descriptionRu && (
-                          <div className="line-clamp-1 text-xs text-muted-foreground">
-                            {d.descriptionRu}
-                          </div>
-                        )}
-                      </Link>
-
-                      <span className="shrink-0 font-heading tabular-nums text-gold">
-                        {d.price !== null
-                          ? formatPrice(d.price, "ru")
-                          : "—"}
-                      </span>
-
-                      <DishActions id={d.id} slug={d.slug} />
-                    </li>
-                  ))}
-                </ul>
+                <DishSortList
+                  dishes={items.map((d) => ({
+                    id: d.id,
+                    slug: d.slug,
+                    nameRu: d.nameRu,
+                    descriptionRu: d.descriptionRu,
+                    price: d.price,
+                    isPublished: d.isPublished,
+                    spicy: d.spicy,
+                  }))}
+                />
               )}
             </section>
           );

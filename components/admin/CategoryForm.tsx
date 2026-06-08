@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { saveCategory, deleteCategory, type CategoryFormInput } from "@/lib/admin-actions";
 
 export function CategoryForm({
@@ -40,10 +41,12 @@ export function CategoryForm({
     startTransition(async () => {
       try {
         await saveCategory(catId, form);
+        toast.success(catId ? "Категория обновлена" : "Категория создана");
         router.push("/admin/categories");
         router.refresh();
       } catch (err) {
         setError((err as Error).message);
+        toast.error("Не удалось сохранить");
       }
     });
   };
@@ -52,9 +55,14 @@ export function CategoryForm({
     if (!catId) return;
     if (!confirm("Удалить категорию? Все блюда внутри тоже удалятся!")) return;
     startTransition(async () => {
-      await deleteCategory(catId);
-      router.push("/admin/categories");
-      router.refresh();
+      try {
+        await deleteCategory(catId);
+        toast.success("Категория удалена");
+        router.push("/admin/categories");
+        router.refresh();
+      } catch {
+        toast.error("Ошибка удаления");
+      }
     });
   };
 
