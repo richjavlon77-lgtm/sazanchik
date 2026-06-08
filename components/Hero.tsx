@@ -19,7 +19,7 @@ export function Hero() {
       {/* Khiva sunset backdrop — subtle, melts into the page */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-top opacity-[0.14] dark:opacity-[0.28]"
+          className="absolute inset-0 bg-cover bg-top opacity-0 dark:opacity-[0.28]"
           style={{ backgroundImage: "url(/images/khiva.jpg)" }}
         />
         <div
