@@ -1,0 +1,130 @@
+const TELEGRAM_API = "https://api.telegram.org";
+
+type TelegramEnv = {
+  botToken?: string;
+  chatId?: string;
+};
+
+function getEnv(): TelegramEnv {
+  return {
+    botToken: process.env.TELEGRAM_BOT_TOKEN,
+    chatId: process.env.TELEGRAM_CHAT_ID,
+  };
+}
+
+function isConfigured(env: TelegramEnv): env is Required<TelegramEnv> {
+  return !!env.botToken && !!env.chatId;
+}
+
+type OrderItem = {
+  name: string;
+  variantLabel?: string;
+  qty: number;
+  price: number;
+};
+
+export async function sendOrderToTelegram(
+  orderId: string,
+  tableNumber: string,
+  items: OrderItem[],
+  subtotal: number,
+  service: number,
+  total: number
+): Promise<{ ok: boolean }> {
+  const env = getEnv();
+  if (!isConfigured(env)) {
+    return { ok: false };
+  }
+
+  const lines = items
+    .map(
+      (item) =>
+        `• ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ""} x${item.qty} — ${formatPrice(item.price * item.qty)}`
+    )
+    .join("\n");
+
+  const message = [
+    `<b>Поступил ЗАКАЗ №${orderId.slice(0, 8)}</b>`,
+    `Стол №${tableNumber}`,
+    `───────────────────────────`,
+    lines,
+    `───────────────────────────`,
+    `Сервис-чардж 20%: ${formatPrice(service)}`,
+    `<b>ИТОГО К ОПЛАТЕ: ${formatPrice(total)}</b>`,
+  ].join("\n");
+
+  const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
+
+  // We send structured parse_mode=HTML without inline buttons
+  // because Telegram Bot API inline keyboards require a webhook / polling loop.
+  // For MVP we send a clean formatted message.
+  // Staff pin the chat and get notified by sound.
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_notification: false,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "unknown");
+    console.error("Telegram send failed:", res.status, err);
+    return { ok: false };
+  }
+
+  return { ok: true };
+}
+
+export async function sendWaiterCallToTelegram(
+  tableNumber: string,
+  type: "waiter" | "bill" | "water"
+): Promise<{ ok: boolean }> {
+  const env = getEnv();
+  if (!isConfigured(env)) {
+    return { ok: false };
+  }
+
+  const labelMap: Record<typeof type, string> = {
+    waiter: "🚨 Вызов официанта",
+    bill: "💰 Просят счёт",
+    water: "🚰 Просят воду",
+  };
+
+  const message = [
+    `<b>${labelMap[type]}</b>`,
+    `Стол №${tableNumber}`,
+    type === "waiter" ? `⏱ Срочно!` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_notification: false,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "unknown");
+    console.error("Telegram waiter call failed:", res.status, err);
+    return { ok: false };
+  }
+
+  return { ok: true };
+}
+
+function formatPrice(amount: number): string {
+  return `${amount.toLocaleString("ru-RU")} сум`;
+}
