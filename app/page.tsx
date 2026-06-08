@@ -17,37 +17,14 @@ import {
   getRestaurantFromDb,
   getStoryFromDb,
 } from "@/lib/menu-from-db";
-import type { MenuCategory } from "@/types/menu";
 
 // Revalidate every 60 seconds (and on-demand from admin via revalidatePath)
 export const revalidate = 60;
-
-function buildImageMap(): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const cat of STATIC_MENU) {
-    for (const item of cat.items) {
-      if (item.image) map.set(item.id, item.image);
-    }
-  }
-  return map;
-}
-
-function mergeStaticImages(menu: MenuCategory[], images: Map<string, string>): MenuCategory[] {
-  return menu.map((cat) => ({
-    ...cat,
-    items: cat.items.map((item) => ({
-      ...item,
-      image: item.image ?? images.get(item.id),
-    })),
-  }));
-}
 
 export default async function Home() {
   let menu;
   let restaurant = STATIC_RESTAURANT;
   let story = STATIC_STORY;
-
-  const staticImages = buildImageMap();
 
   try {
     const [dbMenu, dbRestaurant, dbStory] = await Promise.all([
@@ -58,7 +35,7 @@ export default async function Home() {
 
     menu =
       dbMenu.length > 0
-        ? mergeStaticImages(enrichMenuWithDiet(dbMenu), staticImages)
+        ? enrichMenuWithDiet(dbMenu)
         : applyIntros(enrichMenuWithDiet(STATIC_MENU));
     if (dbRestaurant) restaurant = dbRestaurant;
     if (dbStory.length > 0) story = dbStory;
