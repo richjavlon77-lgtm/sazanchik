@@ -49,16 +49,18 @@ export default async function Home() {
       <JsonLd data={buildRestaurantSchema(menu)} />
       <JsonLd data={buildBreadcrumbSchema()} />
       <OrnamentBackground />
-      <main className="relative z-10 mx-auto w-full max-w-3xl px-6">
-        <ContentProvider value={{ restaurant, story }}>
-          <TimeAwareMenuProvider menu={menu}>
-            <Hero />
+      <ContentProvider value={{ restaurant, story }}>
+        <TimeAwareMenuProvider menu={menu}>
+          {/* Full-bleed cinematic hero */}
+          <Hero />
+          {/* Constrained menu column */}
+          <main className="relative z-10 mx-auto w-full max-w-3xl px-6">
             <CategoryNav />
             <MenuList />
-          </TimeAwareMenuProvider>
-          <Footer />
-        </ContentProvider>
-      </main>
+            <Footer />
+          </main>
+        </TimeAwareMenuProvider>
+      </ContentProvider>
     </>
   );
 }
