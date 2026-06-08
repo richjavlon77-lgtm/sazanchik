@@ -104,11 +104,28 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "cv11";
+    /* Premium text rendering — kerning + ligatures + crisp edges */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-kerning: normal;
   }
   html {
     @apply font-sans;
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
+  }
+
+  /* Headings: balance line breaks, no orphan words */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /* Body copy: avoid single-word last lines */
+  p {
+    text-wrap: pretty;
   }
 
   /* Subtle grain on the whole page */
@@ -131,7 +148,16 @@
 @layer utilities {
   .font-heading {
     font-family: var(--font-heading), Georgia, serif;
-    font-feature-settings: "ss01", "swsh";
+    font-feature-settings: "ss01", "swsh", "liga", "dlig", "kern";
+    /* Optical tightening — display serif reads richer slightly condensed */
+    letter-spacing: -0.012em;
+    font-kerning: normal;
+  }
+
+  /* Editorial italic intros — hanging quotes for a typeset look */
+  .intro-prose {
+    hanging-punctuation: first last;
+    text-wrap: pretty;
   }
 
   .text-gold {

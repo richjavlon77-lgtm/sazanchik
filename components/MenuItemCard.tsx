@@ -72,7 +72,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
 
             {!isVariants && (
               <>
-                <span className="font-heading text-base tabular-nums text-gold shrink-0 md:text-lg">
+                <span className="font-heading tabular-nums text-base text-gold shrink-0 md:text-lg">
                   {formatPrice(item.price as number, locale)}
                 </span>
                 <button

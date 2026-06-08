@@ -15,13 +15,13 @@ export function MenuSection({ category }: { category: MenuCategory }) {
           <h2 className="font-heading text-3xl font-medium leading-none md:text-[40px]">
             {t(category.name, locale)}
           </h2>
-          <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground tabular-nums">
+          <span className="tabular-nums text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
             {String(category.items.length).padStart(2, "0")} ·
           </span>
         </header>
         <div className="divider-gold mb-4 w-16" />
         {category.intro && (
-          <p className="mb-6 max-w-xl text-[13px] leading-relaxed text-muted-foreground/90 italic md:text-sm">
+          <p className="intro-prose mb-6 max-w-xl text-[13px] leading-relaxed text-muted-foreground/90 italic md:text-sm">
             {t(category.intro, locale)}
           </p>
         )}

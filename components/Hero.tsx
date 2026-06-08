@@ -43,7 +43,10 @@ export function Hero() {
         </Reveal>
 
         <Reveal delay={150}>
-          <h1 className="font-heading text-[64px] font-medium leading-[0.95] tracking-tight md:text-[112px]">
+          <h1
+            className="font-heading font-medium leading-[0.95] tracking-tight"
+            style={{ fontSize: "clamp(64px, 13vw, 112px)" }}
+          >
             <span className="italic text-gold">С</span>азанчик
           </h1>
         </Reveal>
@@ -59,7 +62,7 @@ export function Hero() {
         </Reveal>
 
         <Reveal delay={450}>
-          <p className="mx-auto mt-8 max-w-lg text-[13px] leading-relaxed text-muted-foreground md:text-base md:leading-relaxed">
+          <p className="mx-auto mt-8 max-w-lg text-pretty text-[13px] leading-relaxed text-muted-foreground md:text-base md:leading-relaxed">
             {t(RESTAURANT.tagline, locale)}
           </p>
         </Reveal>
