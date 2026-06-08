@@ -31,8 +31,8 @@ export function MenuList() {
 
   return (
     <div className="pb-12">
-      {filteredMenu.map((category) => (
-        <MenuSection key={category.id} category={category} />
+      {filteredMenu.map((category, i) => (
+        <MenuSection key={category.id} category={category} index={i + 1} />
       ))}
     </div>
   );

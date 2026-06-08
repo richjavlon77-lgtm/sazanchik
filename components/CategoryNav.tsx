@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, t } from "@/lib/i18n";
 import { useMenu } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,16 @@ export function CategoryNav() {
   const { locale } = useLocale();
   const { filteredMenu, isFiltering } = useMenu();
   const [active, setActive] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Keep the active chip in view as you scroll through the menu
+  useEffect(() => {
+    if (!active || !navRef.current) return;
+    const btn = navRef.current.querySelector<HTMLElement>(
+      `[data-cat="${active}"]`
+    );
+    btn?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [active]);
 
   useEffect(() => {
     if (isFiltering) return;
@@ -50,10 +60,14 @@ export function CategoryNav() {
         <SearchBar />
 
         {!isFiltering && (
-          <nav className="no-scrollbar -mx-2 flex gap-1 overflow-x-auto px-2">
+          <nav
+            ref={navRef}
+            className="no-scrollbar -mx-2 flex gap-1 overflow-x-auto px-2"
+          >
             {filteredMenu.map((cat) => (
               <button
                 key={cat.id}
+                data-cat={cat.id}
                 onClick={() => handleClick(cat.id)}
                 className={cn(
                   "relative shrink-0 px-3 py-1.5 text-[13px] transition-all duration-300",

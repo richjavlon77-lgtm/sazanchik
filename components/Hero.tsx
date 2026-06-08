@@ -16,17 +16,26 @@ export function Hero() {
 
   return (
     <header className="relative overflow-hidden pt-7 pb-14 md:pt-12 md:pb-20">
-      {/* Khiva sunset backdrop — subtle, melts into the page */}
+      {/* Khiva sunset backdrop — cinematic, melts into the page (dark theme) */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-top opacity-0 dark:opacity-[0.28]"
+          className="kenburns absolute inset-0 bg-cover bg-top opacity-0 will-change-transform motion-reduce:animate-none dark:opacity-[0.32]"
           style={{ backgroundImage: "url(/images/khiva.jpg)" }}
         />
+        {/* depth gradient — fade image into the page */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, color-mix(in oklab, var(--background) 35%, transparent) 0%, color-mix(in oklab, var(--background) 70%, transparent) 55%, var(--background) 92%)",
+              "linear-gradient(to bottom, color-mix(in oklab, var(--background) 25%, transparent) 0%, color-mix(in oklab, var(--background) 62%, transparent) 50%, var(--background) 90%)",
+          }}
+        />
+        {/* side vignette for cinematic framing */}
+        <div
+          className="absolute inset-0 hidden dark:block"
+          style={{
+            background:
+              "radial-gradient(120% 80% at 50% 18%, transparent 40%, color-mix(in oklab, var(--background) 80%, transparent) 100%)",
           }}
         />
       </div>
@@ -81,6 +90,21 @@ export function Hero() {
 
         <Reveal delay={750} className="mt-6">
           <OrnamentDivider />
+        </Reveal>
+
+        <Reveal delay={900} className="mt-10">
+          <span className="scroll-cue inline-flex flex-col items-center gap-1 text-gold/60 motion-reduce:animate-none">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="size-5"
+              aria-hidden
+            >
+              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
         </Reveal>
       </div>
     </header>
