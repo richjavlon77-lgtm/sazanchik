@@ -41,13 +41,22 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
       <div className="flex items-start gap-4">
         {/* Dish image */}
         {item.image && !imgError && (
-          <div className="relative shrink-0 overflow-hidden rounded-xl bg-muted/30">
+          <div className="relative shrink-0 overflow-hidden rounded-xl bg-muted/30 shadow-lg shadow-black/30 ring-1 ring-white/[0.06]">
             <img
               src={item.image}
               alt={t(item.name, locale)}
               loading="lazy"
-              className="size-20 object-cover md:size-24 transition-opacity duration-500 group-hover:opacity-90"
+              className="size-20 object-cover md:size-24 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
               onError={() => setImgError(true)}
+            />
+            {/* Subtle gold sheen on hover */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(212,178,106,0.12), transparent 55%)",
+              }}
             />
           </div>
         )}
@@ -78,7 +87,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                 <button
                   onClick={() => handleAdd(item.price as number)}
                   className={cn(
-                    "ml-1 flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold transition-all duration-300 hover:bg-gold hover:text-primary-foreground active:scale-90",
+                    "ml-1 flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold transition-all duration-300 hover:border-gold hover:bg-gold hover:text-primary-foreground hover:shadow-[0_2px_18px_-4px_var(--gold)] active:scale-90",
                     pulseKey === "main" && "scale-125 bg-gold text-primary-foreground"
                   )}
                   aria-label="+"
@@ -130,7 +139,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                 return (
                   <div
                     key={i}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-background/30 px-3 py-2 text-sm"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-background/30 px-3 py-2 text-sm transition-colors duration-300 hover:border-gold/25 hover:bg-background/50"
                   >
                     <div className="flex flex-col">
                       <span className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -143,7 +152,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                     <button
                       onClick={() => handleAdd(v.price, key, v.label)}
                       className={cn(
-                        "flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold transition-all duration-300 hover:bg-gold hover:text-primary-foreground active:scale-90",
+                        "flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold transition-all duration-300 hover:border-gold hover:bg-gold hover:text-primary-foreground hover:shadow-[0_2px_18px_-4px_var(--gold)] active:scale-90",
                         pulseKey === key && "scale-125 bg-gold text-primary-foreground"
                       )}
                       aria-label="+"
