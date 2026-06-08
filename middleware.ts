@@ -8,8 +8,8 @@ export const config = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow the login page itself to render without a session
-  if (pathname === "/admin/login") {
+  // Allow login page and login API without a session
+  if (pathname === "/admin/login" || pathname === "/admin/api/login") {
     return NextResponse.next();
   }
 

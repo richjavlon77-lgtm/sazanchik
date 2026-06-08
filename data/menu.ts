@@ -313,7 +313,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-orange",
-        image: "/images/salad-orange.jpg",
         name: {
           ru: "Салат апельсиновый",
           uz: "Apelsinli salat",
@@ -430,7 +429,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "pelmeni-home",
-        image: "/images/pelmeni-home.jpg",
         name: { ru: "Домашние пельмени", uz: "Uy chuchvarasi", en: "Homemade pelmeni" },
         price: 70000,
       },
@@ -552,7 +550,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "ishlama-chicken-cheese",
-        image: "/images/ishlama-chicken-cheese.jpg",
         name: {
           ru: "Ишлама с курицей и сыром",
           uz: "Tovuq va pishloqli ishlama",
@@ -628,7 +625,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "manty-pumpkin",
-        image: "/images/manty-pumpkin.jpg",
         name: { ru: "Манты с тыквой", uz: "Qovoqli manti", en: "Pumpkin manty" },
         price: 55000,
       },
@@ -776,7 +772,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "setka-kabob",
-        image: "/images/setka-kabob.jpg",
         name: { ru: "Сетка кабоб", uz: "Setka kabob", en: "Setka kabob" },
         price: 125000,
       },
@@ -834,7 +829,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "sturgeon-whole",
-        image: "/images/sturgeon-whole.jpg",
         name: { ru: "Осётр целиком", uz: "Butun osyotr", en: "Whole sturgeon" },
         description: { ru: "1 кг", uz: "1 kg", en: "1 kg" },
         price: 470000,
@@ -892,7 +886,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "pasta-bolognese",
-        image: "/images/pasta-bolognese.jpg",
         name: { ru: "Паста Болоньезе", uz: "Bolonez pastasi", en: "Pasta Bolognese" },
         description: {
           ru: "Фарш говяжий, фарш свиной, томатный соус, паста спагетти",

@@ -3,7 +3,7 @@ import { SazanFish } from "@/components/icons/SazanFish";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 
 export const metadata = {
-  title: "Админка · Сазанчик CITY",
+  title: "Админка",
   robots: { index: false, follow: false },
 };
 

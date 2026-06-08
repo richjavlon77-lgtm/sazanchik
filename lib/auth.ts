@@ -40,7 +40,6 @@ export async function verifySessionToken(
 export function checkAdminPassword(password: string): boolean {
   const expected = process.env.ADMIN_PASSWORD;
   if (!expected) return false;
-  // Constant-time comparison
   if (password.length !== expected.length) return false;
   let mismatch = 0;
   for (let i = 0; i < password.length; i++) {
