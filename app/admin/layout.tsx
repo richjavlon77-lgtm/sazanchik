@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SazanFish } from "@/components/icons/SazanFish";
+import { BrandLogo } from "@/components/BrandLogo";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 
 export const metadata = {
@@ -17,15 +17,10 @@ export default function AdminLayout({
       <header className="border-b border-border bg-card/40 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <Link href="/admin" className="flex items-center gap-3">
-            <SazanFish className="h-7 w-auto text-gold" />
-            <div>
-              <div className="font-heading text-lg leading-none">
-                <span className="italic text-gold">С</span>азанчик
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                admin
-              </div>
-            </div>
+            <BrandLogo className="w-[130px]" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              admin
+            </span>
           </Link>
 
           <nav className="flex items-center gap-1 text-sm">
