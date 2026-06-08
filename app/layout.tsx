@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/components/I18nProvider";
 import { WaiterButton } from "@/components/WaiterButton";
 import { CartBar } from "@/components/CartBar";
@@ -102,7 +103,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  colorScheme: "dark",
+  colorScheme: "dark light",
 };
 
 export default function RootLayout({
@@ -113,21 +114,29 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased dark`}
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col relative">
-        <I18nProvider>
-          <FavoritesProvider>
-            <CartProvider>
-              {children}
-              <CartBar />
-              <WaiterButton />
-              <HashHighlighter />
-              <IntroSplash />
-              <Toaster position="top-center" />
-            </CartProvider>
-          </FavoritesProvider>
-        </I18nProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <I18nProvider>
+            <FavoritesProvider>
+              <CartProvider>
+                {children}
+                <CartBar />
+                <WaiterButton />
+                <HashHighlighter />
+                <IntroSplash />
+                <Toaster position="top-center" />
+              </CartProvider>
+            </FavoritesProvider>
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

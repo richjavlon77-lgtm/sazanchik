@@ -3,6 +3,7 @@
 import { useLocale, t, UI_STRINGS } from "@/lib/i18n";
 import { useContent } from "@/lib/content-context";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SazanFish } from "@/components/icons/SazanFish";
 import { OrnamentDivider } from "@/components/Ornament";
 import { Reveal } from "@/components/Reveal";
@@ -29,7 +30,10 @@ export function Hero() {
         <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
           Restaurant · Tashkent
         </span>
-        <LanguageSwitcher />
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Title block */}
