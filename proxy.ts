@@ -5,7 +5,7 @@ export const config = {
   matcher: ["/admin/:path*"],
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow login page and login API without a session
