@@ -16,7 +16,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 export function CartBar() {
   const { locale } = useLocale();
@@ -36,6 +36,19 @@ export function CartBar() {
   const { table } = useTableNumber();
   const [placing, startTransition] = useTransition();
   const [placed, setPlaced] = useState(false);
+
+  // Bump the bar when item count grows (premium tactile feedback)
+  const prevCount = useRef(totalItems);
+  const [bump, setBump] = useState(false);
+  useEffect(() => {
+    if (totalItems > prevCount.current) {
+      setBump(true);
+      const id = setTimeout(() => setBump(false), 540);
+      prevCount.current = totalItems;
+      return () => clearTimeout(id);
+    }
+    prevCount.current = totalItems;
+  }, [totalItems]);
 
   const menu = useMemo(() => applyIntros(enrichMenuWithDiet(MENU)), []);
 
@@ -122,7 +135,10 @@ export function CartBar() {
       >
         <button
           onClick={() => setOpen(true)}
-          className="group flex w-full items-center gap-3 rounded-full border border-gold/30 bg-card/95 px-4 py-3 backdrop-blur-md shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] hover:border-gold/60 transition-colors"
+          className={cn(
+            "group flex w-full items-center gap-3 rounded-full border border-gold/30 bg-card/95 px-4 py-3 backdrop-blur-md shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] hover:border-gold/60 transition-colors",
+            bump && "cart-bump"
+          )}
         >
           <span className="relative">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6 text-gold">
@@ -130,7 +146,10 @@ export function CartBar() {
               <circle cx="9" cy="22" r="1.5" />
               <circle cx="17" cy="22" r="1.5" />
             </svg>
-            <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-gold text-[10px] font-bold tabular-nums text-primary-foreground">
+            <span
+              key={totalItems}
+              className="badge-pop absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-gold text-[10px] font-bold tabular-nums text-primary-foreground"
+            >
               {totalItems}
             </span>
           </span>

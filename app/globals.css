@@ -250,4 +250,39 @@
       transform: translateY(0);
     }
   }
+
+  /* Cart badge "pop" — fires on every count change (via React key) */
+  .badge-pop {
+    animation: badgePop 440ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes badgePop {
+    0% {
+      transform: scale(1);
+    }
+    35% {
+      transform: scale(1.4);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Cart bar nudge + gold pulse when an item is added */
+  .cart-bump {
+    animation: cartBump 520ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes cartBump {
+    0% {
+      transform: translateY(0);
+      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+    }
+    30% {
+      transform: translateY(-4px);
+      box-shadow: 0 24px 60px -12px rgba(212, 178, 106, 0.35);
+    }
+    100% {
+      transform: translateY(0);
+      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+    }
+  }
 }
