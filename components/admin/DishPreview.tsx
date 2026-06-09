@@ -33,19 +33,23 @@ export function DishPreview({ form }: { form: DishFormInput }) {
           )}
         </div>
 
-        {(form.descriptionRu || form.weight) && (
+        {(form.descriptionRu || form.weight || form.calories) && (
           <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             {form.descriptionRu && (
               <p className="min-w-[200px] flex-1 text-[13px] leading-relaxed text-muted-foreground">
                 {form.descriptionRu}
               </p>
             )}
-            {form.weight && !useVariants && (
-              <span className="ml-auto shrink-0 text-[11px] tabular-nums text-muted-foreground/70">
-                {form.weight}
-              </span>
-            )}
+            <span className="ml-auto flex shrink-0 items-baseline gap-2 text-[11px] tabular-nums text-muted-foreground/70">
+              {form.calories ? <span>{form.calories} ккал</span> : null}
+              {form.weight && !useVariants ? <span>{form.weight}</span> : null}
+            </span>
           </div>
+        )}
+        {form.allergens && form.allergens.length > 0 && (
+          <p className="mt-1 text-[11px] text-muted-foreground/60">
+            Содержит: {form.allergens.join(", ")}
+          </p>
         )}
 
         {(form.diet.length > 0 || form.spicy) && (

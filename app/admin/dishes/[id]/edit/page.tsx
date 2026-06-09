@@ -48,6 +48,8 @@ export default async function EditDishPage({
           imageUrl: dish.imageUrl ?? "",
           spicy: (dish.spicy ?? null) as 1 | 2 | 3 | null,
           diet: (dish.diet as string[]) ?? [],
+          calories: dish.calories ?? null,
+          allergens: (dish.allergens as string[]) ?? [],
           isPublished: dish.isPublished,
           sortOrder: dish.sortOrder,
           variants: variants.map((v) => ({

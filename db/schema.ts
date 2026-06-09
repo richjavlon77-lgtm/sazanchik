@@ -65,6 +65,8 @@ export const dishes = pgTable(
     weight: text("weight"),
     spicy: integer("spicy"),
     diet: jsonb("diet").$type<string[]>().notNull().default([]),
+    calories: integer("calories"),
+    allergens: jsonb("allergens").$type<string[]>().notNull().default([]),
     tagsRu: jsonb("tags_ru").$type<string[]>().notNull().default([]),
     tagsUz: jsonb("tags_uz").$type<string[]>().notNull().default([]),
     tagsEn: jsonb("tags_en").$type<string[]>().notNull().default([]),

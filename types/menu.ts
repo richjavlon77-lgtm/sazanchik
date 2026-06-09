@@ -17,6 +17,8 @@ export type MenuItem = {
   /** 1 = mild, 2 = medium, 3 = very hot */
   spicy?: 1 | 2 | 3;
   weight?: string;
+  calories?: number;
+  allergens?: string[];
 };
 
 export type MenuCategory = {

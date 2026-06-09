@@ -48,6 +48,8 @@ export function DishForm({
     imageUrl: initial?.imageUrl ?? "",
     spicy: initial?.spicy ?? null,
     diet: initial?.diet ?? [],
+    calories: initial?.calories ?? null,
+    allergens: initial?.allergens ?? [],
     isPublished: initial?.isPublished ?? true,
     sortOrder: initial?.sortOrder ?? 0,
     variants: initial?.variants ?? [],
@@ -210,6 +212,37 @@ export function DishForm({
               </button>
             ))}
           </div>
+        </Field>
+      </div>
+
+      {/* Calories + allergens */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Калорийность (ккал)" hint="необязательно">
+          <input
+            type="number"
+            value={form.calories ?? ""}
+            onChange={(e) =>
+              set("calories", e.target.value ? Number(e.target.value) : null)
+            }
+            className={input}
+            placeholder="320"
+          />
+        </Field>
+        <Field label="Аллергены" hint="через запятую">
+          <input
+            value={(form.allergens ?? []).join(", ")}
+            onChange={(e) =>
+              set(
+                "allergens",
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              )
+            }
+            className={input}
+            placeholder="орехи, молоко, глютен"
+          />
         </Field>
       </div>
 

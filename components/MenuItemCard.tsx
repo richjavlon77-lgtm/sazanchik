@@ -100,8 +100,8 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
             )}
           </div>
 
-          {/* Description + weight + tags */}
-          {(item.description || item.weight || item.tags) && (
+          {/* Description + weight + calories + tags */}
+          {(item.description || item.weight || item.calories || item.tags) && (
             <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               {item.tags && item.tags.length > 0 && (
                 <span className="text-[10px] uppercase tracking-[0.2em] text-gold">
@@ -113,12 +113,22 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                   {t(item.description, locale)}
                 </p>
               )}
-              {item.weight && !isVariants && (
-                <span className="text-[11px] tabular-nums text-muted-foreground/70 ml-auto shrink-0">
-                  {item.weight} {t(UI_STRINGS.weight, locale)}
-                </span>
-              )}
+              <span className="ml-auto flex shrink-0 items-baseline gap-2 text-[11px] tabular-nums text-muted-foreground/70">
+                {item.calories ? <span>{item.calories} ккал</span> : null}
+                {item.weight && !isVariants ? (
+                  <span>
+                    {item.weight} {t(UI_STRINGS.weight, locale)}
+                  </span>
+                ) : null}
+              </span>
             </div>
+          )}
+
+          {/* Allergens */}
+          {item.allergens && item.allergens.length > 0 && (
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Содержит: {item.allergens.join(", ")}
+            </p>
           )}
 
           {/* Diet badges + spicy meter */}

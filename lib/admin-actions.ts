@@ -26,6 +26,8 @@ export type DishFormInput = {
   imageUrl?: string;
   spicy?: 1 | 2 | 3 | null;
   diet: string[];
+  calories?: number | null;
+  allergens?: string[];
   isPublished: boolean;
   sortOrder?: number;
   variants?: {
@@ -60,6 +62,8 @@ export async function saveDish(id: string | null, input: DishFormInput) {
     weight: input.weight || null,
     spicy: input.spicy ?? null,
     diet: input.diet,
+    calories: input.calories ?? null,
+    allergens: input.allergens ?? [],
     isPublished: input.isPublished,
     sortOrder: input.sortOrder ?? 0,
   };

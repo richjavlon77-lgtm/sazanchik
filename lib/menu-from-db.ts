@@ -83,6 +83,10 @@ export async function getMenuFromDb(): Promise<MenuCategory[]> {
         weight: d.weight ?? undefined,
         spicy: d.spicy as 1 | 2 | 3 | undefined,
         diet: (d.diet as MenuItem["diet"]) ?? [],
+        calories: d.calories ?? undefined,
+        allergens: ((d.allergens as string[]) ?? []).length
+          ? (d.allergens as string[])
+          : undefined,
         tags: tags.length ? tags : undefined,
       };
     });
