@@ -289,6 +289,35 @@ export const staff = pgTable(
 export type Staff = typeof staff.$inferSelect;
 export type NewStaff = typeof staff.$inferInsert;
 
+/**
+ * Waiter calls: "call waiter / bill / water" buttons from a table.
+ * Persisted so the waiter board never loses a call (survives offline).
+ */
+export const waiterCalls = pgTable(
+  "waiter_calls",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tableNumber: text("table_number").notNull(),
+    type: text("type", { enum: ["waiter", "bill", "water"] })
+      .notNull()
+      .default("waiter"),
+    status: text("status", { enum: ["new", "done"] })
+      .notNull()
+      .default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("waiter_calls_status_idx").on(t.status),
+    index("waiter_calls_created_idx").on(t.createdAt),
+  ]
+);
+
+export type WaiterCall = typeof waiterCalls.$inferSelect;
+export type NewWaiterCall = typeof waiterCalls.$inferInsert;
+
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Dish = typeof dishes.$inferSelect;

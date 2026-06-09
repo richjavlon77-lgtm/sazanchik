@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { waiterCalls } from "@/db/schema";
 import { callWaiterSchema } from "@/lib/validators";
 import { sendWaiterCallToTelegram } from "@/lib/telegram";
 
@@ -22,16 +24,18 @@ export async function POST(request: Request) {
   const { tableNumber, type } = parsed.data;
 
   try {
-    const result = await sendWaiterCallToTelegram(tableNumber, type);
+    // Persist the call so the waiter board never loses it (survives offline)
+    const [row] = await db
+      .insert(waiterCalls)
+      .values({ tableNumber, type, status: "new" })
+      .returning({ id: waiterCalls.id });
 
-    if (!result.ok) {
-      // Telegram not configured — still accept the call, just log it
-      console.warn(
-        "Waiter call accepted but Telegram not configured or failed."
-      );
-    }
+    // Fire-and-forget Telegram notification (don't block the guest)
+    sendWaiterCallToTelegram(tableNumber, type).catch((err) =>
+      console.error("Telegram waiter call failed:", err)
+    );
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, id: row.id }, { status: 201 });
   } catch (e) {
     console.error("Waiter call failed:", e);
     return NextResponse.json(

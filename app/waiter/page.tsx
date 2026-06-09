@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
-import { inArray, asc } from "drizzle-orm";
+import { inArray, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { orders } from "@/db/schema";
+import { orders, waiterCalls } from "@/db/schema";
 import { getSession } from "@/lib/session";
-import { WaiterBoard, type BoardOrder } from "@/components/waiter/WaiterBoard";
+import {
+  WaiterBoard,
+  type BoardOrder,
+  type BoardCall,
+} from "@/components/waiter/WaiterBoard";
 
 export const dynamic = "force-dynamic";
 
@@ -13,13 +17,20 @@ export default async function WaiterPage() {
     redirect("/waiter/login");
   }
 
-  const rows = await db
-    .select()
-    .from(orders)
-    .where(inArray(orders.status, ["pending", "cooking"]))
-    .orderBy(asc(orders.createdAt));
+  const [orderRows, callRows] = await Promise.all([
+    db
+      .select()
+      .from(orders)
+      .where(inArray(orders.status, ["pending", "cooking"]))
+      .orderBy(asc(orders.createdAt)),
+    db
+      .select()
+      .from(waiterCalls)
+      .where(eq(waiterCalls.status, "new"))
+      .orderBy(asc(waiterCalls.createdAt)),
+  ]);
 
-  const board: BoardOrder[] = rows.map((o) => ({
+  const board: BoardOrder[] = orderRows.map((o) => ({
     id: o.id,
     tableNumber: o.tableNumber,
     status: o.status as BoardOrder["status"],
@@ -31,7 +42,18 @@ export default async function WaiterPage() {
     })),
   }));
 
+  const calls: BoardCall[] = callRows.map((c) => ({
+    id: c.id,
+    tableNumber: c.tableNumber,
+    type: c.type as BoardCall["type"],
+    createdAt: c.createdAt.toISOString(),
+  }));
+
   return (
-    <WaiterBoard orders={board} waiterName={session.name ?? "официант"} />
+    <WaiterBoard
+      orders={board}
+      calls={calls}
+      waiterName={session.name ?? "официант"}
+    />
   );
 }
