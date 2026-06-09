@@ -55,11 +55,10 @@ export function Reveal({
       ref={ref}
       style={{ transitionDelay: visible ? `${delay}ms` : "0ms" }}
       className={cn(
-        // Premium settle — expo-out easing, gentle blur-in
-        "transition-[opacity,transform,filter] duration-[820ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[opacity,transform]",
-        visible
-          ? "opacity-100 translate-y-0 blur-0"
-          : "opacity-0 translate-y-4 blur-[5px]",
+        // Premium settle — expo-out easing (opacity+transform only: no blur/
+        // will-change, keeps the compositor light and scroll buttery on long lists)
+        "transition-[opacity,transform] duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         className
       )}
     >

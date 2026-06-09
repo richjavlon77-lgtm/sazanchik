@@ -33,7 +33,7 @@ export function CartBar() {
     clear,
     add,
   } = useCart();
-  const { table } = useTableNumber();
+  const { table, setTable } = useTableNumber();
   const [placing, startTransition] = useTransition();
   const [placed, setPlaced] = useState(false);
 
@@ -290,7 +290,32 @@ export function CartBar() {
                 </div>
               </div>
 
-              <div className="mt-4 flex gap-2">
+              {/* Table number — required to place the order */}
+              <label className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-gold/20 bg-gold/[0.04] px-4 py-3">
+                <span className="text-sm">
+                  <span className="font-heading text-base">
+                    {t(UI_STRINGS.table, locale)}
+                  </span>
+                  {!table && (
+                    <span className="ml-2 text-[11px] text-gold">
+                      укажите номер
+                    </span>
+                  )}
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={table ?? ""}
+                  onChange={(e) =>
+                    setTable(e.target.value.trim() ? e.target.value.trim() : null)
+                  }
+                  placeholder="№"
+                  className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-center font-heading text-lg tabular-nums outline-none focus:border-gold/60"
+                />
+              </label>
+
+              <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => clear()}
                   disabled={placing}
@@ -300,10 +325,14 @@ export function CartBar() {
                 </button>
                 <button
                   onClick={placeOrder}
-                  disabled={placing || lines.length === 0}
-                  className="flex-1 rounded-full bg-gold py-2.5 text-sm font-medium text-primary-foreground hover:opacity-95 disabled:opacity-50"
+                  disabled={placing || lines.length === 0 || !table}
+                  className="flex-1 rounded-full bg-gold py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-95 disabled:opacity-50"
                 >
-                  {placing ? "Отправка…" : t(UI_STRINGS.cart_call_waiter, locale)}
+                  {placing
+                    ? "Отправка…"
+                    : !table
+                      ? "Укажите стол ↑"
+                      : t(UI_STRINGS.cart_call_waiter, locale)}
                 </button>
               </div>
             </div>
