@@ -171,6 +171,7 @@ export const orders = pgTable(
       .default("pending"),
     totalPrice: integer("total_price").notNull(),
     serviceCharge: integer("service_charge").notNull(),
+    isBirthday: boolean("is_birthday").notNull().default(false),
     itemsSnapshot: jsonb("items_snapshot").$type<OrderItemSnapshot[]>(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

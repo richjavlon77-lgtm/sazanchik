@@ -12,6 +12,7 @@ export type BoardOrder = {
   status: "pending" | "cooking" | "delivered" | "cancelled";
   totalPrice: number;
   createdAt: string;
+  isBirthday: boolean;
   items: { name: string; qty: number }[];
 };
 
@@ -264,6 +265,11 @@ export function WaiterBoard({
                     >
                       {s.text}
                     </span>
+                    {o.isBirthday && (
+                      <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] text-gold">
+                        🎂 ДР · −10%
+                      </span>
+                    )}
                   </div>
                   <span className="text-[11px] text-muted-foreground">
                     {timeAgo(o.createdAt)}

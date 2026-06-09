@@ -30,14 +30,18 @@ type CartContextValue = {
   clear: () => void;
   totalItems: number;
   subtotal: number;
+  discount: number;
   total: number;
   service: number;
+  isBirthday: boolean;
+  setBirthday: (v: boolean) => void;
   isOpen: boolean;
   setOpen: (v: boolean) => void;
 };
 
 const STORAGE_KEY = "sazanchik:cart";
 const SERVICE_RATE = 0.2;
+const BIRTHDAY_RATE = 0.1;
 
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -48,6 +52,7 @@ function keyOf(id: string, variantKey?: string) {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [isOpen, setOpen] = useState(false);
+  const [isBirthday, setBirthday] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -99,7 +104,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setLines((prev) => prev.filter((l) => keyOf(l.id, l.variantKey) !== k));
   }, []);
 
-  const clear = useCallback(() => setLines([]), []);
+  const clear = useCallback(() => {
+    setLines([]);
+    setBirthday(false);
+  }, []);
 
   const totalItems = useMemo(
     () => lines.reduce((acc, l) => acc + l.qty, 0),
@@ -109,8 +117,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () => lines.reduce((acc, l) => acc + l.qty * l.price, 0),
     [lines]
   );
-  const service = useMemo(() => Math.round(subtotal * SERVICE_RATE), [subtotal]);
-  const total = subtotal + service;
+  const discount = useMemo(
+    () => (isBirthday ? Math.round(subtotal * BIRTHDAY_RATE) : 0),
+    [isBirthday, subtotal]
+  );
+  const service = useMemo(
+    () => Math.round((subtotal - discount) * SERVICE_RATE),
+    [subtotal, discount]
+  );
+  const total = subtotal - discount + service;
 
   return (
     <CartContext.Provider
@@ -123,8 +138,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clear,
         totalItems,
         subtotal,
+        discount,
         total,
         service,
+        isBirthday,
+        setBirthday,
         isOpen,
         setOpen,
       }}

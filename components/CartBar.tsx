@@ -24,8 +24,11 @@ export function CartBar() {
     lines,
     totalItems,
     subtotal,
+    discount,
     total,
     service,
+    isBirthday,
+    setBirthday,
     isOpen,
     setOpen,
     inc,
@@ -89,6 +92,7 @@ export function CartBar() {
           body: JSON.stringify({
             tableNumber: t1,
             tableToken: tableToken ?? undefined,
+            isBirthday: isBirthday || undefined,
             lines: lines.map((l) => ({
               id: l.id,
               variantKey: l.variantKey,
@@ -288,6 +292,14 @@ export function CartBar() {
                     {formatPrice(subtotal, locale)}
                   </span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-gold">
+                    <span>🎂 Скидка именинника −10%</span>
+                    <span className="tabular-nums">
+                      −{formatPrice(discount, locale)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t(UI_STRINGS.cart_service, locale)}</span>
                   <span className="tabular-nums">{formatPrice(service, locale)}</span>
@@ -299,6 +311,40 @@ export function CartBar() {
                   </span>
                 </div>
               </div>
+
+              {/* Birthday −10% */}
+              <button
+                type="button"
+                onClick={() => setBirthday(!isBirthday)}
+                aria-pressed={isBirthday}
+                className={cn(
+                  "mt-3 flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
+                  isBirthday
+                    ? "border-gold/50 bg-gold/[0.06]"
+                    : "border-border bg-background/40 hover:border-gold/30"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
+                    isBirthday
+                      ? "border-gold bg-gold text-primary-foreground"
+                      : "border-muted-foreground/40"
+                  )}
+                >
+                  {isBirthday && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="size-3">
+                      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </span>
+                <span>
+                  <span className="block text-sm">🎂 У меня день рождения — скидка 10%</span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    Официант подтвердит по документу
+                  </span>
+                </span>
+              </button>
 
               {/* Table number — required to place the order */}
               <label className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-gold/20 bg-gold/[0.04] px-4 py-3">

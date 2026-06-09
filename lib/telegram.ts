@@ -28,7 +28,8 @@ export async function sendOrderToTelegram(
   items: OrderItem[],
   subtotal: number,
   service: number,
-  total: number
+  total: number,
+  isBirthday = false
 ): Promise<{ ok: boolean }> {
   const env = getEnv();
   if (!isConfigured(env)) {
@@ -48,9 +49,12 @@ export async function sendOrderToTelegram(
     `───────────────────────────`,
     lines,
     `───────────────────────────`,
+    isBirthday ? `🎂 День рождения — скидка 10% (проверить документ)` : "",
     `Сервис-чардж 20%: ${formatPrice(service)}`,
     `<b>ИТОГО К ОПЛАТЕ: ${formatPrice(total)}</b>`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
 

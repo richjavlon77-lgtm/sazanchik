@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { tableNumber, tableToken, lines, subtotal, service, total } =
+  const { tableNumber, tableToken, isBirthday, lines, subtotal, service, total } =
     parsed.data;
 
   // If a signed table token is present (from a QR), it is authoritative and
@@ -48,6 +48,7 @@ export async function POST(request: Request) {
         status: "pending",
         totalPrice: total,
         serviceCharge: service,
+        isBirthday: isBirthday ?? false,
         itemsSnapshot: lines.map((l) => ({
           nameRu: l.name.ru,
           nameUz: l.name.uz,
@@ -96,7 +97,8 @@ export async function POST(request: Request) {
         })),
         subtotal,
         service,
-        total
+        total,
+        isBirthday ?? false
       );
     } catch (err) {
       console.error("Telegram notification failed:", err);

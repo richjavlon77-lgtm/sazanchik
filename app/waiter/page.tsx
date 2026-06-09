@@ -36,6 +36,7 @@ export default async function WaiterPage() {
     status: o.status as BoardOrder["status"],
     totalPrice: o.totalPrice,
     createdAt: o.createdAt.toISOString(),
+    isBirthday: o.isBirthday,
     items: (o.itemsSnapshot ?? []).map((it) => ({
       name: it.nameRu,
       qty: it.quantity,
