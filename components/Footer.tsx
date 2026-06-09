@@ -2,7 +2,6 @@
 
 import { useLocale, t, UI_STRINGS } from "@/lib/i18n";
 import { useContent } from "@/lib/content-context";
-import { BrandLogo } from "@/components/BrandLogo";
 
 export function Footer() {
   const { locale } = useLocale();
@@ -11,9 +10,11 @@ export function Footer() {
   return (
     <footer className="mt-20 border-t border-border pt-12 pb-10">
       <div className="mx-auto max-w-3xl px-1">
-        <div className="flex flex-col items-center text-center">
-          <BrandLogo className="w-[220px] opacity-90" />
-          <p className="mt-3 text-xs text-muted-foreground">
+        <div className="text-center">
+          <div className="font-heading text-3xl text-gold">
+            <span className="italic">С</span>азанчик
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
             {t(RESTAURANT.tagline, locale)}
           </p>
         </div>

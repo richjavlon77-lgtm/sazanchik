@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BrandLogo } from "@/components/BrandLogo";
+import { SazanFish } from "@/components/icons/SazanFish";
 
 export default function AdminLoginPage() {
   return (
@@ -60,8 +60,11 @@ function LoginForm() {
         className="relative z-10 w-full max-w-sm rounded-2xl border border-gold/20 bg-card/80 p-8 backdrop-blur-md"
       >
         <div className="mb-8 flex flex-col items-center text-center">
-          <BrandLogo className="mb-5 w-[180px]" />
-          <p className="text-[11px] uppercase tracking-[0.35em] text-gold/80">
+          <SazanFish className="mb-4 h-10 w-auto text-gold" />
+          <h1 className="font-heading text-2xl">
+            <span className="italic text-gold">С</span>азанчик
+          </h1>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
             Панель управления
           </p>
         </div>

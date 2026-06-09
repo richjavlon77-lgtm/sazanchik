@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BrandLogo } from "@/components/BrandLogo";
+import { SazanFish } from "@/components/icons/SazanFish";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -32,10 +32,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border bg-card/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <Link href="/admin" className="flex items-center gap-3">
-            <BrandLogo className="w-[120px]" />
-            <span className="hidden text-[10px] uppercase tracking-[0.3em] text-muted-foreground sm:inline">
-              admin
-            </span>
+            <SazanFish className="h-7 w-auto text-gold" />
+            <div className="leading-none">
+              <div className="font-heading text-lg">
+                <span className="italic text-gold">С</span>азанчик
+              </div>
+              <div className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground">
+                admin
+              </div>
+            </div>
           </Link>
 
           <nav className="flex items-center gap-1 text-sm">

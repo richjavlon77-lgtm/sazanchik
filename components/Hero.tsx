@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { OrnamentDivider } from "@/components/Ornament";
 import { Reveal } from "@/components/Reveal";
 import { StoryButton } from "@/components/StoryButton";
+import { SazanFish } from "@/components/icons/SazanFish";
 
 export function Hero() {
   const { locale } = useLocale();
@@ -87,14 +88,22 @@ export function Hero() {
         </Reveal>
 
         <Reveal delay={150}>
-          <h1 className="sr-only">Сазанчик CITY</h1>
-          {/* Always the white logo — hero is always dark */}
-          <img
-            src="/brand-logo.png"
-            alt="Сазанчик CITY"
-            fetchPriority="high"
-            className="w-[min(82vw,360px)] drop-shadow-[0_4px_30px_rgba(0,0,0,0.6)] md:w-[480px]"
-          />
+          <h1
+            className="font-heading font-medium leading-[0.95] tracking-tight text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.55)]"
+            style={{ fontSize: "clamp(60px, 12vw, 104px)" }}
+          >
+            <span className="italic text-gold">С</span>азанчик
+          </h1>
+        </Reveal>
+
+        <Reveal delay={320} className="mt-5 flex items-center gap-4">
+          <span className="h-px w-10 bg-white/30" />
+          <SazanFish className="h-6 w-auto text-gold" />
+          <span className="text-[11px] uppercase tracking-[0.6em] text-gold/90">
+            City
+          </span>
+          <SazanFish className="h-6 w-auto -scale-x-100 text-gold" />
+          <span className="h-px w-10 bg-white/30" />
         </Reveal>
 
         <Reveal delay={400} className="mt-7">
