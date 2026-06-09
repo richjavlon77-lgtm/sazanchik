@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { OrnamentDivider } from "@/components/Ornament";
 import { Reveal } from "@/components/Reveal";
 import { StoryButton } from "@/components/StoryButton";
+import { ReservationSheet } from "@/components/ReservationSheet";
 import { SazanFish } from "@/components/icons/SazanFish";
 
 export function Hero() {
@@ -116,8 +117,9 @@ export function Hero() {
           </p>
         </Reveal>
 
-        <Reveal delay={680} className="mt-8">
+        <Reveal delay={680} className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <StoryButton />
+          <ReservationSheet />
         </Reveal>
       </div>
 

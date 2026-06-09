@@ -233,6 +233,41 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 export type OrderItem = typeof orderItems.$inferSelect;
 export type NewOrderItem = typeof orderItems.$inferInsert;
 
+/**
+ * Reservations: table bookings placed from the public site
+ */
+export const reservations = pgTable(
+  "reservations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    phone: text("phone").notNull(),
+    guests: integer("guests").notNull().default(2),
+    reservedAt: timestamp("reserved_at", { withTimezone: true }).notNull(),
+    tableNumber: text("table_number"),
+    comment: text("comment"),
+    isBirthday: boolean("is_birthday").notNull().default(false),
+    status: text("status", {
+      enum: ["new", "confirmed", "seated", "cancelled"],
+    })
+      .notNull()
+      .default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("reservations_status_idx").on(t.status),
+    index("reservations_date_idx").on(t.reservedAt),
+  ]
+);
+
+export type Reservation = typeof reservations.$inferSelect;
+export type NewReservation = typeof reservations.$inferInsert;
+
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Dish = typeof dishes.$inferSelect;

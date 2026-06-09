@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 const NAV = [
   { href: "/admin", label: "Меню" },
   { href: "/admin/categories", label: "Категории" },
+  { href: "/admin/reservations", label: "Брони" },
   { href: "/admin/restaurant", label: "Ресторан" },
   { href: "/admin/story", label: "История" },
 ];

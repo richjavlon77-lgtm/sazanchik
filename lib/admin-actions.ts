@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, dishes, dishVariants, restaurant, storyChapters } from "@/db/schema";
+import { categories, dishes, dishVariants, restaurant, storyChapters, reservations } from "@/db/schema";
 import { asc, eq, sql } from "drizzle-orm";
 
 // ============================================================================
@@ -228,6 +228,21 @@ export async function reorderCategories(orderedIds: string[]) {
   }
   revalidatePath("/");
   revalidatePath("/admin");
+}
+
+// ============================================================================
+// Reservations
+// ============================================================================
+
+export async function setReservationStatus(
+  id: string,
+  status: "new" | "confirmed" | "seated" | "cancelled"
+) {
+  await db
+    .update(reservations)
+    .set({ status, updatedAt: sql`now()` })
+    .where(eq(reservations.id, id));
+  revalidatePath("/admin/reservations");
 }
 
 // ============================================================================

@@ -124,6 +124,70 @@ export async function sendWaiterCallToTelegram(
   return { ok: true };
 }
 
+export async function sendReservationToTelegram(input: {
+  id: string;
+  name: string;
+  phone: string;
+  guests: number;
+  reservedAt: Date;
+  tableNumber?: string | null;
+  comment?: string | null;
+  isBirthday: boolean;
+}): Promise<{ ok: boolean }> {
+  const env = getEnv();
+  if (!isConfigured(env)) {
+    return { ok: false };
+  }
+
+  const when = input.reservedAt.toLocaleString("ru-RU", {
+    timeZone: "Asia/Tashkent",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const message = [
+    `<b>🪑 НОВАЯ БРОНЬ №${input.id.slice(0, 8)}</b>`,
+    `Гость: <b>${escapeHtml(input.name)}</b>`,
+    `Телефон: ${escapeHtml(input.phone)}`,
+    `Когда: <b>${when}</b> (Ташкент)`,
+    `Гостей: ${input.guests}`,
+    input.tableNumber ? `Стол: №${escapeHtml(input.tableNumber)}` : "",
+    input.isBirthday ? `🎂 День рождения — скидка 10% (проверить документ)` : "",
+    input.comment ? `Комментарий: ${escapeHtml(input.comment)}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_notification: false,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "unknown");
+    console.error("Telegram reservation failed:", res.status, err);
+    return { ok: false };
+  }
+
+  return { ok: true };
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function formatPrice(amount: number): string {
   return `${amount.toLocaleString("ru-RU")} сум`;
 }
