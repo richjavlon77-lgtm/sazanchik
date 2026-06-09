@@ -318,6 +318,21 @@ export const waiterCalls = pgTable(
 export type WaiterCall = typeof waiterCalls.$inferSelect;
 export type NewWaiterCall = typeof waiterCalls.$inferInsert;
 
+/**
+ * Uploads: images stored in DB (base64) — self-contained fallback when no
+ * Vercel Blob is connected. Served via /api/img/[id] with long cache headers.
+ */
+export const uploads = pgTable("uploads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mime: text("mime").notNull(),
+  data: text("data").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Upload = typeof uploads.$inferSelect;
+
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Dish = typeof dishes.$inferSelect;

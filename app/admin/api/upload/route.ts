@@ -1,40 +1,50 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import sharp from "sharp";
+import { db } from "@/db";
+import { uploads } from "@/db/schema";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json(
-      {
-        error:
-          "Загрузка фото временно недоступна. Вставьте ссылку на картинку в поле выше (Telegram, Imgur, Instagram).",
-      },
-      { status: 503 }
-    );
-  }
-
   try {
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "Файл не получен" }, { status: 400 });
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      return NextResponse.json({ error: "Файл больше 12 МБ" }, { status: 413 });
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "Файл больше 5 МБ" }, { status: 413 });
+    // Normalize: auto-orient by EXIF (phone photos), resize, compress
+    const input = Buffer.from(await file.arrayBuffer());
+    const optimized = await sharp(input)
+      .rotate()
+      .resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 80, mozjpeg: true })
+      .toBuffer();
+
+    // Prefer Vercel Blob if connected (CDN); else store in DB (self-contained)
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const { put } = await import("@vercel/blob");
+      const name = `menu/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const blob = await put(name, optimized, {
+        access: "public",
+        contentType: "image/jpeg",
+      });
+      return NextResponse.json({ url: blob.url });
     }
 
-    const ext = file.name.split(".").pop() || "jpg";
-    const safeName = `menu/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const [row] = await db
+      .insert(uploads)
+      .values({ mime: "image/jpeg", data: optimized.toString("base64") })
+      .returning({ id: uploads.id });
 
-    const blob = await put(safeName, file, {
-      access: "public",
-      contentType: file.type,
-    });
-
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json({ url: `/api/img/${row.id}` });
   } catch (e) {
+    console.error("Upload failed:", e);
     return NextResponse.json(
-      { error: (e as Error).message },
+      { error: "Не удалось загрузить фото. Попробуйте другое изображение." },
       { status: 500 }
     );
   }
