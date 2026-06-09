@@ -5,6 +5,7 @@ import { useLocale, t } from "@/lib/i18n";
 import { useMenu } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/SearchBar";
+import { DietFilter } from "@/components/DietFilter";
 
 export function CategoryNav() {
   const { locale } = useLocale();
@@ -58,6 +59,7 @@ export function CategoryNav() {
     <div className="sticky top-0 z-40 -mx-6 border-b border-border bg-background/85 px-6 backdrop-blur-md">
       <div className="mx-auto max-w-3xl py-3">
         <SearchBar />
+        <DietFilter />
 
         {!isFiltering && (
           <nav

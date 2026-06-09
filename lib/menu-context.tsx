@@ -15,6 +15,8 @@ import { useLocale } from "@/lib/i18n";
 type MenuContextValue = {
   query: string;
   setQuery: (q: string) => void;
+  activeDiets: string[];
+  toggleDiet: (tag: string) => void;
   menu: MenuCategory[];
   filteredMenu: MenuCategory[];
   totalShown: number;
@@ -33,12 +35,24 @@ export function MenuProvider({
 }) {
   const { locale } = useLocale();
   const [query, setQuery] = useState("");
+  const [activeDiets, setActiveDiets] = useState<string[]>([]);
+
+  const toggleDiet = (tag: string) =>
+    setActiveDiets((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
 
   const normalized = query.trim().toLowerCase();
-  const isFiltering = normalized.length > 0;
+  const isFiltering = normalized.length > 0 || activeDiets.length > 0;
 
   const filteredMenu = useMemo(() => {
-    if (!isFiltering) return menu;
+    if (normalized.length === 0 && activeDiets.length === 0) return menu;
+
+    const matchesDiet = (item: MenuItem) =>
+      activeDiets.length === 0 ||
+      activeDiets.some((tag) =>
+        tag === "spicy" ? !!item.spicy : item.diet?.includes(tag as never)
+      );
 
     const matches = (item: MenuItem) => {
       const haystack = [
@@ -55,9 +69,12 @@ export function MenuProvider({
     };
 
     return menu
-      .map((cat) => ({ ...cat, items: cat.items.filter(matches) }))
+      .map((cat) => ({
+        ...cat,
+        items: cat.items.filter((it) => matches(it) && matchesDiet(it)),
+      }))
       .filter((cat) => cat.items.length > 0);
-  }, [menu, isFiltering, normalized]);
+  }, [menu, normalized, activeDiets]);
 
   const totalAll = useMemo(
     () => menu.reduce((acc, c) => acc + c.items.length, 0),
@@ -77,6 +94,8 @@ export function MenuProvider({
       value={{
         query,
         setQuery,
+        activeDiets,
+        toggleDiet,
         menu,
         filteredMenu,
         totalShown,

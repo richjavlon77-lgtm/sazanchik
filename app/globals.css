@@ -162,6 +162,32 @@
     scroll-padding-top: 5rem;
   }
 
+  /* A11y: visible keyboard focus (WCAG 2.2 — focus appearance) */
+  :focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Mouse/touch users don't see the ring (only keyboard) */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* A11y: respect reduced-motion globally — kill animations + smooth scroll */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   /* Headings: balance line breaks, no orphan words */
   h1,
   h2,

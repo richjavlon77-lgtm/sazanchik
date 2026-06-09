@@ -5,6 +5,7 @@ import { CartBar } from "@/components/CartBar";
 import { WaiterButton } from "@/components/WaiterButton";
 import { HashHighlighter } from "@/components/HashHighlighter";
 import { IntroSplash } from "@/components/IntroSplash";
+import { OrderTracker } from "@/components/OrderTracker";
 
 /**
  * Client-facing widgets (cart, call-waiter, intro splash) belong only to the
@@ -21,6 +22,7 @@ export function ClientChrome() {
       <WaiterButton />
       <HashHighlighter />
       <IntroSplash />
+      <OrderTracker />
     </>
   );
 }

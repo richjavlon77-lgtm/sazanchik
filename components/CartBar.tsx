@@ -111,6 +111,15 @@ export function CartBar() {
         const order = await res.json();
         clear();
 
+        // Remember the order so the guest can track its live status
+        try {
+          localStorage.setItem(
+            "sazanchik:lastOrder",
+            JSON.stringify({ id: order.id, table: t1, at: Date.now() })
+          );
+          window.dispatchEvent(new Event("sazanchik:order-placed"));
+        } catch {}
+
         toast.success(`Заказ #${order.id.slice(0, 8)} принят!`, {
           description: "Официант скоро подойдёт.",
         });
