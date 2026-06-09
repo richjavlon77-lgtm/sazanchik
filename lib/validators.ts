@@ -21,6 +21,7 @@ const cartLineSchema = z.object({
 
 export const createOrderSchema = z.object({
   tableNumber: z.string().min(1, "Номер стола обязателен"),
+  tableToken: z.string().max(64).optional(),
   lines: z.array(cartLineSchema).min(1, "Корзина не может быть пустой"),
   subtotal: z.number().int().positive(),
   service: z.number().int().min(0),
@@ -29,6 +30,7 @@ export const createOrderSchema = z.object({
 
 export const callWaiterSchema = z.object({
   tableNumber: z.string().min(1, "Номер стола обязателен"),
+  tableToken: z.string().max(64).optional(),
   type: z.enum(["waiter", "bill", "water"]),
 });
 

@@ -19,7 +19,7 @@ type CallType = "waiter" | "bill" | "water";
 
 export function WaiterButton() {
   const { locale } = useLocale();
-  const { table, setTable } = useTableNumber();
+  const { table, tableToken, setTable } = useTableNumber();
   const { totalItems } = useCart();
   const [open, setOpen] = useState(false);
   const [tableInput, setTableInput] = useState(table ?? "");
@@ -55,7 +55,7 @@ export function WaiterButton() {
         const res = await fetch("/api/orders/call-waiter", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tableNumber: t1, type }),
+          body: JSON.stringify({ tableNumber: t1, tableToken: tableToken ?? undefined, type }),
         });
 
         if (!res.ok) {

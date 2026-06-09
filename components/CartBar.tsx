@@ -33,7 +33,7 @@ export function CartBar() {
     clear,
     add,
   } = useCart();
-  const { table, setTable } = useTableNumber();
+  const { table, tableToken, setTable } = useTableNumber();
   const [placing, startTransition] = useTransition();
   const [placed, setPlaced] = useState(false);
 
@@ -88,6 +88,7 @@ export function CartBar() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tableNumber: t1,
+            tableToken: tableToken ?? undefined,
             lines: lines.map((l) => ({
               id: l.id,
               variantKey: l.variantKey,

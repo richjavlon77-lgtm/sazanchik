@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { orders, orderItems } from "@/db/schema";
 import { createOrderSchema } from "@/lib/validators";
 import { sendOrderToTelegram } from "@/lib/telegram";
+import { verifyTableToken } from "@/lib/table-sign";
 import { eq, sql } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -22,13 +23,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const { tableNumber, lines, subtotal, service, total } = parsed.data;
+  const { tableNumber, tableToken, lines, subtotal, service, total } =
+    parsed.data;
+
+  // If a signed table token is present (from a QR), it is authoritative and
+  // cannot be forged. A present-but-invalid token means tampering → reject.
+  let table = tableNumber;
+  if (tableToken) {
+    const verified = verifyTableToken(tableToken);
+    if (!verified) {
+      return NextResponse.json(
+        { error: "Недействительный QR-код стола" },
+        { status: 403 }
+      );
+    }
+    table = verified;
+  }
 
   try {
     const [order] = await db
       .insert(orders)
       .values({
-        tableNumber,
+        tableNumber: table,
         status: "pending",
         totalPrice: total,
         serviceCharge: service,
@@ -71,7 +87,7 @@ export async function POST(request: Request) {
     try {
       await sendOrderToTelegram(
         order.id,
-        tableNumber,
+        table,
         lines.map((l) => ({
           name: l.name.ru,
           variantLabel: l.variantLabel?.ru,

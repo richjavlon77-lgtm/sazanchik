@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff } from "@/db/schema";
 import { hashPin, verifyPin, isValidPin } from "@/lib/staff-auth";
+import { signTable } from "@/lib/table-sign";
+import QRCode from "qrcode";
 import { asc, eq, sql } from "drizzle-orm";
 
 // ============================================================================
@@ -283,6 +285,29 @@ export async function setStaffActive(id: string, isActive: boolean) {
 export async function deleteStaff(id: string) {
   await db.delete(staff).where(eq(staff.id, id));
   revalidatePath("/admin/staff");
+}
+
+// ============================================================================
+// Tables — signed QR codes (anti-spoof)
+// ============================================================================
+
+export async function generateTableQRs(
+  count: number
+): Promise<{ num: number; url: string; qr: string }[]> {
+  const n = Math.max(1, Math.min(100, Math.floor(count)));
+  const base =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://sazanchik.vercel.app";
+  const out: { num: number; url: string; qr: string }[] = [];
+  for (let i = 1; i <= n; i++) {
+    const url = `${base}/?t=${encodeURIComponent(signTable(String(i)))}`;
+    const qr = await QRCode.toDataURL(url, {
+      width: 600,
+      margin: 1,
+      color: { dark: "#1a1611", light: "#ffffff" },
+    });
+    out.push({ num: i, url, qr });
+  }
+  return out;
 }
 
 // ============================================================================

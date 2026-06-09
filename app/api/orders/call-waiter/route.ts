@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { waiterCalls } from "@/db/schema";
 import { callWaiterSchema } from "@/lib/validators";
 import { sendWaiterCallToTelegram } from "@/lib/telegram";
+import { verifyTableToken } from "@/lib/table-sign";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -21,18 +22,31 @@ export async function POST(request: Request) {
     );
   }
 
-  const { tableNumber, type } = parsed.data;
+  const { tableNumber, tableToken, type } = parsed.data;
+
+  // Signed QR token is authoritative; a present-but-invalid token = tampering.
+  let table = tableNumber;
+  if (tableToken) {
+    const verified = verifyTableToken(tableToken);
+    if (!verified) {
+      return NextResponse.json(
+        { error: "Недействительный QR-код стола" },
+        { status: 403 }
+      );
+    }
+    table = verified;
+  }
 
   try {
     // Persist the call so the waiter board never loses it (survives offline)
     const [row] = await db
       .insert(waiterCalls)
-      .values({ tableNumber, type, status: "new" })
+      .values({ tableNumber: table, type, status: "new" })
       .returning({ id: waiterCalls.id });
 
     // Await so the serverless function isn't frozen before Telegram is sent.
     try {
-      await sendWaiterCallToTelegram(tableNumber, type);
+      await sendWaiterCallToTelegram(table, type);
     } catch (err) {
       console.error("Telegram waiter call failed:", err);
     }
