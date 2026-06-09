@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
 
@@ -91,12 +92,12 @@ function LoginForm() {
           {busy ? "Проверяем…" : "Войти"}
         </button>
 
-        <a
+        <Link
           href="/"
           className="mt-4 block text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground"
         >
           ← К меню
-        </a>
+        </Link>
       </form>
     </main>
   );

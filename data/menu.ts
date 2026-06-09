@@ -12,7 +12,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "myasnoe-assorti",
-        image: "/images/myasnoe-assorti.jpg",
         name: { ru: "Мясное ассорти", uz: "Go'sht assorti", en: "Meat platter" },
         description: {
           ru: "Язык говяжий, казы, куриный рулет, говядина пряная",
@@ -23,7 +22,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "svezhee-assorti",
-        image: "/images/svezhee-assorti.jpg",
         name: { ru: "Свежее ассорти", uz: "Tarvuz assorti", en: "Fresh platter" },
         description: {
           ru: "Помидоры, огурцы, перец, зелень",
@@ -34,7 +32,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "malosolnye-pomidory",
-        image: "/images/malosolnye-pomidory.jpg",
         name: {
           ru: "Малосольные помидоры",
           uz: "Tuzlangan pomidor",
@@ -49,7 +46,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "brynza-s-zelenyu",
-        image: "/images/brynza-s-zelenyu.jpg",
         name: {
           ru: "Брынза с зеленью",
           uz: "Ko'katli pishloq",
@@ -59,19 +55,16 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "limon",
-        image: "/images/limon.jpg",
         name: { ru: "Лимон", uz: "Limon", en: "Lemon" },
         price: 25000,
       },
       {
         id: "syuzma",
-        image: "/images/syuzma.jpg",
         name: { ru: "Сюзьма", uz: "Suzma", en: "Suzma (strained yogurt)" },
         price: 35000,
       },
       {
         id: "rulety-baklazhan",
-        image: "/images/rulety-baklazhan.jpg",
         name: {
           ru: "Рулеты из баклажан",
           uz: "Baqlajon ruleti",
@@ -99,7 +92,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "salad-yazyk",
-        image: "/images/salad-yazyk.jpg",
         name: {
           ru: "Салат с говяжьим языком",
           uz: "Mol tilli salat",
@@ -114,7 +106,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-mozzarella",
-        image: "/images/salad-mozzarella.jpg",
         name: {
           ru: "Салат с моцареллой и кедровыми орешками",
           uz: "Motsarella va qarag'ay yong'oqli salat",
@@ -124,7 +115,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "hrustyashie-baklazhany",
-        image: "/images/hrustyashie-baklazhany.jpg",
         name: {
           ru: "Хрустящие баклажаны с помидорами",
           uz: "Pomidorli qarsillama baqlajon",
@@ -134,13 +124,11 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "beef-stew-salad",
-        image: "/images/beef-stew-salad.jpg",
         name: { ru: "Beef stew", uz: "Beef stew", en: "Beef stew" },
         price: 90000,
       },
       {
         id: "salad-achichuk",
-        image: "/images/salad-achichuk.jpg",
         name: { ru: "Салат «Ачичук»", uz: "«Achchiqchuchuk» salat", en: "Achichuk salad" },
         description: {
           ru: "Помидоры, огурец, лук",
@@ -151,7 +139,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-grecheskiy",
-        image: "/images/salad-grecheskiy.jpg",
         name: { ru: "Салат «Греческий»", uz: "«Yunon» salati", en: "Greek salad" },
         description: {
           ru: "Помидоры, огурцы, болгарский перец, оливки, фета-сыр, маслины",
@@ -162,7 +149,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-caesar",
-        image: "/images/salad-caesar.jpg",
         name: { ru: "Цезарь с курицей", uz: "Tovuqli «Tsezar»", en: "Caesar with chicken" },
         description: {
           ru: "Айсберг, куриная грудка, пармезан, гренки, соус цезарь",
@@ -173,13 +159,11 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "steak-salad",
-        image: "/images/steak-salad.jpg",
         name: { ru: "Стейк-салат", uz: "Steyk-salat", en: "Steak salad" },
         price: 145000,
       },
       {
         id: "salad-burrata",
-        image: "/images/salad-burrata.jpg",
         name: {
           ru: "Салат буррата с томатами",
           uz: "Pomidorli burata salati",
@@ -194,7 +178,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-tuna",
-        image: "/images/salad-tuna.jpg",
         name: { ru: "Салат «С тунцом»", uz: "Tunets salati", en: "Tuna salad" },
         description: {
           ru: "Тунец, айсберг, помидоры, огурец, перец, оливки",
@@ -205,7 +188,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-caprese",
-        image: "/images/salad-caprese.jpg",
         name: { ru: "Салат «Капрезе»", uz: "«Kaprese» salati", en: "Caprese salad" },
         description: {
           ru: "Спелые помидоры, моцарелла, базилик, оливковое масло, бальзамик",
@@ -216,7 +198,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-tsum",
-        image: "/images/salad-tsum.jpg",
         name: { ru: "Салат «Цум»", uz: "«Tsum» salati", en: "Tsum salad" },
         description: {
           ru: "Лёгкий мясной микс, помидоры, перец, огурец, зелень",
@@ -227,7 +208,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-armyanskiy",
-        image: "/images/salad-armyanskiy.jpg",
         name: { ru: "Салат армянский", uz: "Arman salati", en: "Armenian salad" },
         description: {
           ru: "Овощи, зелень, грецкий орех, гранат, заправка",
@@ -238,13 +218,11 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-aristokrat",
-        image: "/images/salad-aristokrat.jpg",
         name: { ru: "Салат «Аристократ»", uz: "«Aristokrat» salati", en: "Aristocrat salad" },
         price: 110000,
       },
       {
         id: "salad-bonfile",
-        image: "/images/salad-bonfile.jpg",
         name: { ru: "Салат «Бонфиле»", uz: "«Bonfile» salati", en: "Bonfile salad" },
         description: {
           ru: "Бонфиле говядины, овощи, обжаренные грибы, корейская заправка",
@@ -255,13 +233,11 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-tuna-deluxe",
-        image: "/images/salad-tuna-deluxe.jpg",
         name: { ru: "Салат с тунцом «Делюкс»", uz: "Tunetsli «Deluxe» salat", en: "Tuna Deluxe salad" },
         price: 180000,
       },
       {
         id: "salad-chicken-veg",
-        image: "/images/salad-chicken-veg.jpg",
         name: {
           ru: "Салат «Курица-овощи»",
           uz: "«Tovuq-sabzavot» salati",
@@ -276,7 +252,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-yagodnyi",
-        image: "/images/salad-yagodnyi.jpg",
         name: { ru: "Салат ягодный", uz: "Mevali salat", en: "Berry salad" },
         description: {
           ru: "Рукола, ягоды, козий сыр, кедровые орешки, малиновый соус",
@@ -287,7 +262,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-khanskiy",
-        image: "/images/salad-khanskiy.jpg",
         name: { ru: "Салат «Ханский»", uz: "«Xon» salati", en: "Khan's salad" },
         description: {
           ru: "Драники, рукола, телячий язык, помидоры черри, оливки, корнишоны",
@@ -298,7 +272,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "salad-rucola-pomegranate",
-        image: "/images/salad-rucola-pomegranate.jpg",
         name: {
           ru: "Рукола с гранатовым соком",
           uz: "Anor sharbatli rukkola",
@@ -330,7 +303,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "dolma-leaves",
-        image: "/images/dolma-leaves.jpg",
         name: {
           ru: "Долма из виноградных листьев",
           uz: "Uzum bargli dolma",
@@ -341,7 +313,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "beef-tongue-butter",
-        image: "/images/beef-tongue-butter.jpg",
         name: {
           ru: "Язык говяжий в сливочном масле",
           uz: "Sariyog'da mol tili",
@@ -351,7 +322,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "ushok-barak-fried",
-        image: "/images/ushok-barak-fried.jpg",
         name: {
           ru: "Ушок барак жареный",
           uz: "Qovurilgan ushoq barak",
@@ -361,7 +331,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "chicken-wings-bbq",
-        image: "/images/chicken-wings-bbq.jpg",
         name: { ru: "Куриные крылышки BBQ", uz: "BBQ tovuq qanotlari", en: "BBQ chicken wings" },
         description: {
           ru: "Куриные крылышки, соус барбекю, кунжут, перец чили",
@@ -386,7 +355,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "uch-oshi",
-        image: "/images/uch-oshi.jpg",
         name: { ru: "Уч оши", uz: "Uch oshi", en: "Uch oshi" },
         price: [
           { label: { ru: "малая", uz: "kichik", en: "small" }, price: 35000 },
@@ -395,7 +363,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "uch-oshi-ayran",
-        image: "/images/uch-oshi-ayran.jpg",
         name: {
           ru: "Уч оши с айраном",
           uz: "Ayronli uch oshi",
@@ -408,7 +375,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "ushok-barak-soup",
-        image: "/images/ushok-barak-soup.jpg",
         name: { ru: "Ушок барак", uz: "Ushoq barak", en: "Ushok barak" },
         price: [
           { label: { ru: "малая", uz: "kichik", en: "small" }, price: 40000 },
@@ -417,13 +383,11 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "lentil-soup",
-        image: "/images/lentil-soup.jpg",
         name: { ru: "Чечевичный суп", uz: "Mosh sho'rva", en: "Lentil soup" },
         price: 60000,
       },
       {
         id: "chicken-soup",
-        image: "/images/chicken-soup.jpg",
         name: { ru: "Куриный суп", uz: "Tovuq sho'rva", en: "Chicken soup" },
         price: 55000,
       },
@@ -446,13 +410,11 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "katyrma-meat",
-        image: "/images/katyrma-meat.jpg",
         name: { ru: "Катырма с мясом", uz: "Go'shtli qatirma", en: "Qatirma with meat" },
         price: 25000,
       },
       {
         id: "katyrma-meat-cheese",
-        image: "/images/katyrma-meat-cheese.jpg",
         name: {
           ru: "Катырма с мясом и сыром",
           uz: "Go'sht va pishloqli qatirma",
@@ -462,7 +424,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "katyrma-brynza-greens",
-        image: "/images/katyrma-brynza-greens.jpg",
         name: {
           ru: "Катырма с брынзой и зеленью",
           uz: "Pishloq va ko'katli qatirma",
@@ -472,7 +433,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "katyrma-cheese-greens",
-        image: "/images/katyrma-cheese-greens.jpg",
         name: {
           ru: "Катырма с сыром и зеленью",
           uz: "Pishloq va ko'katli qatirma",
@@ -482,19 +442,16 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "katyrma-pumpkin",
-        image: "/images/katyrma-pumpkin.jpg",
         name: { ru: "Катырма с тыквой", uz: "Qovoqli qatirma", en: "Qatirma with pumpkin" },
         price: 22000,
       },
       {
         id: "gumma-meat",
-        image: "/images/gumma-meat.jpg",
         name: { ru: "Гумма с мясом", uz: "Go'shtli gumma", en: "Gumma with meat" },
         price: 30000,
       },
       {
         id: "gumma-meat-cheese",
-        image: "/images/gumma-meat-cheese.jpg",
         name: {
           ru: "Гумма с мясом и сыром",
           uz: "Go'sht va pishloqli gumma",
@@ -504,7 +461,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "gumma-brynza-greens",
-        image: "/images/gumma-brynza-greens.jpg",
         name: {
           ru: "Гумма с брынзой и зеленью",
           uz: "Pishloq va ko'katli gumma",
@@ -514,7 +470,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "gumma-cheese-greens",
-        image: "/images/gumma-cheese-greens.jpg",
         name: {
           ru: "Гумма с сыром и зеленью",
           uz: "Pishloq va ko'katli gumma",
@@ -524,13 +479,11 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "gumma-pumpkin",
-        image: "/images/gumma-pumpkin.jpg",
         name: { ru: "Гумма с тыквой", uz: "Qovoqli gumma", en: "Gumma with pumpkin" },
         price: 18000,
       },
       {
         id: "ishlama-meat-veg",
-        image: "/images/ishlama-meat-veg.jpg",
         name: {
           ru: "Ишлама с мясом и овощами",
           uz: "Go'sht va sabzavotli ishlama",
@@ -540,7 +493,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "ishlama-brynza-greens",
-        image: "/images/ishlama-brynza-greens.jpg",
         name: {
           ru: "Ишлама с брынзой и зеленью",
           uz: "Pishloq va ko'katli ishlama",
@@ -571,7 +523,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "tukum-barak",
-        image: "/images/tukum-barak.jpg",
         name: { ru: "Тукум барак", uz: "Tuxum barak", en: "Tukum barak" },
         price: [
           { label: { ru: "4 шт", uz: "4 dona", en: "4 pcs" }, price: 30000 },
@@ -580,7 +531,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "kulur-barak",
-        image: "/images/kulur-barak.jpg",
         name: { ru: "Кулур барак", uz: "Kulur barak", en: "Kulur barak" },
         price: [
           { label: { ru: "4 шт", uz: "4 dona", en: "4 pcs" }, price: 30000 },
@@ -589,7 +539,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "ushok-barak-dish",
-        image: "/images/ushok-barak-dish.jpg",
         name: { ru: "Ушок барак", uz: "Ushoq barak", en: "Ushok barak" },
         price: [
           { label: { ru: "4 шт", uz: "4 dona", en: "4 pcs" }, price: 25000 },
@@ -598,7 +547,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "kash-barak",
-        image: "/images/kash-barak.jpg",
         name: { ru: "Каш барак", uz: "Qash barak", en: "Kash barak" },
         price: [
           { label: { ru: "4 шт", uz: "4 dona", en: "4 pcs" }, price: 25000 },
@@ -607,19 +555,16 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "shavat-osh",
-        image: "/images/shavat-osh.jpg",
         name: { ru: "Шават Ош", uz: "Shavat oshi", en: "Shavat osh" },
         price: 80000,
       },
       {
         id: "khansky-mix",
-        image: "/images/khansky-mix.jpg",
         name: { ru: "Ханский микс", uz: "Xon miksi", en: "Khan's mix" },
         price: 395000,
       },
       {
         id: "khansky-manty",
-        image: "/images/khansky-manty.jpg",
         name: { ru: "Ханские манты", uz: "Xon manti", en: "Khan's manty" },
         price: 60000,
       },
@@ -643,7 +588,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "vaguri",
-        image: "/images/vaguri.jpg",
         name: { ru: "Вагури", uz: "Vaguri", en: "Vaguri" },
         description: { ru: "1 кг", uz: "1 kg", en: "1 kg" },
         price: 370000,
@@ -651,7 +595,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "assorti-sazanchik",
-        image: "/images/assorti-sazanchik.jpg",
         name: {
           ru: "Ассорти «Сазанчик»",
           uz: "«Sazanchik» assorti",
@@ -663,13 +606,11 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "tsyplyonok",
-        image: "/images/tsyplyonok.jpg",
         name: { ru: "Цыплёнок", uz: "Jo'ja", en: "Spring chicken" },
         price: 120000,
       },
       {
         id: "chicken-breast-cream",
-        image: "/images/chicken-breast-cream.jpg",
         name: {
           ru: "Куриная грудка в сливочно-грибном соусе",
           uz: "Qaymoq-qo'ziqorinli tovuq filesi",
@@ -684,7 +625,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "medallions",
-        image: "/images/medallions.jpg",
         name: {
           ru: "Медальоны с овощами",
           uz: "Sabzavotli medalonlar",
@@ -694,7 +634,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "potato-homestyle",
-        image: "/images/potato-homestyle.jpg",
         name: {
           ru: "Картофель по-домашнему",
           uz: "Uy uslubidagi kartoshka",
@@ -709,7 +648,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "veal-tolyatina",
-        image: "/images/veal-tolyatina.jpg",
         name: { ru: "Тельятина из телятины", uz: "Buzoq go'shti", en: "Veal tolyatina" },
         description: {
           ru: "Все стейки готовятся под заказ, пожалуйста, время приготовления",
@@ -732,7 +670,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "beef-skewer",
-        image: "/images/beef-skewer.jpg",
         name: {
           ru: "Кусковой шашлык из говядины",
           uz: "Mol go'shti shashligi",
@@ -742,31 +679,26 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "chicken-skewer",
-        image: "/images/chicken-skewer.jpg",
         name: { ru: "Куриный шашлык", uz: "Tovuq shashligi", en: "Chicken skewer" },
         price: 60000,
       },
       {
         id: "chicken-wings-grill",
-        image: "/images/chicken-wings-grill.jpg",
         name: { ru: "Куриные крылышки", uz: "Tovuq qanotlari", en: "Chicken wings" },
         price: 50000,
       },
       {
         id: "lamb-rib",
-        image: "/images/lamb-rib.jpg",
         name: { ru: "Баранья корейка", uz: "Qo'y qovurg'asi", en: "Lamb rib" },
         price: 180000,
       },
       {
         id: "lyulya-kebab",
-        image: "/images/lyulya-kebab.jpg",
         name: { ru: "Люля кебаб", uz: "Lyulya kabob", en: "Lyulya kebab" },
         price: 80000,
       },
       {
         id: "veg-grill",
-        image: "/images/veg-grill.jpg",
         name: { ru: "Овощи на мангале", uz: "Mangaldagi sabzavotlar", en: "Grilled vegetables" },
         price: 170000,
       },
@@ -790,14 +722,12 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "sazan-neck",
-        image: "/images/sazan-neck.jpg",
         name: { ru: "Шейка сазана", uz: "Sazan bo'yni", en: "Sazan neck" },
         description: { ru: "1 кг", uz: "1 kg", en: "1 kg" },
         price: 370000,
       },
       {
         id: "sazan-whole",
-        image: "/images/sazan-whole.jpg",
         name: { ru: "Сазан целиком", uz: "Butun sazan", en: "Whole sazan" },
         description: {
           ru: "1 кг (без головы и без хвоста)",
@@ -809,20 +739,17 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "sudak",
-        image: "/images/sudak.jpg",
         name: { ru: "Судак", uz: "Sudak", en: "Pike-perch" },
         price: 300000,
       },
       {
         id: "trout-whole",
-        image: "/images/trout-whole.jpg",
         name: { ru: "Форель целиком", uz: "Butun forel", en: "Whole trout" },
         description: { ru: "1 кг", uz: "1 kg", en: "1 kg" },
         price: 290000,
       },
       {
         id: "salmon",
-        image: "/images/salmon.jpg",
         name: { ru: "Лосось", uz: "Losos", en: "Salmon" },
         description: { ru: "1 кг", uz: "1 kg", en: "1 kg" },
         price: 295000,
@@ -849,7 +776,6 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "alfredo-salmon",
-        image: "/images/alfredo-salmon.jpg",
         name: {
           ru: "Альфредо с лососем",
           uz: "Lososli Alfredo",
@@ -864,7 +790,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "pasta-arrabbiata",
-        image: "/images/pasta-arrabbiata.jpg",
         name: { ru: "Паста Арабьята", uz: "Arabbyata pasta", en: "Pasta Arrabbiata" },
         description: {
           ru: "Острый томатный соус с обжаренным чесноком, паста спагетти",
@@ -875,7 +800,6 @@ export const MENU: MenuCategory[] = [
       },
       {
         id: "pasta-alfredo",
-        image: "/images/pasta-alfredo.jpg",
         name: { ru: "Паста Альфредо", uz: "Alfredo pastasi", en: "Pasta Alfredo" },
         description: {
           ru: "Куриная грудка, грибы, паста сливки, пармезан",
@@ -904,13 +828,11 @@ export const MENU: MenuCategory[] = [
     items: [
       {
         id: "steak-classic",
-        image: "/images/steak-classic.jpg",
         name: { ru: "Классический стейк", uz: "Klassik steyk", en: "Classic steak" },
         price: 215000,
       },
       {
         id: "steak-tbone",
-        image: "/images/steak-tbone.jpg",
         name: { ru: "Стейк Тибон", uz: "T-bon steyki", en: "T-bone steak" },
         price: 255000,
       },

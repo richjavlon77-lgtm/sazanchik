@@ -1,4 +1,3 @@
-const TELEGRAM_API = "https://api.telegram.org";
 
 type TelegramEnv = {
   botToken?: string;
