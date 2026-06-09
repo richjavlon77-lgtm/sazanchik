@@ -334,6 +334,31 @@ export const uploads = pgTable("uploads", {
 
 export type Upload = typeof uploads.$inferSelect;
 
+/**
+ * Football events: match screenings the restaurant hosts ("watch the game here")
+ */
+export const footballEvents = pgTable(
+  "football_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    homeTeam: text("home_team").notNull(),
+    awayTeam: text("away_team").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    league: text("league"),
+    note: text("note"),
+    isPublished: boolean("is_published").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("football_starts_idx").on(t.startsAt),
+    index("football_pub_idx").on(t.isPublished),
+  ]
+);
+
+export type FootballEvent = typeof footballEvents.$inferSelect;
+
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Dish = typeof dishes.$inferSelect;

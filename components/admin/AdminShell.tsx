@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/categories", label: "Категории" },
   { href: "/admin/reservations", label: "Брони" },
   { href: "/admin/tables", label: "Столы" },
+  { href: "/admin/football", label: "Футбол" },
   { href: "/admin/staff", label: "Персонал" },
   { href: "/admin/restaurant", label: "Ресторан" },
   { href: "/admin/story", label: "История" },

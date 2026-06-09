@@ -4,7 +4,11 @@ import { STORY as STATIC_STORY } from "@/data/story";
 import { Hero } from "@/components/Hero";
 import { CategoryNav } from "@/components/CategoryNav";
 import { FeaturedDishes } from "@/components/FeaturedDishes";
+import { FootballBanner, type MatchItem } from "@/components/FootballBanner";
 import { MenuList } from "@/components/MenuList";
+import { db } from "@/db";
+import { footballEvents } from "@/db/schema";
+import { and, eq, gt, asc } from "drizzle-orm";
 import { Footer } from "@/components/Footer";
 import { OrnamentBackground } from "@/components/Ornament";
 import { TimeAwareMenuProvider } from "@/components/TimeAwareMenuProvider";
@@ -26,6 +30,7 @@ export default async function Home() {
   let menu;
   let restaurant = STATIC_RESTAURANT;
   let story = STATIC_STORY;
+  let matches: MatchItem[] = [];
 
   try {
     const [dbMenu, dbRestaurant, dbStory] = await Promise.all([
@@ -40,6 +45,26 @@ export default async function Home() {
         : applyIntros(enrichMenuWithDiet(STATIC_MENU));
     if (dbRestaurant) restaurant = dbRestaurant;
     if (dbStory.length > 0) story = dbStory;
+    matches = (
+      await db
+        .select()
+        .from(footballEvents)
+        .where(
+          and(
+            eq(footballEvents.isPublished, true),
+            gt(footballEvents.startsAt, new Date())
+          )
+        )
+        .orderBy(asc(footballEvents.startsAt))
+        .limit(6)
+    ).map((m) => ({
+      id: m.id,
+      homeTeam: m.homeTeam,
+      awayTeam: m.awayTeam,
+      startsAt: m.startsAt.toISOString(),
+      league: m.league,
+      note: m.note,
+    }));
   } catch (e) {
     console.error("Falling back to static content:", e);
     menu = applyIntros(enrichMenuWithDiet(STATIC_MENU));
@@ -57,6 +82,7 @@ export default async function Home() {
           {/* Constrained menu column */}
           <main className="relative z-10 mx-auto w-full max-w-3xl px-6">
             <CategoryNav />
+            <FootballBanner matches={matches} />
             <FeaturedDishes />
             <MenuList />
             <Footer />

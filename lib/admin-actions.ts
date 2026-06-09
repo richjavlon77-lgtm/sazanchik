@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff } from "@/db/schema";
+import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff, footballEvents } from "@/db/schema";
 import { hashPin, verifyPin, isValidPin } from "@/lib/staff-auth";
 import { signTable } from "@/lib/table-sign";
 import QRCode from "qrcode";
@@ -285,6 +285,50 @@ export async function setStaffActive(id: string, isActive: boolean) {
 export async function deleteStaff(id: string) {
   await db.delete(staff).where(eq(staff.id, id));
   revalidatePath("/admin/staff");
+}
+
+// ============================================================================
+// Football events
+// ============================================================================
+
+export async function saveFootballEvent(
+  id: string | null,
+  input: {
+    homeTeam: string;
+    awayTeam: string;
+    startsAt: string; // datetime-local
+    league?: string;
+    note?: string;
+    isPublished: boolean;
+  }
+) {
+  if (!input.homeTeam.trim() || !input.awayTeam.trim())
+    throw new Error("Укажите обе команды");
+  const starts = new Date(input.startsAt);
+  if (Number.isNaN(starts.getTime())) throw new Error("Укажите дату и время");
+
+  const values = {
+    homeTeam: input.homeTeam.trim(),
+    awayTeam: input.awayTeam.trim(),
+    startsAt: starts,
+    league: input.league?.trim() || null,
+    note: input.note?.trim() || null,
+    isPublished: input.isPublished,
+  };
+
+  if (id) {
+    await db.update(footballEvents).set(values).where(eq(footballEvents.id, id));
+  } else {
+    await db.insert(footballEvents).values(values);
+  }
+  revalidatePath("/");
+  revalidatePath("/admin/football");
+}
+
+export async function deleteFootballEvent(id: string) {
+  await db.delete(footballEvents).where(eq(footballEvents.id, id));
+  revalidatePath("/");
+  revalidatePath("/admin/football");
 }
 
 // ============================================================================
