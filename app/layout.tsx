@@ -3,12 +3,9 @@ import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/components/I18nProvider";
-import { WaiterButton } from "@/components/WaiterButton";
-import { CartBar } from "@/components/CartBar";
+import { ClientChrome } from "@/components/ClientChrome";
 import { CartProvider } from "@/lib/cart-context";
 import { FavoritesProvider } from "@/lib/favorites-context";
-import { HashHighlighter } from "@/components/HashHighlighter";
-import { IntroSplash } from "@/components/IntroSplash";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -128,10 +125,7 @@ export default function RootLayout({
             <FavoritesProvider>
               <CartProvider>
                 {children}
-                <CartBar />
-                <WaiterButton />
-                <HashHighlighter />
-                <IntroSplash />
+                <ClientChrome />
                 <Toaster position="top-center" />
               </CartProvider>
             </FavoritesProvider>

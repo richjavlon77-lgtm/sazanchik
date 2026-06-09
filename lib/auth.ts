@@ -9,18 +9,40 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
+export type Role = "manager" | "waiter";
+
 export type SessionPayload = {
-  admin: true;
+  role: Role;
+  waiterId?: string;
+  name?: string;
+  /** legacy manager sessions issued before roles existed */
+  admin?: true;
   iat?: number;
   exp?: number;
 };
 
-export async function createSessionToken(): Promise<string> {
-  return new SignJWT({ admin: true })
+async function sign(
+  payload: Record<string, unknown>,
+  expiresIn: string
+): Promise<string> {
+  return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${EXPIRES_IN_DAYS}d`)
+    .setExpirationTime(expiresIn)
     .sign(getSecret());
+}
+
+/** Manager (admin) session */
+export async function createSessionToken(): Promise<string> {
+  return sign({ role: "manager" }, `${EXPIRES_IN_DAYS}d`);
+}
+
+/** Waiter session — tied to a staff member */
+export async function createWaiterSession(
+  waiterId: string,
+  name: string
+): Promise<string> {
+  return sign({ role: "waiter", waiterId, name }, `${EXPIRES_IN_DAYS}d`);
 }
 
 export async function verifySessionToken(
@@ -28,9 +50,10 @@ export async function verifySessionToken(
 ): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret());
-    if (typeof payload === "object" && (payload as SessionPayload).admin === true) {
-      return payload as SessionPayload;
-    }
+    const p = payload as SessionPayload;
+    if (p.role === "manager" || p.role === "waiter") return p;
+    // Backward-compat: sessions signed before roles were introduced
+    if ((p as { admin?: boolean }).admin === true) return { role: "manager" };
     return null;
   } catch {
     return null;

@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, dishes, dishVariants, restaurant, storyChapters, reservations } from "@/db/schema";
+import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff } from "@/db/schema";
+import { hashPin, verifyPin, isValidPin } from "@/lib/staff-auth";
 import { asc, eq, sql } from "drizzle-orm";
 
 // ============================================================================
@@ -243,6 +244,45 @@ export async function setReservationStatus(
     .set({ status, updatedAt: sql`now()` })
     .where(eq(reservations.id, id));
   revalidatePath("/admin/reservations");
+}
+
+// ============================================================================
+// Staff (waiters)
+// ============================================================================
+
+export async function createStaff(input: {
+  name: string;
+  pin: string;
+  zone?: string;
+}) {
+  const name = input.name.trim();
+  const pin = input.pin.trim();
+  if (name.length < 2) throw new Error("Укажите имя");
+  if (!isValidPin(pin)) throw new Error("PIN — это 4 цифры");
+
+  // PIN must be unique among active staff (login matches by PIN)
+  const active = await db.select().from(staff).where(eq(staff.isActive, true));
+  if (active.some((s) => verifyPin(pin, s.pinHash))) {
+    throw new Error("Этот PIN уже занят");
+  }
+
+  await db.insert(staff).values({
+    name,
+    pinHash: hashPin(pin),
+    zone: input.zone?.trim() || null,
+    isActive: true,
+  });
+  revalidatePath("/admin/staff");
+}
+
+export async function setStaffActive(id: string, isActive: boolean) {
+  await db.update(staff).set({ isActive }).where(eq(staff.id, id));
+  revalidatePath("/admin/staff");
+}
+
+export async function deleteStaff(id: string) {
+  await db.delete(staff).where(eq(staff.id, id));
+  revalidatePath("/admin/staff");
 }
 
 // ============================================================================

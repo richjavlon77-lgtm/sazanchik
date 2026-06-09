@@ -268,6 +268,27 @@ export const reservations = pgTable(
 export type Reservation = typeof reservations.$inferSelect;
 export type NewReservation = typeof reservations.$inferInsert;
 
+/**
+ * Staff: waiters who log into the /waiter PWA with a personal PIN
+ */
+export const staff = pgTable(
+  "staff",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    pinHash: text("pin_hash").notNull(),
+    zone: text("zone"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("staff_active_idx").on(t.isActive)]
+);
+
+export type Staff = typeof staff.$inferSelect;
+export type NewStaff = typeof staff.$inferInsert;
+
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Dish = typeof dishes.$inferSelect;
