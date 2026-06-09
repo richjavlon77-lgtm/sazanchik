@@ -30,10 +30,12 @@ export async function POST(request: Request) {
       .values({ tableNumber, type, status: "new" })
       .returning({ id: waiterCalls.id });
 
-    // Fire-and-forget Telegram notification (don't block the guest)
-    sendWaiterCallToTelegram(tableNumber, type).catch((err) =>
-      console.error("Telegram waiter call failed:", err)
-    );
+    // Await so the serverless function isn't frozen before Telegram is sent.
+    try {
+      await sendWaiterCallToTelegram(tableNumber, type);
+    } catch (err) {
+      console.error("Telegram waiter call failed:", err);
+    }
 
     return NextResponse.json({ ok: true, id: row.id }, { status: 201 });
   } catch (e) {

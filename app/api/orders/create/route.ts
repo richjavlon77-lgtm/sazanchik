@@ -66,19 +66,25 @@ export async function POST(request: Request) {
       .set({ updatedAt: sql`now()` })
       .where(eq(orders.id, order.id));
 
-    sendOrderToTelegram(
-      order.id,
-      tableNumber,
-      lines.map((l) => ({
-        name: l.name.ru,
-        variantLabel: l.variantLabel?.ru,
-        qty: l.qty,
-        price: l.price,
-      })),
-      subtotal,
-      service,
-      total
-    ).catch((err) => console.error("Telegram notification failed:", err));
+    // Await so the serverless function isn't frozen before Telegram is sent.
+    // Wrapped: a Telegram failure must NOT fail the order.
+    try {
+      await sendOrderToTelegram(
+        order.id,
+        tableNumber,
+        lines.map((l) => ({
+          name: l.name.ru,
+          variantLabel: l.variantLabel?.ru,
+          qty: l.qty,
+          price: l.price,
+        })),
+        subtotal,
+        service,
+        total
+      );
+    } catch (err) {
+      console.error("Telegram notification failed:", err);
+    }
 
     return NextResponse.json({ id: order.id, status: "pending" }, { status: 201 });
   } catch (e) {

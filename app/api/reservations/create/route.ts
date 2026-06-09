@@ -41,18 +41,21 @@ export async function POST(request: Request) {
       })
       .returning({ id: reservations.id });
 
-    sendReservationToTelegram({
-      id: row.id,
-      name,
-      phone,
-      guests,
-      reservedAt: reservedDate,
-      tableNumber: tableNumber || null,
-      comment: comment || null,
-      isBirthday,
-    }).catch((err) =>
-      console.error("Telegram reservation notification failed:", err)
-    );
+    // Await so the serverless function isn't frozen before Telegram is sent.
+    try {
+      await sendReservationToTelegram({
+        id: row.id,
+        name,
+        phone,
+        guests,
+        reservedAt: reservedDate,
+        tableNumber: tableNumber || null,
+        comment: comment || null,
+        isBirthday,
+      });
+    } catch (err) {
+      console.error("Telegram reservation notification failed:", err);
+    }
 
     return NextResponse.json({ id: row.id, status: "new" }, { status: 201 });
   } catch (e) {
