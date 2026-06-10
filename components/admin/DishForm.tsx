@@ -183,14 +183,22 @@ export function DishForm({
 
       {/* Price + weight + spicy */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Field label="Цена (сум)" hint={useVariants ? "Игнорируется когда есть варианты" : ""}>
-          <input
-            type="number"
-            disabled={useVariants}
-            value={form.price ?? ""}
-            onChange={(e) => set("price", e.target.value ? Number(e.target.value) : null)}
-            className={input}
-          />
+        <Field label="Цена (сум)">
+          {useVariants ? (
+            <div className="rounded-lg border border-gold/25 bg-gold/[0.05] px-3 py-2 text-xs text-muted-foreground">
+              Цена задаётся в «Вариантах порций» ниже ↓
+            </div>
+          ) : (
+            <input
+              type="number"
+              value={form.price ?? ""}
+              onChange={(e) =>
+                set("price", e.target.value ? Number(e.target.value) : null)
+              }
+              className={input}
+              placeholder="50000"
+            />
+          )}
         </Field>
         <Field label="Граммовка/штуки">
           <input value={form.weight} onChange={(e) => set("weight", e.target.value)} className={input} placeholder="300, 1 кг..." />

@@ -67,27 +67,20 @@ export function ImageUploader({
           )}
         </div>
 
-        {/* URL field + dropzone */}
+        {/* Upload (primary) + URL (optional, hidden by default) */}
         <div className="space-y-2">
-          <input
-            type="url"
-            placeholder="https://... (ссылка на картинку из Telegram, Imgur, и т.д.)"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold/50"
-          />
-
-          <label
-            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card/30 px-3 py-3 text-xs text-muted-foreground transition-colors hover:border-gold/40 hover:text-foreground"
-          >
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-gold/40 bg-gold/[0.07] px-3 py-3.5 text-sm font-medium text-gold transition-colors hover:bg-gold hover:text-primary-foreground">
             <input
               type="file"
               accept="image/*"
               className="hidden"
               onChange={(e) => handleFiles(e.target.files)}
             />
-            {uploading ? "Загружаем…" : "↑ Выбрать файл (или вставь URL выше)"}
+            {uploading ? "Загружаем…" : "📷 Загрузить фото"}
           </label>
+          <p className="text-[11px] text-muted-foreground">
+            Выберите фото с телефона или компьютера — оно сразу появится в меню.
+          </p>
 
           {error && <p className="text-xs text-red-400">{error}</p>}
           {value && (
@@ -99,6 +92,19 @@ export function ImageUploader({
               Убрать фото
             </button>
           )}
+
+          <details className="pt-1">
+            <summary className="cursor-pointer text-[11px] text-muted-foreground/70 hover:text-foreground">
+              или вставить ссылку
+            </summary>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold/50"
+            />
+          </details>
         </div>
       </div>
     </div>
