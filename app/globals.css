@@ -214,6 +214,35 @@
     opacity: 0.025;
   }
 
+  /* Rich depth — soft warm glow instead of a flat dark field (premium 2026) */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .dark body::after {
+    background:
+      radial-gradient(
+        130% 55% at 50% -5%,
+        rgba(212, 178, 106, 0.06),
+        transparent 55%
+      ),
+      radial-gradient(
+        90% 60% at 50% 105%,
+        rgba(212, 178, 106, 0.035),
+        transparent 60%
+      );
+  }
+  .light body::after {
+    background: radial-gradient(
+      120% 55% at 50% -5%,
+      rgba(180, 140, 70, 0.06),
+      transparent 55%
+    );
+  }
+
   ::selection {
     background-color: var(--gold);
     color: var(--background);
