@@ -36,23 +36,23 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
   return (
     <article
       id={`dish-${item.id}`}
-      className="group relative py-5 md:py-6 border-b border-border last:border-b-0"
+      className="group relative -mx-3 rounded-2xl border-b border-border px-3 py-5 transition-colors duration-300 last:border-b-0 hover:bg-gold/[0.02] md:py-6"
     >
       <div className="flex items-start gap-4">
         {/* Dish image */}
         {item.image && !imgError && (
-          <div className="relative shrink-0 overflow-hidden rounded-xl bg-muted/30 shadow-lg shadow-black/30 ring-1 ring-white/[0.06]">
+          <div className="relative shrink-0 overflow-hidden rounded-2xl bg-muted/30 shadow-lg shadow-black/30 ring-1 ring-white/[0.06]">
             <img
               src={item.image}
               alt={t(item.name, locale)}
               loading="lazy"
-              className="size-20 object-cover md:size-24 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
+              className="size-24 object-cover md:size-28 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
               onError={() => setImgError(true)}
             />
             {/* Subtle gold sheen on hover */}
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+              className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(212,178,106,0.12), transparent 55%)",
