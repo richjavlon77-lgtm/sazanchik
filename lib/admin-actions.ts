@@ -286,10 +286,23 @@ export async function setReservationStatus(
 // Staff (waiters)
 // ============================================================================
 
+function parseTables(input?: string | string[]): string[] {
+  const raw = Array.isArray(input) ? input.join(",") : input ?? "";
+  return Array.from(
+    new Set(
+      raw
+        .split(/[,\s]+/)
+        .map((t) => t.replace(/\D/g, ""))
+        .filter(Boolean)
+    )
+  );
+}
+
 export async function createStaff(input: {
   name: string;
   pin: string;
   zone?: string;
+  tables?: string;
 }) {
   const name = input.name.trim();
   const pin = input.pin.trim();
@@ -306,6 +319,7 @@ export async function createStaff(input: {
     name,
     pinHash: hashPin(pin),
     zone: input.zone?.trim() || null,
+    tables: parseTables(input.tables),
     isActive: true,
   });
   revalidatePath("/admin/staff");
@@ -313,6 +327,14 @@ export async function createStaff(input: {
 
 export async function setStaffActive(id: string, isActive: boolean) {
   await db.update(staff).set({ isActive }).where(eq(staff.id, id));
+  revalidatePath("/admin/staff");
+}
+
+export async function setStaffTables(id: string, tables: string) {
+  await db
+    .update(staff)
+    .set({ tables: parseTables(tables) })
+    .where(eq(staff.id, id));
   revalidatePath("/admin/staff");
 }
 

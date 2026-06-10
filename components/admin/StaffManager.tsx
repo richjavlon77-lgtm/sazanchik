@@ -2,39 +2,70 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { createStaff, setStaffActive, deleteStaff } from "@/lib/admin-actions";
+import {
+  createStaff,
+  setStaffActive,
+  deleteStaff,
+  setStaffTables,
+} from "@/lib/admin-actions";
 import { cn } from "@/lib/utils";
 
 export type StaffRow = {
   id: string;
   name: string;
   zone: string | null;
+  tables: string[];
   isActive: boolean;
+};
+
+export type StaffStat = {
+  ordersToday: number;
+  ordersTotal: number;
+  callsToday: number;
+  callsTotal: number;
 };
 
 const field =
   "rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold/60 focus:ring-3 focus:ring-gold/20";
 
-export function StaffManager({ initial }: { initial: StaffRow[] }) {
+export function StaffManager({
+  initial,
+  stats = {},
+}: {
+  initial: StaffRow[];
+  stats?: Record<string, StaffStat>;
+}) {
   const [pending, start] = useTransition();
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
   const [zone, setZone] = useState("");
+  const [tables, setTables] = useState("");
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
     start(async () => {
       try {
-        await createStaff({ name, pin, zone });
+        await createStaff({ name, pin, zone, tables });
         toast.success(`Официант «${name}» добавлен`);
         setName("");
         setPin("");
         setZone("");
+        setTables("");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Ошибка");
       }
     });
   };
+
+  const saveTables = (id: string, value: string) =>
+    start(async () => {
+      try {
+        await setStaffTables(id, value);
+        toast.success("Столы обновлены");
+      } catch {
+        toast.error("Ошибка");
+      }
+    });
 
   const toggle = (id: string, active: boolean) =>
     start(async () => {
@@ -100,6 +131,17 @@ export function StaffManager({ initial }: { initial: StaffRow[] }) {
             placeholder="Зал 1 / Терраса"
           />
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            Столы (через запятую)
+          </label>
+          <input
+            value={tables}
+            onChange={(e) => setTables(e.target.value)}
+            className={cn(field, "tabular-nums")}
+            placeholder="1, 2, 3, 4"
+          />
+        </div>
         <button
           type="submit"
           disabled={pending}
@@ -133,6 +175,33 @@ export function StaffManager({ initial }: { initial: StaffRow[] }) {
                 {s.zone && (
                   <div className="text-xs text-muted-foreground">{s.zone}</div>
                 )}
+                {(() => {
+                  const st = stats[s.name];
+                  if (!st) return null;
+                  return (
+                    <div className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
+                      <span className="text-gold">Сегодня:</span> {st.ordersToday}{" "}
+                      заказ. · {st.callsToday} вызов.{" "}
+                      <span className="opacity-60">
+                        (всего {st.ordersTotal} / {st.callsTotal})
+                      </span>
+                    </div>
+                  );
+                })()}
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Столы:
+                  </span>
+                  <input
+                    defaultValue={s.tables.join(", ")}
+                    onBlur={(e) => {
+                      if (e.target.value.trim() !== s.tables.join(", "))
+                        saveTables(s.id, e.target.value);
+                    }}
+                    placeholder="все"
+                    className="w-36 rounded border border-border bg-background px-2 py-0.5 text-[11px] tabular-nums outline-none focus:border-gold/50"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button

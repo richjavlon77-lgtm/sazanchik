@@ -174,6 +174,7 @@ export const orders = pgTable(
     totalPrice: integer("total_price").notNull(),
     serviceCharge: integer("service_charge").notNull(),
     isBirthday: boolean("is_birthday").notNull().default(false),
+    servedBy: text("served_by"),
     itemsSnapshot: jsonb("items_snapshot").$type<OrderItemSnapshot[]>(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -281,6 +282,7 @@ export const staff = pgTable(
     name: text("name").notNull(),
     pinHash: text("pin_hash").notNull(),
     zone: text("zone"),
+    tables: jsonb("tables").$type<string[]>().notNull().default([]),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -311,6 +313,7 @@ export const waiterCalls = pgTable(
       .notNull()
       .defaultNow(),
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedBy: text("resolved_by"),
   },
   (t) => [
     index("waiter_calls_status_idx").on(t.status),

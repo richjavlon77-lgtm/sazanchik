@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { inArray, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { orders, waiterCalls } from "@/db/schema";
+import { orders, waiterCalls, staff } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import {
   WaiterBoard,
@@ -50,11 +50,22 @@ export default async function WaiterPage() {
     createdAt: c.createdAt.toISOString(),
   }));
 
+  // This waiter's assigned tables (for the "Мои / Все" filter)
+  let myTables: string[] = [];
+  if (session.waiterId) {
+    const [me] = await db
+      .select({ tables: staff.tables })
+      .from(staff)
+      .where(eq(staff.id, session.waiterId));
+    myTables = (me?.tables as string[]) ?? [];
+  }
+
   return (
     <WaiterBoard
       orders={board}
       calls={calls}
       waiterName={session.name ?? "официант"}
+      myTables={myTables}
     />
   );
 }

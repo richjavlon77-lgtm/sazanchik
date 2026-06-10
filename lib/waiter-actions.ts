@@ -22,10 +22,15 @@ type OrderStatus = "pending" | "cooking" | "delivered" | "cancelled";
  * the client contour can never call this (no valid session).
  */
 export async function advanceOrder(id: string, status: OrderStatus) {
-  await requireStaff();
+  const session = await requireStaff();
   await db
     .update(orders)
-    .set({ status, updatedAt: sql`now()` })
+    .set({
+      status,
+      updatedAt: sql`now()`,
+      // credit the waiter who actually served it
+      ...(status === "delivered" ? { servedBy: session.name ?? null } : {}),
+    })
     .where(eq(orders.id, id));
   await notifyWaiters();
   revalidatePath("/waiter");
@@ -34,10 +39,14 @@ export async function advanceOrder(id: string, status: OrderStatus) {
 
 /** Mark a waiter call as handled. */
 export async function resolveCall(id: string) {
-  await requireStaff();
+  const session = await requireStaff();
   await db
     .update(waiterCalls)
-    .set({ status: "done", resolvedAt: sql`now()` })
+    .set({
+      status: "done",
+      resolvedAt: sql`now()`,
+      resolvedBy: session.name ?? null,
+    })
     .where(eq(waiterCalls.id, id));
   await notifyWaiters();
   revalidatePath("/waiter");

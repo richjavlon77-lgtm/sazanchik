@@ -47,12 +47,23 @@ export function WaiterBoard({
   orders,
   calls,
   waiterName,
+  myTables = [],
 }: {
   orders: BoardOrder[];
   calls: BoardCall[];
   waiterName: string;
+  myTables?: string[];
 }) {
   const router = useRouter();
+  const hasZone = myTables.length > 0;
+  const [onlyMine, setOnlyMine] = useState(hasZone);
+  const mine = new Set(myTables);
+  const shownOrders =
+    onlyMine && hasZone
+      ? orders.filter((o) => mine.has(o.tableNumber))
+      : orders;
+  const shownCalls =
+    onlyMine && hasZone ? calls.filter((c) => mine.has(c.tableNumber)) : calls;
   const [pending, start] = useTransition();
   const [, setTick] = useState(0);
   const [online, setOnline] = useState(true);
@@ -99,9 +110,11 @@ export function WaiterBoard({
 
   // Detect newly-arrived orders/calls → beep
   useEffect(() => {
+    // Only beep for the tables this waiter actually watches
+    const inScope = (table: string) => !onlyMine || !hasZone || mine.has(table);
     const ids = new Set<string>([
-      ...orders.map((o) => `o:${o.id}`),
-      ...calls.map((c) => `c:${c.id}`),
+      ...orders.filter((o) => inScope(o.tableNumber)).map((o) => `o:${o.id}`),
+      ...calls.filter((c) => inScope(c.tableNumber)).map((c) => `c:${c.id}`),
     ]);
     if (knownRef.current === null) {
       knownRef.current = ids; // first render — prime, no beep
@@ -113,7 +126,8 @@ export function WaiterBoard({
     });
     if (hasNew && soundOn) beep();
     knownRef.current = ids;
-  }, [orders, calls, soundOn, beep]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, calls, onlyMine, soundOn, beep]);
 
   // Real-time push via SSE (instant). Auto-reconnects on its own.
   useEffect(() => {
@@ -215,10 +229,33 @@ export function WaiterBoard({
         </div>
       </header>
 
+      {/* Zone filter */}
+      {hasZone && (
+        <div className="mb-4 inline-flex rounded-full border border-border bg-card/40 p-0.5 text-xs">
+          {[
+            { v: true, label: `Мои столы (${myTables.join(", ")})` },
+            { v: false, label: "Все" },
+          ].map((o) => (
+            <button
+              key={String(o.v)}
+              onClick={() => setOnlyMine(o.v)}
+              className={cn(
+                "rounded-full px-3 py-1 transition-colors",
+                onlyMine === o.v
+                  ? "bg-gold text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Active calls — top priority */}
-      {calls.length > 0 && (
+      {shownCalls.length > 0 && (
         <div className="mb-5 space-y-2">
-          {calls.map((c) => {
+          {shownCalls.map((c) => {
             const m = CALL_META[c.type];
             return (
               <div
@@ -251,15 +288,15 @@ export function WaiterBoard({
 
       {/* Orders */}
       <div className="mb-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-        Заказы · {orders.length}
+        Заказы · {shownOrders.length}
       </div>
-      {orders.length === 0 ? (
+      {shownOrders.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card/40 px-5 py-12 text-center text-sm text-muted-foreground">
           Активных заказов нет. Доска обновляется сама.
         </div>
       ) : (
         <div className="space-y-3">
-          {orders.map((o) => {
+          {shownOrders.map((o) => {
             const s = STATUS[o.status] ?? STATUS.pending;
             return (
               <article
