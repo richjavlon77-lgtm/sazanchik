@@ -4,6 +4,7 @@ import { orders, orderItems } from "@/db/schema";
 import { createOrderSchema } from "@/lib/validators";
 import { sendOrderToTelegram } from "@/lib/telegram";
 import { verifyTableToken } from "@/lib/table-sign";
+import { notifyWaiters } from "@/lib/realtime";
 import { eq, sql } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -82,6 +83,9 @@ export async function POST(request: Request) {
       .update(orders)
       .set({ updatedAt: sql`now()` })
       .where(eq(orders.id, order.id));
+
+    // Push to the waiter board in real time
+    await notifyWaiters();
 
     // Await so the serverless function isn't frozen before Telegram is sent.
     // Wrapped: a Telegram failure must NOT fail the order.

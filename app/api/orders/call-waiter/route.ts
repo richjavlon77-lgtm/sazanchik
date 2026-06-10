@@ -4,6 +4,7 @@ import { waiterCalls } from "@/db/schema";
 import { callWaiterSchema } from "@/lib/validators";
 import { sendWaiterCallToTelegram } from "@/lib/telegram";
 import { verifyTableToken } from "@/lib/table-sign";
+import { notifyWaiters } from "@/lib/realtime";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
       .insert(waiterCalls)
       .values({ tableNumber: table, type, status: "new" })
       .returning({ id: waiterCalls.id });
+
+    await notifyWaiters();
 
     // Await so the serverless function isn't frozen before Telegram is sent.
     try {

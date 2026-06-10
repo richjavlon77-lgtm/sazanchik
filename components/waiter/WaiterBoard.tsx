@@ -115,12 +115,26 @@ export function WaiterBoard({
     knownRef.current = ids;
   }, [orders, calls, soundOn, beep]);
 
-  // Near-real-time polling (5s) + tick for relative times; pause when offline
+  // Real-time push via SSE (instant). Auto-reconnects on its own.
+  useEffect(() => {
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource("/waiter/api/stream");
+      es.onmessage = (e) => {
+        if (e.data === "update") router.refresh();
+      };
+    } catch {
+      /* SSE unavailable — the safety poll below still keeps things fresh */
+    }
+    return () => es?.close();
+  }, [router]);
+
+  // Safety net: refresh every 25s + tick relative times (in case SSE drops)
   useEffect(() => {
     const id = setInterval(() => {
       setTick((t) => t + 1);
       if (navigator.onLine) router.refresh();
-    }, 5000);
+    }, 25000);
     return () => clearInterval(id);
   }, [router]);
 
