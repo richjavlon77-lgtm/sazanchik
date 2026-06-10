@@ -5,7 +5,28 @@ import { db } from "@/db";
 import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff, footballEvents } from "@/db/schema";
 import { hashPin, verifyPin, isValidPin } from "@/lib/staff-auth";
 import { signTable } from "@/lib/table-sign";
+import { slugify } from "@/lib/slug";
 import QRCode from "qrcode";
+
+/** A slug that's unique among dishes (auto-suffixed), excluding the dish itself. */
+async function uniqueDishSlug(
+  desired: string,
+  fallbackName: string,
+  excludeId: string | null
+): Promise<string> {
+  const base = slugify(desired || fallbackName);
+  let candidate = base;
+  let n = 2;
+  // small loop; dish counts are tiny
+  for (;;) {
+    const [row] = await db
+      .select({ id: dishes.id })
+      .from(dishes)
+      .where(eq(dishes.slug, candidate));
+    if (!row || (excludeId && row.id === excludeId)) return candidate;
+    candidate = `${base}-${n++}`;
+  }
+}
 import { asc, eq, sql } from "drizzle-orm";
 
 // ============================================================================
@@ -45,18 +66,27 @@ export async function saveDish(id: string | null, input: DishFormInput) {
     .from(categories)
     .where(eq(categories.slug, input.categorySlug));
   if (!cat) throw new Error("Category not found");
+  if (!input.nameRu?.trim()) throw new Error("Укажите название (RU)");
 
   const useVariants = (input.variants?.length ?? 0) > 0;
 
+  // Auto slug: keeps an existing dish's slug; generates a unique one for new
+  // dishes (or when left blank) so the manager never has to think about it.
+  const slug = await uniqueDishSlug(input.slug, input.nameRu, id);
+
+  // Fill UZ/EN from RU when left blank, so the manager can fill just RU and
+  // the dish still shows in every language (instead of going blank).
+  const ru = input.nameRu.trim();
+  const descRu = input.descriptionRu?.trim() || null;
   const values = {
     categoryId: cat.id,
-    slug: input.slug,
-    nameRu: input.nameRu,
-    nameUz: input.nameUz,
-    nameEn: input.nameEn,
-    descriptionRu: input.descriptionRu || null,
-    descriptionUz: input.descriptionUz || null,
-    descriptionEn: input.descriptionEn || null,
+    slug,
+    nameRu: ru,
+    nameUz: input.nameUz?.trim() || ru,
+    nameEn: input.nameEn?.trim() || ru,
+    descriptionRu: descRu,
+    descriptionUz: input.descriptionUz?.trim() || descRu,
+    descriptionEn: input.descriptionEn?.trim() || descRu,
     price: useVariants ? null : input.price ?? null,
     imageUrl: input.imageUrl || null,
     weight: input.weight || null,

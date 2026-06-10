@@ -64,8 +64,8 @@ export function DishForm({
     e.preventDefault();
     setError(null);
 
-    if (!form.nameRu || !form.slug) {
-      setError("Slug и название RU обязательны");
+    if (!form.nameRu.trim()) {
+      setError("Укажите название блюда (RU)");
       return;
     }
 
@@ -108,71 +108,52 @@ export function DishForm({
       {/* Live preview */}
       <DishPreview form={form} />
 
-      {/* Category + slug + sort */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Field label="Категория">
-          <select
-            value={form.categorySlug}
-            onChange={(e) => set("categorySlug", e.target.value)}
-            className={input}
-          >
-            {categories.map((c) => (
-              <option key={c.id} value={c.slug}>
-                {c.nameRu}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Slug (URL-id)" hint="латиница, без пробелов">
-          <input
-            value={form.slug}
-            onChange={(e) => set("slug", e.target.value)}
-            className={input}
-            placeholder="my-dish"
-          />
-        </Field>
-
-        <Field label="Порядок">
-          <input
-            type="number"
-            value={form.sortOrder}
-            onChange={(e) => set("sortOrder", Number(e.target.value))}
-            className={input}
-          />
-        </Field>
-      </div>
+      {/* Category */}
+      <Field label="Категория">
+        <select
+          value={form.categorySlug}
+          onChange={(e) => set("categorySlug", e.target.value)}
+          className={input}
+        >
+          {categories.map((c) => (
+            <option key={c.id} value={c.slug}>
+              {c.nameRu}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       {/* Names */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Field label="Название RU">
-          <input value={form.nameRu} onChange={(e) => set("nameRu", e.target.value)} className={input} />
+        <Field label="Название RU" hint="обязательно">
+          <input value={form.nameRu} onChange={(e) => set("nameRu", e.target.value)} className={input} placeholder="Плов" />
         </Field>
-        <Field label="Название UZ">
+        <Field label="Название UZ" hint="можно пусто = RU">
           <input value={form.nameUz} onChange={(e) => set("nameUz", e.target.value)} className={input} />
         </Field>
-        <Field label="Название EN">
+        <Field label="Название EN" hint="можно пусто = RU">
           <input value={form.nameEn} onChange={(e) => set("nameEn", e.target.value)} className={input} />
         </Field>
       </div>
 
       {/* Descriptions */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Field label="Описание RU">
+        <Field label="Описание RU" hint="необязательно">
           <textarea
             value={form.descriptionRu}
             onChange={(e) => set("descriptionRu", e.target.value)}
             className={`${input} min-h-[88px] resize-y`}
+            placeholder="Короткое аппетитное описание"
           />
         </Field>
-        <Field label="Описание UZ">
+        <Field label="Описание UZ" hint="можно пусто = RU">
           <textarea
             value={form.descriptionUz}
             onChange={(e) => set("descriptionUz", e.target.value)}
             className={`${input} min-h-[88px] resize-y`}
           />
         </Field>
-        <Field label="Описание EN">
+        <Field label="Описание EN" hint="можно пусто = RU">
           <textarea
             value={form.descriptionEn}
             onChange={(e) => set("descriptionEn", e.target.value)}
@@ -317,7 +298,7 @@ export function DishForm({
         {form.variants?.map((v, i) => (
           <div key={i} className="grid grid-cols-1 gap-2 md:grid-cols-5">
             <input
-              placeholder="RU label"
+              placeholder="Порция RU (малая)"
               value={v.labelRu}
               onChange={(e) => {
                 const next = [...(form.variants ?? [])];
@@ -327,7 +308,7 @@ export function DishForm({
               className={input}
             />
             <input
-              placeholder="UZ label"
+              placeholder="UZ (kichik)"
               value={v.labelUz}
               onChange={(e) => {
                 const next = [...(form.variants ?? [])];
@@ -337,7 +318,7 @@ export function DishForm({
               className={input}
             />
             <input
-              placeholder="EN label"
+              placeholder="EN (small)"
               value={v.labelEn}
               onChange={(e) => {
                 const next = [...(form.variants ?? [])];
@@ -387,6 +368,31 @@ export function DishForm({
           </span>
         </label>
       </Field>
+
+      {/* Advanced (technical) — hidden by default */}
+      <details className="rounded-lg border border-border/60 bg-card/20 px-4 py-3">
+        <summary className="cursor-pointer text-xs uppercase tracking-[0.15em] text-muted-foreground">
+          Дополнительно (для разработчика)
+        </summary>
+        <div className="mt-3 grid gap-4 md:grid-cols-2">
+          <Field label="Slug (URL-id)" hint="заполнится сам из названия">
+            <input
+              value={form.slug}
+              onChange={(e) => set("slug", e.target.value)}
+              className={input}
+              placeholder="генерируется автоматически"
+            />
+          </Field>
+          <Field label="Порядок" hint="обычно меняется перетаскиванием">
+            <input
+              type="number"
+              value={form.sortOrder}
+              onChange={(e) => set("sortOrder", Number(e.target.value))}
+              className={input}
+            />
+          </Field>
+        </div>
+      </details>
 
       {/* Submit */}
       <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-gold/20 bg-card/95 p-4 backdrop-blur-md">
