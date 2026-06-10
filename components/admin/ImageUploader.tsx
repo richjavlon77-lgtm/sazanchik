@@ -98,7 +98,8 @@ export function ImageUploader({
               или вставить ссылку
             </summary>
             <input
-              type="url"
+              type="text"
+              inputMode="url"
               placeholder="https://..."
               value={value}
               onChange={(e) => onChange(e.target.value)}
