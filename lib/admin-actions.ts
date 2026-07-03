@@ -2,11 +2,62 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff, footballEvents } from "@/db/schema";
+import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff, footballEvents, uploads } from "@/db/schema";
 import { hashPin, verifyPin, isValidPin } from "@/lib/staff-auth";
 import { signTable } from "@/lib/table-sign";
 import { slugify } from "@/lib/slug";
+import { getSession } from "@/lib/session";
+import { parseTashkentLocal } from "@/lib/tz";
 import QRCode from "qrcode";
+
+/** Every admin action is manager-only — verified in-action (defense in depth,
+ *  not just the proxy). */
+async function requireManager() {
+  const session = await getSession();
+  if (!session || session.role !== "manager") throw new Error("Unauthorized");
+}
+
+/** Deletes an orphaned dish photo (DB-stored `/api/img/:id` row, or a Vercel
+ *  Blob object) when it's no longer the current image for `excludeDishId`
+ *  and no *other* dish still points at it. Swaps and cancelled edits used to
+ *  leak these forever — best-effort, never blocks the save. */
+async function cleanupOldDishImage(
+  oldUrl: string | null | undefined,
+  newUrl: string | null | undefined,
+  excludeDishId: string | null
+) {
+  if (!oldUrl || oldUrl === newUrl) return;
+  try {
+    const stillUsedQuery = db
+      .select({ id: dishes.id })
+      .from(dishes)
+      .where(eq(dishes.imageUrl, oldUrl));
+    const stillUsed = excludeDishId
+      ? (await stillUsedQuery).filter((r) => r.id !== excludeDishId)
+      : await stillUsedQuery;
+    if (stillUsed.length) return; // another dish still uses this image
+
+    const dbImage = oldUrl.match(/^\/api\/img\/([0-9a-f-]+)$/i);
+    if (dbImage) {
+      await db.delete(uploads).where(eq(uploads.id, dbImage[1]));
+      return;
+    }
+    if (oldUrl.includes(".blob.vercel-storage.com")) {
+      const { del } = await import("@vercel/blob");
+      await del(oldUrl).catch(() => {});
+    }
+  } catch (err) {
+    console.error("Old dish image cleanup failed (non-fatal):", err);
+  }
+}
+
+/** Called when a manager uploads a new dish photo but then cancels the form
+ *  instead of saving — the upload already landed in storage/DB, so without
+ *  this it leaks forever. Manager-gated like every other admin action. */
+export async function discardUnsavedImage(url: string) {
+  await requireManager();
+  await cleanupOldDishImage(url, null, null);
+}
 
 /** A slug that's unique among dishes (auto-suffixed), excluding the dish itself. */
 async function uniqueDishSlug(
@@ -60,6 +111,7 @@ export type DishFormInput = {
 };
 
 export async function saveDish(id: string | null, input: DishFormInput) {
+  await requireManager();
   // Find category by slug
   const [cat] = await db
     .select({ id: categories.id })
@@ -100,8 +152,13 @@ export async function saveDish(id: string | null, input: DishFormInput) {
 
   let dishId: string;
   if (id) {
+    const [prev] = await db
+      .select({ imageUrl: dishes.imageUrl })
+      .from(dishes)
+      .where(eq(dishes.id, id));
     await db.update(dishes).set({ ...values, updatedAt: sql`now()` }).where(eq(dishes.id, id));
     dishId = id;
+    await cleanupOldDishImage(prev?.imageUrl, values.imageUrl, id);
   } else {
     const [row] = await db.insert(dishes).values(values).returning({ id: dishes.id });
     dishId = row.id;
@@ -129,7 +186,13 @@ export async function saveDish(id: string | null, input: DishFormInput) {
 }
 
 export async function deleteDish(id: string) {
+  await requireManager();
+  const [prev] = await db
+    .select({ imageUrl: dishes.imageUrl })
+    .from(dishes)
+    .where(eq(dishes.id, id));
   await db.delete(dishes).where(eq(dishes.id, id));
+  await cleanupOldDishImage(prev?.imageUrl, null, id);
   revalidatePath("/");
   revalidatePath("/admin");
 }
@@ -151,8 +214,19 @@ export type CategoryFormInput = {
 };
 
 export async function saveCategory(id: string | null, input: CategoryFormInput) {
+  await requireManager();
+  const slug = slugify(input.slug || input.nameRu);
+
+  const [dupe] = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.slug, slug));
+  if (dupe && dupe.id !== id) {
+    throw new Error("Такой раздел уже существует — выберите другой slug");
+  }
+
   const values = {
-    slug: input.slug,
+    slug,
     nameRu: input.nameRu,
     nameUz: input.nameUz,
     nameEn: input.nameEn,
@@ -174,6 +248,7 @@ export async function saveCategory(id: string | null, input: CategoryFormInput) 
 }
 
 export async function deleteCategory(id: string) {
+  await requireManager();
   await db.delete(categories).where(eq(categories.id, id));
   revalidatePath("/");
   revalidatePath("/admin");
@@ -197,6 +272,7 @@ export async function saveRestaurant(input: {
   hoursEn: string;
   instagram: string;
 }) {
+  await requireManager();
   await db
     .insert(restaurant)
     .values({ id: 1, ...input })
@@ -223,6 +299,7 @@ export async function saveStory(
     bodyEn: string;
   }[]
 ) {
+  await requireManager();
   // Simple replace-all strategy — small list (~4 chapters)
   await db.delete(storyChapters);
   for (let i = 0; i < chapters.length; i++) {
@@ -246,23 +323,29 @@ export async function saveStory(
 // ============================================================================
 
 export async function reorderDishes(orderedIds: string[]) {
-  for (let i = 0; i < orderedIds.length; i++) {
-    await db
-      .update(dishes)
-      .set({ sortOrder: i, updatedAt: sql`now()` })
-      .where(eq(dishes.id, orderedIds[i]));
-  }
+  await requireManager();
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await tx
+        .update(dishes)
+        .set({ sortOrder: i, updatedAt: sql`now()` })
+        .where(eq(dishes.id, orderedIds[i]));
+    }
+  });
   revalidatePath("/");
   revalidatePath("/admin");
 }
 
 export async function reorderCategories(orderedIds: string[]) {
-  for (let i = 0; i < orderedIds.length; i++) {
-    await db
-      .update(categories)
-      .set({ sortOrder: i, updatedAt: sql`now()` })
-      .where(eq(categories.id, orderedIds[i]));
-  }
+  await requireManager();
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await tx
+        .update(categories)
+        .set({ sortOrder: i, updatedAt: sql`now()` })
+        .where(eq(categories.id, orderedIds[i]));
+    }
+  });
   revalidatePath("/");
   revalidatePath("/admin");
 }
@@ -275,6 +358,7 @@ export async function setReservationStatus(
   id: string,
   status: "new" | "confirmed" | "seated" | "cancelled"
 ) {
+  await requireManager();
   await db
     .update(reservations)
     .set({ status, updatedAt: sql`now()` })
@@ -303,11 +387,19 @@ export async function createStaff(input: {
   pin: string;
   zone?: string;
   tables?: string;
+  role?: string;
 }) {
+  await requireManager();
   const name = input.name.trim();
   const pin = input.pin.trim();
   if (name.length < 2) throw new Error("Укажите имя");
   if (!isValidPin(pin)) throw new Error("PIN — это 4 цифры");
+
+  type Kind = "waiter" | "bartender" | "hookah" | "cook" | "cold" | "meat";
+  const kinds: Kind[] = ["waiter", "bartender", "hookah", "cook", "cold", "meat"];
+  const role: Kind = kinds.includes(input.role as Kind)
+    ? (input.role as Kind)
+    : "waiter";
 
   // PIN must be unique among active staff (login matches by PIN)
   const active = await db.select().from(staff).where(eq(staff.isActive, true));
@@ -318,6 +410,7 @@ export async function createStaff(input: {
   await db.insert(staff).values({
     name,
     pinHash: hashPin(pin),
+    role,
     zone: input.zone?.trim() || null,
     tables: parseTables(input.tables),
     isActive: true,
@@ -326,11 +419,13 @@ export async function createStaff(input: {
 }
 
 export async function setStaffActive(id: string, isActive: boolean) {
+  await requireManager();
   await db.update(staff).set({ isActive }).where(eq(staff.id, id));
   revalidatePath("/admin/staff");
 }
 
 export async function setStaffTables(id: string, tables: string) {
+  await requireManager();
   await db
     .update(staff)
     .set({ tables: parseTables(tables) })
@@ -339,6 +434,7 @@ export async function setStaffTables(id: string, tables: string) {
 }
 
 export async function deleteStaff(id: string) {
+  await requireManager();
   await db.delete(staff).where(eq(staff.id, id));
   revalidatePath("/admin/staff");
 }
@@ -358,9 +454,10 @@ export async function saveFootballEvent(
     isPublished: boolean;
   }
 ) {
+  await requireManager();
   if (!input.homeTeam.trim() || !input.awayTeam.trim())
     throw new Error("Укажите обе команды");
-  const starts = new Date(input.startsAt);
+  const starts = parseTashkentLocal(input.startsAt);
   if (Number.isNaN(starts.getTime())) throw new Error("Укажите дату и время");
 
   const values = {
@@ -382,6 +479,7 @@ export async function saveFootballEvent(
 }
 
 export async function deleteFootballEvent(id: string) {
+  await requireManager();
   await db.delete(footballEvents).where(eq(footballEvents.id, id));
   revalidatePath("/");
   revalidatePath("/admin/football");
@@ -394,6 +492,7 @@ export async function deleteFootballEvent(id: string) {
 export async function generateTableQRs(
   count: number
 ): Promise<{ num: number; url: string; qr: string }[]> {
+  await requireManager();
   const n = Math.max(1, Math.min(100, Math.floor(count)));
   const base =
     process.env.NEXT_PUBLIC_SITE_URL || "https://sazanchik.vercel.app";
@@ -415,6 +514,7 @@ export async function generateTableQRs(
 // ============================================================================
 
 export async function getAllCategoriesForForm() {
+  await requireManager();
   return db
     .select({ id: categories.id, slug: categories.slug, nameRu: categories.nameRu })
     .from(categories)
@@ -422,6 +522,7 @@ export async function getAllCategoriesForForm() {
 }
 
 export async function getDishById(id: string) {
+  await requireManager();
   const [dish] = await db.select().from(dishes).where(eq(dishes.id, id));
   if (!dish) return null;
   const variants = await db

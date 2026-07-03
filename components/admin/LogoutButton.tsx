@@ -6,7 +6,12 @@ export function LogoutButton() {
   const router = useRouter();
 
   const logout = async () => {
-    await fetch("/admin/api/logout", { method: "POST" });
+    try {
+      await fetch("/admin/api/logout", { method: "POST" });
+    } catch {
+      // Network hiccup — still send them to the login screen below;
+      // the server session cookie will simply expire on its own.
+    }
     router.push("/admin/login");
     router.refresh();
   };

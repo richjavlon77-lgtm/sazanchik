@@ -50,7 +50,12 @@ export async function getMenuFromDb(): Promise<MenuCategory[]> {
       let price: Price;
       if (variants.length > 0) {
         price = variants.map((v) => ({
-          label: { ru: v.labelRu, uz: v.labelUz, en: v.labelEn } as Localized,
+          label: {
+            ru: v.labelRu,
+            uz: v.labelUz,
+            en: v.labelEn,
+            tr: v.labelTr ?? undefined,
+          } as Localized,
           price: v.price,
         }));
       } else {
@@ -69,13 +74,19 @@ export async function getMenuFromDb(): Promise<MenuCategory[]> {
 
       return {
         id: d.slug,
-        name: { ru: d.nameRu, uz: d.nameUz, en: d.nameEn },
+        name: {
+          ru: d.nameRu,
+          uz: d.nameUz,
+          en: d.nameEn,
+          tr: d.nameTr ?? undefined,
+        },
         description:
           d.descriptionRu || d.descriptionUz || d.descriptionEn
             ? {
                 ru: d.descriptionRu ?? "",
                 uz: d.descriptionUz ?? "",
                 en: d.descriptionEn ?? "",
+                tr: d.descriptionTr ?? undefined,
               }
             : undefined,
         price,
@@ -88,15 +99,26 @@ export async function getMenuFromDb(): Promise<MenuCategory[]> {
           ? (d.allergens as string[])
           : undefined,
         tags: tags.length ? tags : undefined,
+        outOfStock: d.inStock === false,
       };
     });
 
     return {
       id: c.slug,
-      name: { ru: c.nameRu, uz: c.nameUz, en: c.nameEn },
+      name: {
+        ru: c.nameRu,
+        uz: c.nameUz,
+        en: c.nameEn,
+        tr: c.nameTr ?? undefined,
+      },
       intro:
         c.introRu || c.introUz || c.introEn
-          ? { ru: c.introRu ?? "", uz: c.introUz ?? "", en: c.introEn ?? "" }
+          ? {
+              ru: c.introRu ?? "",
+              uz: c.introUz ?? "",
+              en: c.introEn ?? "",
+              tr: c.introTr ?? undefined,
+            }
           : undefined,
       items,
     };
@@ -108,10 +130,10 @@ export async function getRestaurantFromDb(): Promise<RestaurantInfo | null> {
   if (!r) return null;
   return {
     name: r.name,
-    tagline: { ru: r.taglineRu, uz: r.taglineUz, en: r.taglineEn },
-    address: { ru: r.addressRu, uz: r.addressUz, en: r.addressEn },
+    tagline: { ru: r.taglineRu, uz: r.taglineUz, en: r.taglineEn, tr: r.taglineTr || undefined },
+    address: { ru: r.addressRu, uz: r.addressUz, en: r.addressEn, tr: r.addressTr || undefined },
     phone: r.phone,
-    workingHours: { ru: r.hoursRu, uz: r.hoursUz, en: r.hoursEn },
+    workingHours: { ru: r.hoursRu, uz: r.hoursUz, en: r.hoursEn, tr: r.hoursTr || undefined },
     instagram: r.instagram,
   };
 }
@@ -127,7 +149,7 @@ export async function getStoryFromDb(): Promise<StoryFromDb[]> {
     .from(storyChapters)
     .orderBy(asc(storyChapters.sortOrder));
   return rows.map((r) => ({
-    title: { ru: r.titleRu, uz: r.titleUz, en: r.titleEn },
-    body: { ru: r.bodyRu, uz: r.bodyUz, en: r.bodyEn },
+    title: { ru: r.titleRu, uz: r.titleUz, en: r.titleEn, tr: r.titleTr ?? undefined },
+    body: { ru: r.bodyRu, uz: r.bodyUz, en: r.bodyEn, tr: r.bodyTr ?? undefined },
   }));
 }

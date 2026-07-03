@@ -27,8 +27,9 @@ export function Reveal({
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (reduced) {
-      setVisible(true);
-      return;
+      // Show on the next frame — async, so no cascading sync render
+      const raf = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(raf);
     }
 
     const el = ref.current;

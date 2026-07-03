@@ -1,9 +1,20 @@
 "use client";
 
+import { Fragment } from "react";
 import { useMenu } from "@/lib/menu-context";
 import { useLocale, t, UI_STRINGS } from "@/lib/i18n";
 import { MenuSection } from "@/components/MenuSection";
+import { PhotoBand } from "@/components/PhotoBand";
 import { OrnamentDivider } from "@/components/Ornament";
+
+// Khiva photo strips woven through the menu (one after every 3rd category).
+const BANDS = [
+  { src: "/images/khiva-1.jpg", caption: "Хива · Ичан-Кала" },
+  { src: "/images/khiva-2.jpg", caption: "Хива · Кальта-Минор" },
+  { src: "/images/khiva-3.jpg", caption: "Узбекская резьба" },
+  { src: "/images/khiva-4.jpg", caption: "Изразцы · Хорезм" },
+  { src: "/images/khiva-5.jpg", caption: "Хива · Старый город" },
+];
 
 export function MenuList() {
   const { filteredMenu, isFiltering, query, setQuery } = useMenu();
@@ -31,9 +42,17 @@ export function MenuList() {
 
   return (
     <div className="pb-12">
-      {filteredMenu.map((category, i) => (
-        <MenuSection key={category.id} category={category} index={i + 1} />
-      ))}
+      {filteredMenu.map((category, i) => {
+        // a photo band after every 3rd category (skipped while searching)
+        const bandIdx = (i + 1) % 3 === 0 ? (i + 1) / 3 - 1 : -1;
+        const band = !isFiltering && bandIdx >= 0 ? BANDS[bandIdx] : null;
+        return (
+          <Fragment key={category.id}>
+            <MenuSection category={category} index={i + 1} />
+            {band && <PhotoBand src={band.src} caption={band.caption} />}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

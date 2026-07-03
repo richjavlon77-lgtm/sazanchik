@@ -7,11 +7,12 @@ import { useCart } from "@/lib/cart-context";
 import { Reveal } from "@/components/Reveal";
 import type { MenuItem, MenuCategory } from "@/types/menu";
 
-const TITLE = { ru: "Выбор шефа", uz: "Oshpaz tanlovi", en: "Chef's choice" };
+const TITLE = { ru: "Выбор шефа", uz: "Oshpaz tanlovi", en: "Chef's choice", tr: "Şefin seçimi" };
 const SUB = {
   ru: "Фирменные блюда, которыми мы гордимся",
   uz: "Biz faxrlanadigan maxsus taomlar",
   en: "Signature dishes we're proud of",
+  tr: "Gurur duyduğumuz özel yemekler",
 };
 
 function priceOf(item: MenuItem): number {

@@ -21,7 +21,13 @@ const SUB = {
 
 function when(iso: string, locale: string) {
   return new Date(iso).toLocaleString(
-    locale === "en" ? "en-GB" : locale === "uz" ? "uz-UZ" : "ru-RU",
+    locale === "en"
+      ? "en-GB"
+      : locale === "uz"
+        ? "uz-UZ"
+        : locale === "tr"
+          ? "tr-TR"
+          : "ru-RU",
     {
       timeZone: "Asia/Tashkent",
       weekday: "short",

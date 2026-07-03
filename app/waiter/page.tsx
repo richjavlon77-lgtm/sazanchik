@@ -3,6 +3,7 @@ import { inArray, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { orders, waiterCalls, staff } from "@/db/schema";
 import { getSession } from "@/lib/session";
+import { loadComposerItems } from "@/lib/composer-data";
 import {
   WaiterBoard,
   type BoardOrder,
@@ -40,6 +41,8 @@ export default async function WaiterPage() {
     items: (o.itemsSnapshot ?? []).map((it) => ({
       name: it.nameRu,
       qty: it.quantity,
+      ready: it.ready ?? false,
+      delivered: it.delivered ?? false,
     })),
   }));
 
@@ -60,12 +63,15 @@ export default async function WaiterPage() {
     myTables = (me?.tables as string[]) ?? [];
   }
 
+  const composerItems = await loadComposerItems();
+
   return (
     <WaiterBoard
       orders={board}
       calls={calls}
       waiterName={session.name ?? "официант"}
       myTables={myTables}
+      composerItems={composerItems}
     />
   );
 }

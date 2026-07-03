@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { readLocal, useLocalString, writeLocal } from "@/lib/local-store";
 
 type FavoritesContextValue = {
   favorites: Set<string>;
@@ -19,30 +14,27 @@ const STORAGE_KEY = "sazanchik:favorites";
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
+function parseFavorites(raw: string | null): Set<string> {
+  if (!raw) return new Set();
+  try {
+    const v = JSON.parse(raw);
+    return new Set(Array.isArray(v) ? (v as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setFavorites(new Set(JSON.parse(raw)));
-    } catch {}
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(favorites)));
-  }, [favorites, hydrated]);
+  // Favorites live in localStorage, read via useSyncExternalStore (SSR-safe,
+  // synced across tabs).
+  const raw = useLocalString(STORAGE_KEY);
+  const favorites = useMemo(() => parseFavorites(raw), [raw]);
 
   const toggle = useCallback((id: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = parseFavorites(readLocal(STORAGE_KEY));
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    writeLocal(STORAGE_KEY, JSON.stringify(Array.from(next)));
   }, []);
 
   const isFavorite = useCallback((id: string) => favorites.has(id), [favorites]);

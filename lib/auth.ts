@@ -9,7 +9,23 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-export type Role = "manager" | "waiter";
+export type Role =
+  | "manager"
+  | "waiter"
+  | "bartender"
+  | "hookah"
+  | "cook"
+  | "cold"
+  | "meat";
+
+/** Staff roles that log in by PIN (everyone except the password-based manager) */
+export type StaffRole =
+  | "waiter"
+  | "bartender"
+  | "hookah"
+  | "cook"
+  | "cold"
+  | "meat";
 
 export type SessionPayload = {
   role: Role;
@@ -37,12 +53,13 @@ export async function createSessionToken(): Promise<string> {
   return sign({ role: "manager" }, `${EXPIRES_IN_DAYS}d`);
 }
 
-/** Waiter session — tied to a staff member */
+/** Staff session — tied to a staff member; role is "waiter" or "bartender" */
 export async function createWaiterSession(
   waiterId: string,
-  name: string
+  name: string,
+  role: StaffRole = "waiter"
 ): Promise<string> {
-  return sign({ role: "waiter", waiterId, name }, `${EXPIRES_IN_DAYS}d`);
+  return sign({ role, waiterId, name }, `${EXPIRES_IN_DAYS}d`);
 }
 
 export async function verifySessionToken(
@@ -51,7 +68,16 @@ export async function verifySessionToken(
   try {
     const { payload } = await jwtVerify(token, getSecret());
     const p = payload as SessionPayload;
-    if (p.role === "manager" || p.role === "waiter") return p;
+    const roles = [
+      "manager",
+      "waiter",
+      "bartender",
+      "hookah",
+      "cook",
+      "cold",
+      "meat",
+    ];
+    if (roles.includes(p.role)) return p;
     // Backward-compat: sessions signed before roles were introduced
     if ((p as { admin?: boolean }).admin === true) return { role: "manager" };
     return null;

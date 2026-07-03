@@ -1,27 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { I18nContext, DEFAULT_LOCALE } from "@/lib/i18n";
+import { useHydrated, useLocalString, writeLocal } from "@/lib/local-store";
 import type { Locale } from "@/types/menu";
 
 const STORAGE_KEY = "sazanchik:locale";
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
-  const [mounted, setMounted] = useState(false);
+function isLocale(v: string | null): v is Locale {
+  return v === "ru" || v === "uz" || v === "en" || v === "tr";
+}
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
-    if (saved === "ru" || saved === "uz" || saved === "en") {
-      setLocaleState(saved);
-    }
-    setMounted(true);
-  }, []);
+export function I18nProvider({ children }: { children: React.ReactNode }) {
+  const mounted = useHydrated();
+  const saved = useLocalString(STORAGE_KEY);
+  const locale: Locale = isLocale(saved) ? saved : DEFAULT_LOCALE;
 
   const setLocale = (l: Locale) => {
     const apply = () => {
-      setLocaleState(l);
-      localStorage.setItem(STORAGE_KEY, l);
+      writeLocal(STORAGE_KEY, l);
       document.documentElement.lang = l;
     };
 

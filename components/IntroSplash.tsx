@@ -18,13 +18,16 @@ export function IntroSplash() {
     if (reduced) return;
     if (sessionStorage.getItem(STORAGE_KEY)) return;
 
-    setShown(true);
     sessionStorage.setItem(STORAGE_KEY, "1");
 
+    // All state changes are scheduled (rAF / timeouts), never sync in the
+    // effect body — splash appears on the next frame.
+    const raf = requestAnimationFrame(() => setShown(true));
     const fadeT = setTimeout(() => setFadingOut(true), INTRO_DURATION - 500);
     const hideT = setTimeout(() => setShown(false), INTRO_DURATION);
 
     return () => {
+      cancelAnimationFrame(raf);
       clearTimeout(fadeT);
       clearTimeout(hideT);
     };

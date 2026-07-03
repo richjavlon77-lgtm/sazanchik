@@ -13,6 +13,12 @@ const NAV = [
   { href: "/admin/tables", label: "Столы" },
   { href: "/admin/football", label: "Футбол" },
   { href: "/admin/staff", label: "Персонал" },
+  { href: "/admin/finance", label: "Финансы" },
+  { href: "/admin/cash", label: "Касса" },
+  { href: "/admin/payroll", label: "Зарплаты" },
+  { href: "/admin/shifts", label: "Смены" },
+  { href: "/admin/inventory", label: "Склад" },
+  { href: "/admin/recipes", label: "Рецепты" },
   { href: "/admin/restaurant", label: "Ресторан" },
   { href: "/admin/story", label: "История" },
 ];

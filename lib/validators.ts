@@ -22,11 +22,15 @@ const cartLineSchema = z.object({
 export const createOrderSchema = z.object({
   tableNumber: z.string().min(1, "Номер стола обязателен"),
   tableToken: z.string().max(64).optional(),
+  idempotencyKey: z.string().max(64).optional(),
   isBirthday: z.boolean().optional(),
   lines: z.array(cartLineSchema).min(1, "Корзина не может быть пустой"),
-  subtotal: z.number().int().positive(),
-  service: z.number().int().min(0),
-  total: z.number().int().positive(),
+  // The client sends its own totals for UX, but the server NEVER trusts them —
+  // priceOrder() recomputes everything from the DB. Accepted-but-ignored, hence
+  // optional: the contract reflects that they carry no authority.
+  subtotal: z.number().int().positive().optional(),
+  service: z.number().int().min(0).optional(),
+  total: z.number().int().positive().optional(),
 });
 
 export const callWaiterSchema = z.object({

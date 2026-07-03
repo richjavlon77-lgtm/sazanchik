@@ -122,7 +122,7 @@ export default async function AdminMenuPage() {
                 <div className="px-5 py-6 text-sm text-muted-foreground">
                   Нет блюд.{" "}
                   <Link
-                    href={`/admin/dishes/new?category=${c.id}`}
+                    href={`/admin/dishes/new?category=${c.slug}`}
                     className="text-gold hover:underline"
                   >
                     Добавить первое

@@ -5,13 +5,21 @@ import { useLocale, t } from "@/lib/i18n";
 import { useMenu } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/SearchBar";
-import { DietFilter } from "@/components/DietFilter";
 
 export function CategoryNav() {
   const { locale } = useLocale();
   const { filteredMenu, isFiltering } = useMenu();
   const [active, setActive] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
+
+  // "Adjust state during render" (react.dev pattern): when the visible menu
+  // changes, reset the active chip to its first category — no effect needed.
+  const firstId = !isFiltering && filteredMenu.length ? filteredMenu[0].id : null;
+  const [prevFirstId, setPrevFirstId] = useState<string | null>(firstId);
+  if (firstId !== prevFirstId) {
+    setPrevFirstId(firstId);
+    if (firstId) setActive(firstId);
+  }
 
   // Keep the active chip in view as you scroll through the menu
   useEffect(() => {
@@ -25,7 +33,6 @@ export function CategoryNav() {
   useEffect(() => {
     if (isFiltering) return;
     if (!filteredMenu.length) return;
-    setActive(filteredMenu[0].id);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -59,7 +66,6 @@ export function CategoryNav() {
     <div className="sticky top-0 z-40 -mx-6 border-b border-border bg-background/85 px-6 backdrop-blur-md">
       <div className="mx-auto max-w-3xl py-3">
         <SearchBar />
-        <DietFilter />
 
         {!isFiltering && (
           <nav

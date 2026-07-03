@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useLocalString, writeLocal } from "@/lib/local-store";
 
 type Stored = { id: string; table: string; at: number };
 type Status = "pending" | "cooking" | "delivered" | "cancelled";
@@ -15,38 +16,29 @@ const STEPS: { key: Status; label: string }[] = [
 ];
 
 export function OrderTracker() {
-  const [order, setOrder] = useState<Stored | null>(null);
+  // The last order lives in localStorage; CartBar writes it via writeLocal,
+  // so this component re-renders automatically — no events, no manual load().
+  const raw = useLocalString(STORAGE_KEY);
+  const order = useMemo<Stored | null>(() => {
+    if (!raw) return null;
+    try {
+      const o = JSON.parse(raw) as Stored;
+      return o?.id ? o : null;
+    } catch {
+      return null;
+    }
+  }, [raw]);
   const [status, setStatus] = useState<Status>("pending");
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const load = useCallback(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return setOrder(null);
-      const o = JSON.parse(raw) as Stored;
-      if (!o?.id || Date.now() - o.at > MAX_AGE_MS) {
-        localStorage.removeItem(STORAGE_KEY);
-        return setOrder(null);
-      }
-      setOrder(o);
-    } catch {
-      setOrder(null);
-    }
-  }, []);
+  const dismiss = () => writeLocal(STORAGE_KEY, null);
 
-  const dismiss = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
-    setOrder(null);
-  };
-
+  // Expire stale orders (side effect — Date.now is fine here)
   useEffect(() => {
-    load();
-    const onPlaced = () => load();
-    window.addEventListener("sazanchik:order-placed", onPlaced);
-    return () => window.removeEventListener("sazanchik:order-placed", onPlaced);
-  }, [load]);
+    if (order && Date.now() - order.at > MAX_AGE_MS) {
+      writeLocal(STORAGE_KEY, null);
+    }
+  }, [order]);
 
   useEffect(() => {
     if (!order) return;
@@ -86,7 +78,7 @@ export function OrderTracker() {
   const done = status === "delivered";
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[45] flex justify-center px-4 pt-3">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[45] flex justify-center px-4 pt-safe-3">
       <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-gold/25 bg-card/95 px-4 py-3 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md">
         <div className="flex items-center justify-between gap-3">
           <span className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -96,17 +88,15 @@ export function OrderTracker() {
                 ? "Готово 🎉"
                 : `Ваш заказ · стол №${order.table}`}
           </span>
-          {(done || cancelled) && (
-            <button
-              onClick={dismiss}
-              aria-label="Закрыть"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
-                <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
-              </svg>
-            </button>
-          )}
+          <button
+            onClick={dismiss}
+            aria-label="Закрыть"
+            className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
+              <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
 
         {cancelled ? (

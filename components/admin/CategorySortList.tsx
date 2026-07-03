@@ -18,6 +18,16 @@ export function CategorySortList({ categories }: { categories: CategoryRow[] }) 
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
+  const persist = (next: CategoryRow[], prev: CategoryRow[]) => {
+    setItems(next);
+    reorderCategories(next.map((x) => x.id))
+      .then(() => toast.success("Порядок категорий сохранён"))
+      .catch(() => {
+        setItems(prev);
+        toast.error("Ошибка сортировки — порядок не сохранён");
+      });
+  };
+
   const handleDrop = (targetId: string) => {
     setOverId(null);
     if (!dragId || dragId === targetId) {
@@ -26,15 +36,24 @@ export function CategorySortList({ categories }: { categories: CategoryRow[] }) 
     }
     const from = items.findIndex((x) => x.id === dragId);
     const to = items.findIndex((x) => x.id === targetId);
+    setDragId(null);
     if (from === -1 || to === -1) return;
     const next = [...items];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
-    setItems(next);
-    setDragId(null);
-    reorderCategories(next.map((x) => x.id))
-      .then(() => toast.success("Порядок категорий сохранён"))
-      .catch(() => toast.error("Ошибка сортировки"));
+    persist(next, items);
+  };
+
+  // Touch/tablet fallback — native HTML5 drag-and-drop doesn't fire on
+  // touch devices, so reordering needs a tap-based path too.
+  const move = (id: string, dir: -1 | 1) => {
+    const from = items.findIndex((x) => x.id === id);
+    const to = from + dir;
+    if (from === -1 || to < 0 || to >= items.length) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    persist(next, items);
   };
 
   return (
@@ -60,7 +79,7 @@ export function CategorySortList({ categories }: { categories: CategoryRow[] }) 
           }
         >
           <span
-            className="shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing"
+            className="hidden shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing sm:inline-flex"
             aria-hidden
             title="Перетащить"
           >
@@ -72,6 +91,27 @@ export function CategorySortList({ categories }: { categories: CategoryRow[] }) 
               <circle cx="9" cy="18" r="1.6" />
               <circle cx="15" cy="18" r="1.6" />
             </svg>
+          </span>
+
+          <span className="flex shrink-0 flex-col">
+            <button
+              type="button"
+              onClick={() => move(c.id, -1)}
+              disabled={items[0]?.id === c.id}
+              aria-label="Выше"
+              className="flex size-5 items-center justify-center text-muted-foreground/60 hover:text-gold disabled:opacity-20"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={() => move(c.id, 1)}
+              disabled={items[items.length - 1]?.id === c.id}
+              aria-label="Ниже"
+              className="flex size-5 items-center justify-center text-muted-foreground/60 hover:text-gold disabled:opacity-20"
+            >
+              ▼
+            </button>
           </span>
 
           <Link

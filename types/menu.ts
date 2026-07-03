@@ -1,6 +1,7 @@
-export type Locale = "ru" | "uz" | "en";
+export type Locale = "ru" | "uz" | "en" | "tr";
 
-export type Localized = Record<Locale, string>;
+// ru/uz/en are the base content; tr (Turkish) is optional and falls back to ru.
+export type Localized = { ru: string; uz: string; en: string; tr?: string };
 
 export type Price = number | { label: Localized; price: number }[];
 
@@ -19,6 +20,8 @@ export type MenuItem = {
   weight?: string;
   calories?: number;
   allergens?: string[];
+  /** false = on the cook's stop-list (temporarily unavailable to order) */
+  outOfStock?: boolean;
 };
 
 export type MenuCategory = {

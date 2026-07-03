@@ -98,49 +98,51 @@
   --sidebar-ring: oklch(0.78 0.115 80 / 50%);
 }
 
-/* Light mode — warm cream paper, espresso text, deeper gold for contrast */
+/* Light mode — Quiet Luxury / Old Money:
+   ivory paper · charcoal ink · deep forest · muted champagne gold · taupe */
 .light {
-  --background: oklch(0.967 0.013 85);
-  --foreground: oklch(0.235 0.018 55);
-  --cream: oklch(0.967 0.013 85);
-  --gold: oklch(0.595 0.118 72);
+  --background: #fbf9f6; /* pure ivory — soft, not harsh white */
+  --foreground: #1a1a1a; /* rich charcoal */
+  --cream: #fbf9f6;
+  --gold: #b5945e; /* muted champagne gold — legible on ivory */
 
-  --card: oklch(0.992 0.008 85);
-  --card-foreground: oklch(0.235 0.018 55);
-  --popover: oklch(0.992 0.008 85);
-  --popover-foreground: oklch(0.235 0.018 55);
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
 
-  --primary: oklch(0.595 0.118 72);
-  --primary-foreground: oklch(0.985 0.01 85);
+  --primary: #1b362f; /* deep forest — primary actions */
+  --primary-foreground: #fbf9f6;
 
-  --secondary: oklch(0.92 0.012 75);
-  --secondary-foreground: oklch(0.235 0.018 55);
+  --secondary: #f3eee7;
+  --secondary-foreground: #1a1a1a;
 
-  --muted: oklch(0.925 0.012 75);
-  --muted-foreground: oklch(0.47 0.018 60);
+  --muted: #f1ebe2;
+  --muted-foreground: #8b8589; /* taupe — secondary text */
 
-  --accent: oklch(0.595 0.118 72);
-  --accent-foreground: oklch(0.985 0.01 85);
+  --accent: #c5a880; /* champagne gold accent (use sparingly) */
+  --accent-foreground: #1a1a1a;
 
-  --destructive: oklch(0.55 0.2 25);
-  --border: oklch(0.3 0.02 60 / 14%);
-  --input: oklch(0.3 0.02 60 / 18%);
-  --ring: oklch(0.595 0.118 72 / 45%);
+  --destructive: oklch(0.55 0.16 28); /* muted brick, not neon */
+  --border: rgba(58, 53, 48, 0.12);
+  --input: rgba(58, 53, 48, 0.16);
+  --ring: rgba(181, 148, 94, 0.45);
 
-  --chart-1: oklch(0.595 0.118 72);
-  --chart-2: oklch(0.68 0.09 60);
-  --chart-3: oklch(0.55 0.06 60);
-  --chart-4: oklch(0.42 0.04 60);
-  --chart-5: oklch(0.85 0.015 70);
+  --chart-1: #1b362f;
+  --chart-2: #b5945e;
+  --chart-3: #8b8589;
+  --chart-4: #2e4334;
+  --chart-5: #d9cdb8;
 
-  --sidebar: oklch(0.992 0.008 85);
-  --sidebar-foreground: oklch(0.235 0.018 55);
-  --sidebar-primary: oklch(0.595 0.118 72);
-  --sidebar-primary-foreground: oklch(0.985 0.01 85);
-  --sidebar-accent: oklch(0.92 0.012 75);
-  --sidebar-accent-foreground: oklch(0.235 0.018 55);
-  --sidebar-border: oklch(0.3 0.02 60 / 14%);
-  --sidebar-ring: oklch(0.595 0.118 72 / 45%);
+  /* Admin sidebar — deep forest panel for an "old money" feel */
+  --sidebar: #1b362f;
+  --sidebar-foreground: #ece5d8;
+  --sidebar-primary: #c5a880;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: rgba(255, 255, 255, 0.07);
+  --sidebar-accent-foreground: #fbf9f6;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: rgba(197, 168, 128, 0.5);
 }
 
 @layer base {
@@ -160,6 +162,20 @@
     @apply font-sans;
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
+    /* safety: stray-wide content never forces a horizontal scrollbar on mobile
+       (clip, unlike hidden, keeps position:sticky working) */
+    overflow-x: clip;
+  }
+
+  /* iOS Safari auto-zooms into any input with font-size < 16px on focus.
+     Force 16px on phones so tapping a field never zooms the screen
+     (pinch-zoom stays available for accessibility). */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 
   /* A11y: visible keyboard focus (WCAG 2.2 — focus appearance) */
@@ -265,6 +281,20 @@
 }
 
 @layer utilities {
+  /* iPhone home-indicator safe area — keep fixed UI clear of the bottom bar */
+  .bottom-safe-4 {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .bottom-safe-5 {
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pb-safe-3 {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pt-safe-3 {
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  }
+
   .font-heading {
     font-family: var(--font-heading), Georgia, serif;
     font-feature-settings: "ss01", "swsh", "liga", "dlig", "kern";

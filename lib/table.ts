@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { useLocalString, writeLocal } from "@/lib/local-store";
 
 const TABLE_KEY = "sazanchik:table";
 const TOKEN_KEY = "sazanchik:tableToken";
@@ -16,62 +17,47 @@ function numberOf(token: string): string {
  * - `?t=<signed>` from a QR → verified table (token kept to send to the server,
  *   which validates the HMAC; the number can't be forged).
  * - `?table=N` or manual entry → unverified fallback (no token).
- * Cached in localStorage. Returns null until mounted on the client.
+ *
+ * State lives in localStorage and is read through useSyncExternalStore, so
+ * the effect below only WRITES to the store (sanctioned external-system sync)
+ * and every subscribed component re-renders automatically.
+ * Returns null until hydrated on the client.
  */
 export function useTableNumber(): {
   table: string | null;
   tableToken: string | null;
   setTable: (v: string | null) => void;
 } {
-  const [table, setTableState] = useState<string | null>(null);
-  const [tableToken, setTableToken] = useState<string | null>(null);
+  const tableToken = useLocalString(TOKEN_KEY);
+  const storedTable = useLocalString(TABLE_KEY);
 
+  // One-time URL → storage sync on mount (QR scan / legacy link).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
     // 1) Signed QR token
     const signed = params.get("t");
     if (signed) {
-      const num = numberOf(signed);
-      localStorage.setItem(TABLE_KEY, num);
-      localStorage.setItem(TOKEN_KEY, signed);
-      setTableState(num);
-      setTableToken(signed);
+      writeLocal(TABLE_KEY, numberOf(signed));
+      writeLocal(TOKEN_KEY, signed);
       return;
     }
 
     // 2) Legacy / manual ?table=N (unverified)
     const fromUrl = params.get("table");
     if (fromUrl) {
-      localStorage.setItem(TABLE_KEY, fromUrl);
-      localStorage.removeItem(TOKEN_KEY);
-      setTableState(fromUrl);
-      setTableToken(null);
-      return;
-    }
-
-    // 3) Restore from storage
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-    const stored = localStorage.getItem(TABLE_KEY);
-    if (storedToken) {
-      setTableToken(storedToken);
-      setTableState(numberOf(storedToken));
-    } else if (stored) {
-      setTableState(stored);
+      writeLocal(TABLE_KEY, fromUrl);
+      writeLocal(TOKEN_KEY, null);
     }
   }, []);
 
   // Manual entry → unverified (clears any signed token)
-  const setTable = (v: string | null) => {
-    if (v) {
-      localStorage.setItem(TABLE_KEY, v);
-    } else {
-      localStorage.removeItem(TABLE_KEY);
-    }
-    localStorage.removeItem(TOKEN_KEY);
-    setTableToken(null);
-    setTableState(v);
-  };
+  const setTable = useCallback((v: string | null) => {
+    writeLocal(TABLE_KEY, v);
+    writeLocal(TOKEN_KEY, null);
+  }, []);
+
+  const table = tableToken ? numberOf(tableToken) : storedTable;
 
   return { table, tableToken, setTable };
 }

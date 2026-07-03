@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "qr": "node scripts/generate-qr.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "og": "node scripts/generate-og.mjs",
@@ -47,6 +49,7 @@
     "eslint-config-next": "16.2.7",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.6"
   }
 }

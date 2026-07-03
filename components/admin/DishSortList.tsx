@@ -22,6 +22,19 @@ export function DishSortList({ dishes }: { dishes: DishRow[] }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
+  // Persist a new order optimistically, rolling back to the previous order
+  // (not just the pre-change order — reverting mid-sequence edits too) if
+  // the server rejects it, so the list never silently drifts from the DB.
+  const persist = (next: DishRow[], prev: DishRow[]) => {
+    setItems(next);
+    reorderDishes(next.map((x) => x.id))
+      .then(() => toast.success("Порядок сохранён"))
+      .catch(() => {
+        setItems(prev);
+        toast.error("Ошибка сортировки — порядок не сохранён");
+      });
+  };
+
   const handleDrop = (targetId: string) => {
     setOverId(null);
     if (!dragId || dragId === targetId) {
@@ -30,15 +43,24 @@ export function DishSortList({ dishes }: { dishes: DishRow[] }) {
     }
     const from = items.findIndex((x) => x.id === dragId);
     const to = items.findIndex((x) => x.id === targetId);
+    setDragId(null);
     if (from === -1 || to === -1) return;
     const next = [...items];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
-    setItems(next);
-    setDragId(null);
-    reorderDishes(next.map((x) => x.id))
-      .then(() => toast.success("Порядок сохранён"))
-      .catch(() => toast.error("Ошибка сортировки"));
+    persist(next, items);
+  };
+
+  // Touch/tablet fallback — native HTML5 drag-and-drop doesn't fire on
+  // touch devices, so reordering needs a tap-based path too.
+  const move = (id: string, dir: -1 | 1) => {
+    const from = items.findIndex((x) => x.id === id);
+    const to = from + dir;
+    if (from === -1 || to < 0 || to >= items.length) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    persist(next, items);
   };
 
   return (
@@ -65,9 +87,9 @@ export function DishSortList({ dishes }: { dishes: DishRow[] }) {
               : "hover:bg-card/60 ")
           }
         >
-          {/* Drag handle */}
+          {/* Drag handle — desktop mouse only */}
           <span
-            className="shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing"
+            className="hidden shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing sm:inline-flex"
             aria-hidden
             title="Перетащить"
           >
@@ -79,6 +101,29 @@ export function DishSortList({ dishes }: { dishes: DishRow[] }) {
               <circle cx="9" cy="18" r="1.6" />
               <circle cx="15" cy="18" r="1.6" />
             </svg>
+          </span>
+
+          {/* Up/down — works everywhere, including touch/tablet where native
+              HTML5 drag-and-drop above doesn't fire at all. */}
+          <span className="flex shrink-0 flex-col">
+            <button
+              type="button"
+              onClick={() => move(d.id, -1)}
+              disabled={items[0]?.id === d.id}
+              aria-label="Выше"
+              className="flex size-5 items-center justify-center text-muted-foreground/60 hover:text-gold disabled:opacity-20"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={() => move(d.id, 1)}
+              disabled={items[items.length - 1]?.id === d.id}
+              aria-label="Ниже"
+              className="flex size-5 items-center justify-center text-muted-foreground/60 hover:text-gold disabled:opacity-20"
+            >
+              ▼
+            </button>
           </span>
 
           <Link href={`/admin/dishes/${d.id}/edit`} className="min-w-0 flex-1">

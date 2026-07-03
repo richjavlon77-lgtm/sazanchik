@@ -35,7 +35,7 @@ export function MenuSection({
             <span className="shrink-0 tabular-nums text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
               {String(category.items.length).padStart(2, "0")} ·{" "}
               {t(
-                { ru: "блюд", uz: "taom", en: "dishes" },
+                { ru: "блюд", uz: "taom", en: "dishes", tr: "yemek" },
                 locale
               )}
             </span>

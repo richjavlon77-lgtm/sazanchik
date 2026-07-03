@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, useCallback } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  useCallback,
+  useOptimistic,
+} from "react";
 import { useRouter } from "next/navigation";
+import { useOnline } from "@/lib/local-store";
+import Link from "next/link";
 import { toast } from "sonner";
-import { advanceOrder, resolveCall } from "@/lib/waiter-actions";
+import { advanceOrder, resolveCall, toggleItemDelivered } from "@/lib/waiter-actions";
+import { OrderComposer } from "@/components/waiter/OrderComposer";
+import type { ComposerItem } from "@/lib/composer-data";
 import { cn } from "@/lib/utils";
 
 export type BoardOrder = {
@@ -13,7 +24,7 @@ export type BoardOrder = {
   totalPrice: number;
   createdAt: string;
   isBirthday: boolean;
-  items: { name: string; qty: number }[];
+  items: { name: string; qty: number; ready: boolean; delivered: boolean }[];
 };
 
 export type BoardCall = {
@@ -48,26 +59,62 @@ export function WaiterBoard({
   calls,
   waiterName,
   myTables = [],
+  composerItems = [],
 }: {
   orders: BoardOrder[];
   calls: BoardCall[];
   waiterName: string;
   myTables?: string[];
+  composerItems?: ComposerItem[];
 }) {
   const router = useRouter();
   const hasZone = myTables.length > 0;
   const [onlyMine, setOnlyMine] = useState(hasZone);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [pending, start] = useTransition();
+  const [, setTick] = useState(0);
+  const online = useOnline();
+  const [soundOn, setSoundOn] = useState(false);
+
+  // Optimistic per-dish delivery ticks. useOptimistic auto-reverts to the
+  // server data once the action's transition settles, so ticks stay correct
+  // and sync across devices via SSE — no manual reset needed.
+  const [optimisticOrders, markDelivered] = useOptimistic(
+    orders,
+    (
+      state: BoardOrder[],
+      u: { orderId: string; index: number; delivered: boolean }
+    ) =>
+      state.map((o) =>
+        o.id === u.orderId
+          ? {
+              ...o,
+              items: o.items.map((it, i) =>
+                i === u.index ? { ...it, delivered: u.delivered } : it
+              ),
+            }
+          : o
+      )
+  );
+
+  const toggleItem = (orderId: string, index: number, next: boolean) => {
+    start(async () => {
+      markDelivered({ orderId, index, delivered: next });
+      try {
+        await toggleItemDelivered(orderId, index, next);
+      } catch {
+        toast.error("Не удалось отметить");
+      }
+    });
+  };
+
   const mine = new Set(myTables);
   const shownOrders =
     onlyMine && hasZone
-      ? orders.filter((o) => mine.has(o.tableNumber))
-      : orders;
+      ? optimisticOrders.filter((o) => mine.has(o.tableNumber))
+      : optimisticOrders;
   const shownCalls =
     onlyMine && hasZone ? calls.filter((c) => mine.has(c.tableNumber)) : calls;
-  const [pending, start] = useTransition();
-  const [, setTick] = useState(0);
-  const [online, setOnline] = useState(true);
-  const [soundOn, setSoundOn] = useState(false);
 
   const audioRef = useRef<AudioContext | null>(null);
   const knownRef = useRef<Set<string> | null>(null);
@@ -153,19 +200,12 @@ export function WaiterBoard({
   }, [router]);
 
   // Online/offline awareness — calls persist in DB, so nothing is lost
+  // Refresh the board the moment the connection returns; the `online`
+  // indicator itself comes from useOnline() (useSyncExternalStore).
   useEffect(() => {
-    const up = () => {
-      setOnline(true);
-      router.refresh();
-    };
-    const down = () => setOnline(false);
-    setOnline(navigator.onLine);
+    const up = () => router.refresh();
     window.addEventListener("online", up);
-    window.addEventListener("offline", down);
-    return () => {
-      window.removeEventListener("online", up);
-      window.removeEventListener("offline", down);
-    };
+    return () => window.removeEventListener("online", up);
   }, [router]);
 
   const doOrder = (id: string, status: BoardOrder["status"], label: string) =>
@@ -177,6 +217,11 @@ export function WaiterBoard({
         toast.error("Не удалось обновить");
       }
     });
+
+  const doCancel = (id: string, table: string) => {
+    if (!confirm(`Отменить заказ стола №${table}? Склад вернётся.`)) return;
+    doOrder(id, "cancelled", "Заказ отменён");
+  };
 
   const doResolve = (id: string) =>
     start(async () => {
@@ -195,7 +240,8 @@ export function WaiterBoard({
   };
 
   return (
-    <main className="mx-auto min-h-[100svh] max-w-2xl px-4 pb-20 pt-5">
+    <>
+    <main className="mx-auto min-h-[100svh] max-w-2xl px-4 pb-24 pt-5">
       <header className="mb-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate font-heading text-2xl">
@@ -212,6 +258,12 @@ export function WaiterBoard({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/waiter/bills"
+            className="rounded-full border border-gold/40 px-3 py-2 text-xs uppercase tracking-wider text-gold transition-colors hover:bg-gold hover:text-primary-foreground"
+          >
+            🧾 Счета
+          </Link>
           {!soundOn && (
             <button
               onClick={enableSound}
@@ -298,6 +350,8 @@ export function WaiterBoard({
         <div className="space-y-3">
           {shownOrders.map((o) => {
             const s = STATUS[o.status] ?? STATUS.pending;
+            const doneCount = o.items.filter((it) => it.delivered).length;
+            const allDone = o.items.length > 0 && doneCount === o.items.length;
             return (
               <article
                 key={o.id}
@@ -327,18 +381,71 @@ export function WaiterBoard({
                   </span>
                 </div>
 
-                <ul className="mt-2 space-y-0.5 text-sm text-muted-foreground">
-                  {o.items.map((it, i) => (
-                    <li key={i}>
-                      {it.name} <span className="text-gold">×{it.qty}</span>
-                    </li>
-                  ))}
+                <ul className="mt-2 space-y-0.5 text-sm">
+                  {o.items.map((it, i) => {
+                    const done = it.delivered;
+                    const readyToCarry = it.ready && !done;
+                    return (
+                      <li key={i}>
+                        <button
+                          type="button"
+                          onClick={() => toggleItem(o.id, i, !done)}
+                          className={cn(
+                            "flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors active:scale-[0.99]",
+                            done
+                              ? "text-muted-foreground/60"
+                              : readyToCarry
+                                ? "bg-emerald-500/5 text-foreground hover:bg-emerald-500/10"
+                                : "text-muted-foreground hover:bg-card"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] transition-colors",
+                              done
+                                ? "border-emerald-500/60 bg-emerald-500/20 text-emerald-400"
+                                : readyToCarry
+                                  ? "border-emerald-500/60 text-transparent"
+                                  : "border-border text-transparent"
+                            )}
+                          >
+                            ✓
+                          </span>
+                          <span className={cn("flex-1", done && "line-through")}>
+                            {it.name}{" "}
+                            <span className={done ? "text-emerald-400/60" : "text-gold"}>
+                              ×{it.qty}
+                            </span>
+                          </span>
+                          {readyToCarry && (
+                            <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-400">
+                              🍽 можно нести
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="font-heading tabular-nums text-gold">
-                    {o.totalPrice.toLocaleString("ru-RU")} сум
-                  </span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-heading tabular-nums text-gold">
+                      {o.totalPrice.toLocaleString("ru-RU")} сум
+                    </span>
+                    {o.items.length > 0 && (
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] tabular-nums",
+                          allDone
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : "bg-card text-muted-foreground"
+                        )}
+                      >
+                        {allDone ? "✓ всё отнесено" : `отнесено ${doneCount}/${o.items.length}`}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     {o.status === "pending" && (
                       <button
@@ -353,9 +460,23 @@ export function WaiterBoard({
                       <button
                         onClick={() => doOrder(o.id, "delivered", "Заказ подан")}
                         disabled={pending}
-                        className="rounded-full border border-emerald-500/40 px-4 py-1.5 text-xs uppercase tracking-wider text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white disabled:opacity-40"
+                        className={cn(
+                          "rounded-full border px-4 py-1.5 text-xs uppercase tracking-wider transition-colors disabled:opacity-40",
+                          allDone
+                            ? "border-emerald-500 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500 hover:text-white"
+                            : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+                        )}
                       >
                         Подан
+                      </button>
+                    )}
+                    {(o.status === "pending" || o.status === "cooking") && (
+                      <button
+                        onClick={() => doCancel(o.id, o.tableNumber)}
+                        disabled={pending}
+                        className="rounded-full border border-red-500/30 px-3 py-1.5 text-xs uppercase tracking-wider text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-40"
+                      >
+                        Отмена
                       </button>
                     )}
                   </div>
@@ -366,5 +487,22 @@ export function WaiterBoard({
         </div>
       )}
     </main>
+
+      {/* Offline order — waiter takes a verbal order and routes it to stations */}
+      <button
+        onClick={() => setComposerOpen(true)}
+        className="fixed bottom-safe-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-gold px-6 py-3 text-sm font-medium text-primary-foreground shadow-[0_8px_30px_-6px_var(--gold)] transition-transform active:scale-95"
+      >
+        + Новый заказ
+      </button>
+
+      {composerOpen && (
+        <OrderComposer
+          items={composerItems}
+          defaultTable={myTables[0] ?? ""}
+          onClose={() => setComposerOpen(false)}
+        />
+      )}
+    </>
   );
 }

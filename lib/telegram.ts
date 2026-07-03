@@ -83,6 +83,79 @@ export async function sendOrderToTelegram(
   return { ok: true };
 }
 
+export async function sendLowStockToTelegram(
+  name: string,
+  stock: number,
+  unit: string,
+  min: number
+): Promise<{ ok: boolean }> {
+  const env = getEnv();
+  if (!isConfigured(env)) return { ok: false };
+
+  const n = (v: number) => Number(v.toFixed(2)).toLocaleString("ru-RU");
+  const message = [
+    `<b>⚠️ Заканчивается на складе</b>`,
+    `${name}: осталось <b>${n(stock)} ${unit}</b> (минимум ${n(min)} ${unit})`,
+    `Пора пополнить запас.`,
+  ].join("\n");
+
+  const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_notification: false,
+    }),
+  });
+  if (!res.ok) {
+    console.error("Telegram low-stock failed:", res.status);
+    return { ok: false };
+  }
+  return { ok: true };
+}
+
+export async function sendErrorToTelegram(input: {
+  message: string;
+  url?: string;
+  ua?: string;
+  stack?: string;
+}): Promise<{ ok: boolean }> {
+  const env = getEnv();
+  if (!isConfigured(env)) return { ok: false };
+
+  const clip = (s: string | undefined, n: number) =>
+    (s ?? "").slice(0, n).replace(/[<>&]/g, " ");
+  const message = [
+    `<b>🐞 Ошибка на сайте</b>`,
+    clip(input.message, 300),
+    input.url ? `Стр: ${clip(input.url, 120)}` : "",
+    input.ua ? `Устр: ${clip(input.ua, 120)}` : "",
+    input.stack ? `<code>${clip(input.stack, 400)}</code>` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_notification: true,
+    }),
+  });
+  if (!res.ok) {
+    console.error("Telegram error-report failed:", res.status);
+    return { ok: false };
+  }
+  return { ok: true };
+}
+
 export async function sendWaiterCallToTelegram(
   tableNumber: string,
   type: "waiter" | "bill" | "water"

@@ -1,13 +1,13 @@
 "use client";
 
 import { useCart } from "@/lib/cart-context";
+import { writeLocal } from "@/lib/local-store";
 import { useLocale, t, formatPrice, UI_STRINGS } from "@/lib/i18n";
 import { useTableNumber } from "@/lib/table";
 import { getRecommendations } from "@/lib/pairings";
-import { MENU } from "@/data/menu";
-import { applyIntros } from "@/data/category-intros";
-import { enrichMenuWithDiet } from "@/lib/auto-diet";
+import { useMenuOptional } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
+import { enqueueOrder } from "@/lib/order-queue";
 import {
   Sheet,
   SheetContent,
@@ -17,6 +17,14 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+
+function safeRandomId(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
 
 export function CartBar() {
   const { locale } = useLocale();
@@ -43,6 +51,8 @@ export function CartBar() {
   // Bump the bar when item count grows (premium tactile feedback)
   const prevCount = useRef(totalItems);
   const [bump, setBump] = useState(false);
+  // Idempotency: same key across retries of one attempt, reset after success.
+  const idemRef = useRef<string | null>(null);
   useEffect(() => {
     if (totalItems > prevCount.current) {
       setBump(true);
@@ -53,10 +63,10 @@ export function CartBar() {
     prevCount.current = totalItems;
   }, [totalItems]);
 
-  const menu = useMemo(() => applyIntros(enrichMenuWithDiet(MENU)), []);
+  const menu = useMenuOptional()?.menu;
 
   const recommendations = useMemo(() => {
-    if (lines.length === 0) return [];
+    if (!menu || lines.length === 0) return [];
     const itemIds = new Set(lines.map((l) => l.id));
     const catIds = new Set<string>();
     for (const cat of menu) {
@@ -75,36 +85,37 @@ export function CartBar() {
       return;
     }
 
-    // Optimistic: close cart, show placing state
+    // Optimistic: close cart, show a "sending" state — the success toast
+    // only fires once the server actually confirms the order (below).
     setOpen(false);
     setPlaced(true);
 
-    toast.success("Заказ отправлен на кухню!", {
-      description: `Стол #${t1} · ${formatPrice(total, locale)}`,
-      duration: 5000,
-    });
+    idemRef.current ??= safeRandomId();
+
+    const orderBody = {
+      tableNumber: t1,
+      tableToken: tableToken ?? undefined,
+      idempotencyKey: idemRef.current ?? undefined,
+      isBirthday: isBirthday || undefined,
+      lines: lines.map((l) => ({
+        id: l.id,
+        variantKey: l.variantKey,
+        qty: l.qty,
+        price: l.price,
+        name: l.name,
+        variantLabel: l.variantLabel,
+      })),
+      subtotal,
+      service,
+      total,
+    };
 
     startTransition(async () => {
       try {
         const res = await fetch("/api/orders/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tableNumber: t1,
-            tableToken: tableToken ?? undefined,
-            isBirthday: isBirthday || undefined,
-            lines: lines.map((l) => ({
-              id: l.id,
-              variantKey: l.variantKey,
-              qty: l.qty,
-              price: l.price,
-              name: l.name,
-              variantLabel: l.variantLabel,
-            })),
-            subtotal,
-            service,
-            total,
-          }),
+          body: JSON.stringify(orderBody),
         });
 
         if (!res.ok) {
@@ -115,22 +126,27 @@ export function CartBar() {
 
         const order = await res.json();
         clear();
+        idemRef.current = null; // success → next order gets a fresh key
 
-        // Remember the order so the guest can track its live status
-        try {
-          localStorage.setItem(
-            "sazanchik:lastOrder",
-            JSON.stringify({ id: order.id, table: t1, at: Date.now() })
-          );
-          window.dispatchEvent(new Event("sazanchik:order-placed"));
-        } catch {}
+        // Remember the order so the guest can track its live status.
+        // writeLocal notifies OrderTracker through the shared store.
+        writeLocal(
+          "sazanchik:lastOrder",
+          JSON.stringify({ id: order.id, table: t1, at: Date.now() })
+        );
 
         toast.success(`Заказ #${order.id.slice(0, 8)} принят!`, {
           description: "Официант скоро подойдёт.",
         });
       } catch (err) {
-        console.error("Order placement failed:", err);
-        toast.error("Не удалось отправить заказ. Попробуйте ещё раз.");
+        // Likely offline → queue it; the same idempotencyKey makes resend safe.
+        console.error("Order placement failed (queuing):", err);
+        enqueueOrder(orderBody);
+        clear();
+        idemRef.current = null;
+        toast.success("Нет сети — заказ сохранён", {
+          description: "Отправим автоматически, как появится интернет.",
+        });
       } finally {
         setPlaced(false);
       }
@@ -141,7 +157,7 @@ export function CartBar() {
     <>
       <div
         className={cn(
-          "fixed left-4 right-4 bottom-4 z-40 transition-all duration-500 md:left-1/2 md:right-auto md:bottom-8 md:-translate-x-1/2 md:w-[480px]",
+          "fixed left-4 right-4 bottom-safe-4 z-40 transition-all duration-500 md:left-1/2 md:right-auto md:bottom-8 md:-translate-x-1/2 md:w-[480px]",
           totalItems > 0
             ? "translate-y-0 opacity-100"
             : "translate-y-32 opacity-0 pointer-events-none"
@@ -346,8 +362,11 @@ export function CartBar() {
                 </span>
               </button>
 
-              {/* Table number — required to place the order */}
-              <label className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-gold/20 bg-gold/[0.04] px-4 py-3">
+              {/* Table number — required to place the order. Once verified by
+                  a scanned QR token, it's locked: free-text edits would
+                  silently discard the signature that proves the guest is
+                  actually at that table. */}
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-gold/20 bg-gold/[0.04] px-4 py-3">
                 <span className="text-sm">
                   <span className="font-heading text-base">
                     {t(UI_STRINGS.table, locale)}
@@ -357,19 +376,47 @@ export function CartBar() {
                       укажите номер
                     </span>
                   )}
+                  {tableToken && (
+                    <span className="ml-2 text-[11px] text-emerald-400">
+                      ✓ по QR-коду
+                    </span>
+                  )}
                 </span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  value={table ?? ""}
-                  onChange={(e) =>
-                    setTable(e.target.value.trim() ? e.target.value.trim() : null)
-                  }
-                  placeholder="№"
-                  className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-center font-heading text-lg tabular-nums outline-none focus:border-gold/60"
-                />
-              </label>
+                {tableToken ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-center font-heading text-lg tabular-nums">
+                      {table}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "Изменить номер стола вручную? Используйте, только если вы не за этим столом."
+                          )
+                        ) {
+                          setTable(null);
+                        }
+                      }}
+                      className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    >
+                      изм.
+                    </button>
+                  </span>
+                ) : (
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    value={table ?? ""}
+                    onChange={(e) =>
+                      setTable(e.target.value.trim() ? e.target.value.trim() : null)
+                    }
+                    placeholder="№"
+                    className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-center font-heading text-lg tabular-nums outline-none focus:border-gold/60"
+                  />
+                )}
+              </div>
 
               <div className="mt-3 flex gap-2">
                 <button

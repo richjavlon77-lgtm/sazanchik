@@ -3,10 +3,20 @@ import { db } from "@/db";
 import { waiterCalls } from "@/db/schema";
 import { callWaiterSchema } from "@/lib/validators";
 import { sendWaiterCallToTelegram } from "@/lib/telegram";
-import { verifyTableToken } from "@/lib/table-sign";
+import { resolveTable } from "@/lib/table-sign";
 import { notifyWaiters } from "@/lib/realtime";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
+
+const TOO_FAST = "Слишком часто. Подождите немного.";
 
 export async function POST(request: Request) {
+  // Coarse per-IP backstop (venue Wi-Fi shares an IP, so keep it generous).
+  const ip = clientIp(request);
+  if (!checkRateLimit(`call-ip:${ip}`, { limit: 30, windowMs: 60_000 }).allowed) {
+    return NextResponse.json({ error: TOO_FAST }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -25,17 +35,16 @@ export async function POST(request: Request) {
 
   const { tableNumber, tableToken, type } = parsed.data;
 
-  // Signed QR token is authoritative; a present-but-invalid token = tampering.
-  let table = tableNumber;
-  if (tableToken) {
-    const verified = verifyTableToken(tableToken);
-    if (!verified) {
-      return NextResponse.json(
-        { error: "Недействительный QR-код стола" },
-        { status: 403 }
-      );
-    }
-    table = verified;
+  // Signed QR token is authoritative; strict-QR mode rejects tokenless calls.
+  const resolved = resolveTable(tableNumber, tableToken);
+  if (!resolved.ok) {
+    return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+  }
+  const table = resolved.table;
+
+  // Per-table anti-spam: nobody legitimately calls a waiter many times a minute.
+  if (!checkRateLimit(`call-table:${table}`, { limit: 5, windowMs: 60_000 }).allowed) {
+    return NextResponse.json({ error: TOO_FAST }, { status: 429 });
   }
 
   try {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useLocale, t, formatPrice, UI_STRINGS } from "@/lib/i18n";
 import type { MenuItem } from "@/types/menu";
 import { DietBadge } from "@/components/DietBadge";
@@ -10,18 +11,79 @@ import { ShareButton } from "@/components/ShareButton";
 import { SpicyMeter } from "@/components/SpicyMeter";
 import { cn } from "@/lib/utils";
 
+/** Add "+" (gold, idle) → forest "− n +" stepper once the dish is in the cart. */
+function QtyControl({
+  qty,
+  pulse,
+  onAdd,
+  onInc,
+  onDec,
+}: {
+  qty: number;
+  pulse: boolean;
+  onAdd: () => void;
+  onInc: () => void;
+  onDec: () => void;
+}) {
+  if (qty === 0) {
+    return (
+      <button
+        onClick={onAdd}
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold transition-all duration-300 hover:border-gold hover:bg-gold hover:text-primary-foreground hover:shadow-[0_2px_18px_-4px_var(--gold)] active:scale-90",
+          pulse && "scale-125 bg-gold text-primary-foreground"
+        )}
+        aria-label="Добавить"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3.5">
+          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+        </svg>
+      </button>
+    );
+  }
+  return (
+    <div className="flex h-7 shrink-0 items-center rounded-full bg-primary text-primary-foreground shadow-[0_6px_20px_-10px_var(--primary)]">
+      <button
+        onClick={onDec}
+        className="grid size-7 place-items-center rounded-full transition-transform active:scale-90"
+        aria-label="Убрать одну"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="size-3.5">
+          <path d="M5 12h14" strokeLinecap="round" />
+        </svg>
+      </button>
+      <span className="w-5 text-center text-[13px] font-semibold tabular-nums">{qty}</span>
+      <button
+        onClick={onInc}
+        className="grid size-7 place-items-center rounded-full transition-transform active:scale-90"
+        aria-label="Добавить одну"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="size-3.5">
+          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export function MenuItemCard({ item }: { item: MenuItem }) {
   const { locale } = useLocale();
-  const { add } = useCart();
+  const { add, lines, inc, dec } = useCart();
   const isVariants = Array.isArray(item.price);
+  const stop = item.outOfStock === true;
   const [pulseKey, setPulseKey] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
+
+  // Current quantity of this dish (or a specific variant) already in the cart.
+  const qtyOf = (variantKey?: string) =>
+    lines.find((l) => l.id === item.id && l.variantKey === variantKey)?.qty ?? 0;
 
   const handleAdd = (
     price: number,
     variantKey?: string,
     variantLabel?: typeof item.name
   ) => {
+    if (stop) return;
     add({
       id: item.id,
       variantKey,
@@ -36,16 +98,21 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
   return (
     <article
       id={`dish-${item.id}`}
-      className="group relative -mx-3 rounded-2xl border-b border-border px-3 py-5 transition-colors duration-300 last:border-b-0 hover:bg-gold/[0.02] md:py-6"
+      className={cn(
+        "group relative -mx-3 rounded-2xl border-b border-border px-3 py-5 transition-colors duration-300 last:border-b-0 hover:bg-gold/[0.02] md:py-6",
+        stop && "opacity-55"
+      )}
     >
       <div className="flex items-start gap-4">
         {/* Dish image */}
         {item.image && !imgError && (
-          <div className="relative shrink-0 overflow-hidden rounded-2xl bg-muted/30 shadow-lg shadow-black/30 ring-1 ring-white/[0.06]">
-            <img
+          <div className="relative shrink-0 overflow-hidden rounded-2xl bg-muted shadow-[0_10px_30px_-14px_rgba(23,21,15,0.35)] ring-1 ring-black/[0.06]">
+            <Image
               src={item.image}
               alt={t(item.name, locale)}
-              loading="lazy"
+              width={112}
+              height={112}
+              unoptimized
               className="size-24 object-cover md:size-28 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
               onError={() => setImgError(true)}
             />
@@ -74,6 +141,12 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
               />
             </h3>
 
+            {stop && (
+              <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.15em] text-destructive">
+                {t({ ru: "Стоп", uz: "Tugadi", en: "Out", tr: "Tükendi" }, locale)}
+              </span>
+            )}
+
             <span
               aria-hidden
               className="flex-1 mb-1 border-b border-dotted border-border/60"
@@ -84,18 +157,17 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                 <span className="font-heading tabular-nums text-base text-gold shrink-0 md:text-lg">
                   {formatPrice(item.price as number, locale)}
                 </span>
-                <button
-                  onClick={() => handleAdd(item.price as number)}
-                  className={cn(
-                    "ml-1 flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold transition-all duration-300 hover:border-gold hover:bg-gold hover:text-primary-foreground hover:shadow-[0_2px_18px_-4px_var(--gold)] active:scale-90",
-                    pulseKey === "main" && "scale-125 bg-gold text-primary-foreground"
-                  )}
-                  aria-label="+"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3.5">
-                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                  </svg>
-                </button>
+                {!stop && (
+                  <div className="ml-1">
+                    <QtyControl
+                      qty={qtyOf()}
+                      pulse={pulseKey === "main"}
+                      onAdd={() => handleAdd(item.price as number)}
+                      onInc={() => inc(item.id)}
+                      onDec={() => dec(item.id)}
+                    />
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -114,7 +186,12 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                 </p>
               )}
               <span className="ml-auto flex shrink-0 items-baseline gap-2 text-[11px] tabular-nums text-muted-foreground/70">
-                {item.calories ? <span>{item.calories} ккал</span> : null}
+                {item.calories ? (
+                  <span>
+                    {item.calories}{" "}
+                    {t({ ru: "ккал", uz: "kkal", en: "kcal", tr: "kcal" }, locale)}
+                  </span>
+                ) : null}
                 {item.weight && !isVariants ? (
                   <span>
                     {item.weight} {t(UI_STRINGS.weight, locale)}
@@ -127,7 +204,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
           {/* Allergens */}
           {item.allergens && item.allergens.length > 0 && (
             <p className="mt-1 text-[11px] text-muted-foreground/60">
-              Содержит: {item.allergens.join(", ")}
+              {t({ ru: "Содержит", uz: "Tarkibida", en: "Contains", tr: "İçerir" }, locale)}: {item.allergens.join(", ")}
             </p>
           )}
 
@@ -159,18 +236,13 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                         {formatPrice(v.price, locale)}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleAdd(v.price, key, v.label)}
-                      className={cn(
-                        "flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/30 text-gold transition-all duration-300 hover:border-gold hover:bg-gold hover:text-primary-foreground hover:shadow-[0_2px_18px_-4px_var(--gold)] active:scale-90",
-                        pulseKey === key && "scale-125 bg-gold text-primary-foreground"
-                      )}
-                      aria-label="+"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3.5">
-                        <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                      </svg>
-                    </button>
+                    <QtyControl
+                      qty={qtyOf(key)}
+                      pulse={pulseKey === key}
+                      onAdd={() => handleAdd(v.price, key, v.label)}
+                      onInc={() => inc(item.id, key)}
+                      onDec={() => dec(item.id, key)}
+                    />
                   </div>
                 );
               })}

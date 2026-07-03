@@ -16,7 +16,7 @@ const DIRECT_URL =
  */
 export async function GET(request: Request) {
   const session = await getSession();
-  if (!session || (session.role !== "waiter" && session.role !== "manager")) {
+  if (!session || session.role === undefined) {
     return new Response("Unauthorized", { status: 401 });
   }
   if (!DIRECT_URL) {

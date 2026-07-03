@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { checkAdminPassword, createSessionToken, SESSION_COOKIE } from "@/lib/auth";
 import { rateLimitResponse } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
 
 export async function POST(request: Request) {
   // Rate limit: 5 attempts per minute per IP
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "anonymous";
+  const ip = clientIp(request);
 
   const rl = rateLimitResponse(`login:${ip}`, { limit: 5, windowMs: 60_000 });
 

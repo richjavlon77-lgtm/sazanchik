@@ -18,6 +18,27 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Environment variables
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` / `POSTGRES_URL` | yes | Pooled Postgres connection for runtime queries. |
+| `DATABASE_URL_UNPOOLED` / `POSTGRES_URL_NON_POOLING` | yes (realtime) | Direct connection used by the waiter SSE stream (`LISTEN/NOTIFY`). |
+| `SESSION_SECRET` | yes | Signs session JWTs and table QR HMAC tokens. |
+| `ADMIN_PASSWORD` | yes | Manager (admin) login password. |
+| `REQUIRE_TABLE_TOKEN` | no (default off) | **Strict-QR mode.** When `1`/`true`, dine-in orders and waiter calls must carry a valid signed QR token — a bare `?table=N` is rejected. Turn on once every physical QR is a signed one, to fully close table-spoofing. |
+
+## Testing
+
+```bash
+npm test          # run the unit suite once (vitest)
+npm run test:watch
+npm run lint      # eslint
+npx tsc --noEmit  # typecheck
+```
+
+CI (`.github/workflows/ci.yml`) runs lint → typecheck → tests on every push and PR.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

@@ -102,15 +102,18 @@ export function ReservationSheet({ className }: { className?: string }) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "inline-flex items-center gap-2 rounded-full border border-gold/40 px-5 py-2.5 text-xs uppercase tracking-[0.25em] text-gold transition-all duration-300 hover:bg-gold hover:text-primary-foreground hover:shadow-[0_4px_24px_-6px_var(--gold)]",
+          "flex w-full items-center gap-2.5 rounded-full border border-primary/30 px-4 py-3 text-[13.5px] font-medium text-primary transition-colors duration-300 hover:bg-primary/[0.05]",
           className
         )}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-4">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="size-[15px]">
+          <rect x="3" y="5" width="18" height="16" rx="3" />
+          <path d="M8 3v4M16 3v4M3 10h18" strokeLinecap="round" />
         </svg>
         {t(L.cta, locale)}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto size-3.5">
+          <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>

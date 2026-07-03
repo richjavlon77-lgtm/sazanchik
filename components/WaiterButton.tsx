@@ -35,7 +35,9 @@ export function WaiterButton() {
     if (!t1) return;
     if (!table) setTable(t1);
 
-    // Optimistic update — show success immediately
+    // Optimistic UI: show the "sending" badge immediately for a responsive
+    // feel, but the success toast only fires once the server confirms —
+    // otherwise a failed call still tells the guest help is on the way.
     setOptimisticStatus({ type, tableNum: t1 });
     setOpen(false);
 
@@ -45,11 +47,6 @@ export function WaiterButton() {
       water: UI_STRINGS.water_request as { ru: string; uz: string; en: string },
     };
 
-    toast.success(t(UI_STRINGS.call_sent, locale), {
-      description: `${t(UI_STRINGS.table, locale)} ${t1} · ${t(messages[type], locale)}`,
-    });
-
-    // Fire the actual API call in background
     startTransition(async () => {
       try {
         const res = await fetch("/api/orders/call-waiter", {
@@ -61,14 +58,25 @@ export function WaiterButton() {
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           console.error("Waiter call API error:", data.error ?? res.status);
-          // Don't revert optimism — the toast already confirmed.
-          // Staff might still get it via alternative channels.
+          setOptimisticStatus(null);
+          toast.error("Не удалось вызвать — попробуйте ещё раз", {
+            description: `${t(UI_STRINGS.table, locale)} ${t1}`,
+          });
+          return;
         }
+
+        toast.success(t(UI_STRINGS.call_sent, locale), {
+          description: `${t(UI_STRINGS.table, locale)} ${t1} · ${t(messages[type], locale)}`,
+        });
       } catch (err) {
         console.error("Waiter call network error:", err);
-      } finally {
         setOptimisticStatus(null);
+        toast.error("Нет сети — вызов не отправлен, попробуйте ещё раз", {
+          description: `${t(UI_STRINGS.table, locale)} ${t1}`,
+        });
+        return;
       }
+      setOptimisticStatus(null);
     });
   };
 
@@ -92,7 +100,7 @@ export function WaiterButton() {
         className={cn(
           "fixed right-5 z-50 flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-sm font-medium text-primary-foreground shadow-[0_8px_32px_-8px_rgba(212,178,106,0.6)] transition-all duration-500 hover:scale-105 active:scale-95",
           "md:right-8",
-          hasCart ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-8",
+          hasCart ? "bottom-24 md:bottom-28" : "bottom-safe-5 md:bottom-8",
           pending && "opacity-80"
         )}
         aria-label={t(UI_STRINGS.call_waiter_title, locale)}

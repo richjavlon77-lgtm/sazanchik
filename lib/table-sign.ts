@@ -33,3 +33,46 @@ export function verifyTableToken(token: string): string | null {
   if (a.length !== b.length) return null;
   return timingSafeEqual(a, b) ? num : null;
 }
+
+/**
+ * Strict-QR mode. When `REQUIRE_TABLE_TOKEN` is on, every dine-in action
+ * (order / waiter call) MUST carry a valid signed token — a bare `?table=N`
+ * is rejected. Turn this on once all physical QR codes are signed ones, to
+ * fully close table-spoofing. Default off, so legacy plain links keep working.
+ */
+export function tableTokenRequired(): boolean {
+  const v = process.env.REQUIRE_TABLE_TOKEN;
+  return v === "1" || v === "true";
+}
+
+export type TableResolution =
+  | { ok: true; table: string }
+  | { ok: false; error: string; status: number };
+
+/**
+ * Resolve the authoritative table from a request's `(tableNumber, tableToken)`:
+ *  - valid token  → its verified number (authoritative, cannot be forged)
+ *  - bad token     → reject (tampering)
+ *  - no token      → use tableNumber, unless strict-QR mode requires a token
+ * Centralised so the order and call-waiter routes stay consistent.
+ */
+export function resolveTable(
+  tableNumber: string,
+  tableToken?: string
+): TableResolution {
+  if (tableToken) {
+    const verified = verifyTableToken(tableToken);
+    if (!verified) {
+      return { ok: false, error: "Недействительный QR-код стола", status: 403 };
+    }
+    return { ok: true, table: verified };
+  }
+  if (tableTokenRequired()) {
+    return {
+      ok: false,
+      error: "Отсканируйте QR-код стола, чтобы сделать заказ",
+      status: 403,
+    };
+  }
+  return { ok: true, table: tableNumber };
+}

@@ -4,10 +4,10 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
+import { readLocal, useLocalString, writeLocal } from "@/lib/local-store";
 
 export type CartLine = {
   id: string;
@@ -49,24 +49,32 @@ function keyOf(id: string, variantKey?: string) {
   return variantKey ? `${id}::${variantKey}` : id;
 }
 
+function parseLines(raw: string | null): CartLine[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? (v as CartLine[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [lines, setLines] = useState<CartLine[]>([]);
+  // The cart lives in localStorage and is read via useSyncExternalStore —
+  // SSR-safe (server sees an empty cart) and synced across tabs for free.
+  const raw = useLocalString(STORAGE_KEY);
+  const lines = useMemo(() => parseLines(raw), [raw]);
   const [isOpen, setOpen] = useState(false);
   const [isBirthday, setBirthday] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setLines(JSON.parse(raw));
-    } catch {}
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
-  }, [lines, hydrated]);
+  /** Read-modify-write against the store (single source of truth). */
+  const setLines = useCallback(
+    (updater: (prev: CartLine[]) => CartLine[]) => {
+      const next = updater(parseLines(readLocal(STORAGE_KEY)));
+      writeLocal(STORAGE_KEY, JSON.stringify(next));
+    },
+    []
+  );
 
   const add = useCallback((line: Omit<CartLine, "qty">) => {
     setLines((prev) => {
@@ -79,14 +87,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { ...line, qty: 1 }];
     });
-  }, []);
+  }, [setLines]);
 
   const inc = useCallback((id: string, variantKey?: string) => {
     const k = keyOf(id, variantKey);
     setLines((prev) =>
       prev.map((l) => (keyOf(l.id, l.variantKey) === k ? { ...l, qty: l.qty + 1 } : l))
     );
-  }, []);
+  }, [setLines]);
 
   const dec = useCallback((id: string, variantKey?: string) => {
     const k = keyOf(id, variantKey);
@@ -97,17 +105,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         )
         .filter((l) => l.qty > 0)
     );
-  }, []);
+  }, [setLines]);
 
   const remove = useCallback((id: string, variantKey?: string) => {
     const k = keyOf(id, variantKey);
     setLines((prev) => prev.filter((l) => keyOf(l.id, l.variantKey) !== k));
-  }, []);
+  }, [setLines]);
 
   const clear = useCallback(() => {
-    setLines([]);
+    setLines(() => []);
     setBirthday(false);
-  }, []);
+  }, [setLines]);
 
   const totalItems = useMemo(
     () => lines.reduce((acc, l) => acc + l.qty, 0),

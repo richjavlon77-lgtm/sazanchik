@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { saveDish, deleteDish, type DishFormInput } from "@/lib/admin-actions";
+import { saveDish, deleteDish, discardUnsavedImage, type DishFormInput } from "@/lib/admin-actions";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { DishPreview } from "@/components/admin/DishPreview";
 
@@ -33,6 +33,7 @@ export function DishForm({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const initialImageUrl = initial?.imageUrl ?? "";
 
   const [form, setForm] = useState<DishFormInput>({
     categorySlug: initial?.categorySlug ?? categories[0]?.slug ?? "",
@@ -406,7 +407,14 @@ export function DishForm({
           </button>
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => {
+              // Photo was uploaded (storage/DB row created) but the form was
+              // never saved — clean it up instead of leaking it forever.
+              if (form.imageUrl && form.imageUrl !== initialImageUrl) {
+                discardUnsavedImage(form.imageUrl).catch(() => {});
+              }
+              router.back();
+            }}
             className="rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
           >
             Отмена

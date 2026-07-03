@@ -59,9 +59,11 @@ export function MenuProvider({
         t(item.name, "ru"),
         t(item.name, "uz"),
         t(item.name, "en"),
+        item.name.tr ?? "",
         item.description ? t(item.description, "ru") : "",
         item.description ? t(item.description, "uz") : "",
         item.description ? t(item.description, "en") : "",
+        item.description?.tr ?? "",
       ]
         .join(" ")
         .toLowerCase();
@@ -112,6 +114,13 @@ export function useMenu() {
   const ctx = useContext(MenuContext);
   if (!ctx) throw new Error("useMenu must be used inside MenuProvider");
   return ctx;
+}
+
+/** Like useMenu(), but returns null instead of throwing outside a
+ *  MenuProvider — for shared chrome (e.g. CartBar) mounted on pages
+ *  (like /print) that never wrap their content in one. */
+export function useMenuOptional() {
+  return useContext(MenuContext);
 }
 
 // Helper hook to debounce input

@@ -77,7 +77,7 @@ export default async function Home() {
       <OrnamentBackground />
       <ContentProvider value={{ restaurant, story }}>
         <TimeAwareMenuProvider menu={menu}>
-          {/* Full-bleed cinematic hero */}
+          {/* Flat light guest header */}
           <Hero />
           {/* Constrained menu column */}
           <main className="relative z-10 mx-auto w-full max-w-3xl px-6">

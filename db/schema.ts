@@ -3,6 +3,7 @@ import {
   uuid,
   text,
   integer,
+  doublePrecision,
   boolean,
   timestamp,
   jsonb,
@@ -23,9 +24,11 @@ export const categories = pgTable(
     nameRu: text("name_ru").notNull(),
     nameUz: text("name_uz").notNull(),
     nameEn: text("name_en").notNull(),
+    nameTr: text("name_tr"),
     introRu: text("intro_ru"),
     introUz: text("intro_uz"),
     introEn: text("intro_en"),
+    introTr: text("intro_tr"),
     sortOrder: integer("sort_order").notNull().default(0),
     isPublished: boolean("is_published").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -56,9 +59,11 @@ export const dishes = pgTable(
     nameRu: text("name_ru").notNull(),
     nameUz: text("name_uz").notNull(),
     nameEn: text("name_en").notNull(),
+    nameTr: text("name_tr"),
     descriptionRu: text("description_ru"),
     descriptionUz: text("description_uz"),
     descriptionEn: text("description_en"),
+    descriptionTr: text("description_tr"),
     /** nullable when item uses variants */
     price: integer("price"),
     imageUrl: text("image_url"),
@@ -72,6 +77,8 @@ export const dishes = pgTable(
     tagsEn: jsonb("tags_en").$type<string[]>().notNull().default([]),
     sortOrder: integer("sort_order").notNull().default(0),
     isPublished: boolean("is_published").notNull().default(true),
+    /** stop-list: cook can temporarily mark a dish unavailable (out of stock) */
+    inStock: boolean("in_stock").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -101,6 +108,7 @@ export const dishVariants = pgTable(
     labelRu: text("label_ru").notNull(),
     labelUz: text("label_uz").notNull(),
     labelEn: text("label_en").notNull(),
+    labelTr: text("label_tr"),
     price: integer("price").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -121,13 +129,16 @@ export const restaurant = pgTable(
     taglineRu: text("tagline_ru").notNull().default(""),
     taglineUz: text("tagline_uz").notNull().default(""),
     taglineEn: text("tagline_en").notNull().default(""),
+    taglineTr: text("tagline_tr").notNull().default(""),
     addressRu: text("address_ru").notNull().default(""),
     addressUz: text("address_uz").notNull().default(""),
     addressEn: text("address_en").notNull().default(""),
+    addressTr: text("address_tr").notNull().default(""),
     phone: text("phone").notNull().default(""),
     hoursRu: text("hours_ru").notNull().default(""),
     hoursUz: text("hours_uz").notNull().default(""),
     hoursEn: text("hours_en").notNull().default(""),
+    hoursTr: text("hours_tr").notNull().default(""),
     instagram: text("instagram").notNull().default(""),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
@@ -146,9 +157,11 @@ export const storyChapters = pgTable(
     titleRu: text("title_ru").notNull(),
     titleUz: text("title_uz").notNull(),
     titleEn: text("title_en").notNull(),
+    titleTr: text("title_tr"),
     bodyRu: text("body_ru").notNull(),
     bodyUz: text("body_uz").notNull(),
     bodyEn: text("body_en").notNull(),
+    bodyTr: text("body_tr"),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -159,6 +172,35 @@ export const storyChapters = pgTable(
   },
   (t) => [index("story_sort_idx").on(t.sortOrder)]
 );
+
+/** A table's bill: groups all orders of one visit until the waiter closes it. */
+export const tableSessions = pgTable(
+  "table_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tableNumber: text("table_number").notNull(),
+    status: text("status", { enum: ["open", "closed"] })
+      .notNull()
+      .default("open"),
+    guests: integer("guests"),
+    openedAt: timestamp("opened_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    closedBy: text("closed_by"),
+  },
+  (t) => [
+    // At most one open session per table — getOrCreateTableSession() relies
+    // on this to stay race-safe under concurrent order creation. (This
+    // index already existed live under this name; declaring it here just
+    // brings schema.ts in sync so `db:push` stops proposing to drop it.)
+    uniqueIndex("table_sessions_open_uidx")
+      .on(t.tableNumber)
+      .where(sql`${t.status} = 'open'`),
+  ]
+);
+
+export type TableSession = typeof tableSessions.$inferSelect;
 
 /**
  * Orders: placed from the cart
@@ -175,7 +217,20 @@ export const orders = pgTable(
     serviceCharge: integer("service_charge").notNull(),
     isBirthday: boolean("is_birthday").notNull().default(false),
     servedBy: text("served_by"),
+    drinksReady: boolean("drinks_ready").notNull().default(false),
+    hookahReady: boolean("hookah_ready").notNull().default(false),
+    foodReady: boolean("food_ready").notNull().default(false),
+    coldReady: boolean("cold_ready").notNull().default(false),
+    meatReady: boolean("meat_ready").notNull().default(false),
     itemsSnapshot: jsonb("items_snapshot").$type<OrderItemSnapshot[]>(),
+    /** which staff marked each prep station ready — { station: staffName } */
+    readyBy: jsonb("ready_by").$type<Record<string, string>>().notNull().default({}),
+    /** de-dupe double-submits / network retries (unique when present) */
+    idempotencyKey: text("idempotency_key"),
+    /** the table's bill this order belongs to */
+    sessionId: uuid("session_id").references(() => tableSessions.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -187,6 +242,11 @@ export const orders = pgTable(
     index("orders_status_idx").on(t.status),
     index("orders_table_idx").on(t.tableNumber),
     index("orders_created_idx").on(t.createdAt),
+    index("orders_session_idx").on(t.sessionId),
+    // De-dupes double-submits/retries (CartBar/order-queue idempotencyKey).
+    uniqueIndex("orders_idem_uidx")
+      .on(t.idempotencyKey)
+      .where(sql`${t.idempotencyKey} is not null`),
   ]
 );
 
@@ -198,6 +258,8 @@ export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
 
 export type OrderItemSnapshot = {
+  /** dish slug — lets cancellation reverse the stock deduction */
+  slug?: string;
   nameRu: string;
   nameUz: string;
   nameEn: string;
@@ -206,6 +268,16 @@ export type OrderItemSnapshot = {
   variantLabelEn?: string;
   quantity: number;
   price: number;
+  isDrink?: boolean;
+  isHookah?: boolean;
+  /** prep station: bar | hookah | cold | meat | kitchen */
+  station?: "bar" | "hookah" | "cold" | "meat" | "kitchen";
+  /** the prep station marked this single dish as cooked/ready — the waiter
+   *  board lights it up as "можно нести". Per-dish, lives in the snapshot. */
+  ready?: boolean;
+  /** waiter ticked this line off as carried to the table (per-dish checklist).
+   *  Stored in the snapshot so it syncs live across all staff devices. */
+  delivered?: boolean;
 };
 
 export const orderItems = pgTable(
@@ -281,6 +353,11 @@ export const staff = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
     pinHash: text("pin_hash").notNull(),
+    role: text("role", {
+      enum: ["waiter", "bartender", "hookah", "cook", "cold", "meat"],
+    })
+      .notNull()
+      .default("waiter"),
     zone: text("zone"),
     tables: jsonb("tables").$type<string[]>().notNull().default([]),
     isActive: boolean("is_active").notNull().default(true),
@@ -363,6 +440,160 @@ export const footballEvents = pgTable(
 );
 
 export type FootballEvent = typeof footballEvents.$inferSelect;
+
+/**
+ * Expenses: manual outflow records (purchases, rent, salary…) so the owner can
+ * see profit = revenue − expenses.
+ */
+export const expenses = pgTable(
+  "expenses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    amount: integer("amount").notNull(),
+    category: text("category", {
+      enum: ["purchase", "rent", "salary", "utilities", "other"],
+    })
+      .notNull()
+      .default("other"),
+    note: text("note"),
+    spentAt: timestamp("spent_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("expenses_spent_idx").on(t.spentAt)]
+);
+
+export type Expense = typeof expenses.$inferSelect;
+export type NewExpense = typeof expenses.$inferInsert;
+
+/**
+ * Inventory: warehouse ingredients ("товары для блюд") with current stock.
+ */
+export const ingredients = pgTable(
+  "ingredients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    unit: text("unit", { enum: ["g", "kg", "ml", "l", "pcs"] })
+      .notNull()
+      .default("pcs"),
+    stock: doublePrecision("stock").notNull().default(0),
+    minStock: doublePrecision("min_stock").notNull().default(0),
+    /** purchase cost per unit, in сум */
+    costPerUnit: integer("cost_per_unit").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("ingredients_name_idx").on(t.name)]
+);
+
+export type Ingredient = typeof ingredients.$inferSelect;
+export type NewIngredient = typeof ingredients.$inferInsert;
+
+/** Stock movements: receiving (+приход), write-off/consumption (−уход). */
+export const stockMovements = pgTable(
+  "stock_movements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ingredientId: uuid("ingredient_id")
+      .notNull()
+      .references(() => ingredients.id, { onDelete: "cascade" }),
+    delta: doublePrecision("delta").notNull(),
+    reason: text("reason", {
+      enum: ["receive", "writeoff", "order", "manual", "correction"],
+    })
+      .notNull()
+      .default("manual"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("stock_mov_ing_idx").on(t.ingredientId, t.createdAt)]
+);
+
+export type StockMovement = typeof stockMovements.$inferSelect;
+
+/** Recipe: how much of each ingredient a dish consumes ("товары для блюд"). */
+export const recipeItems = pgTable(
+  "recipe_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dishId: uuid("dish_id")
+      .notNull()
+      .references(() => dishes.id, { onDelete: "cascade" }),
+    ingredientId: uuid("ingredient_id")
+      .notNull()
+      .references(() => ingredients.id, { onDelete: "cascade" }),
+    qty: doublePrecision("qty").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("recipe_dish_ing_uidx").on(t.dishId, t.ingredientId),
+    index("recipe_dish_idx").on(t.dishId),
+  ]
+);
+
+export type RecipeItem = typeof recipeItems.$inferSelect;
+
+/** Payroll roster: everyone on salary (incl. non-login staff like cleaner). */
+export const employees = pgTable("employees", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  position: text("position").notNull().default("other"),
+  /** daily guaranteed rate (дневной гарант), in сум */
+  dailyRate: integer("daily_rate").notNull().default(0),
+  /** planned shift start "HH:MM" — for lateness tracking (optional) */
+  shiftStart: text("shift_start"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type Employee = typeof employees.$inferSelect;
+
+/** Work shifts: clock-in / clock-out for attendance and hours. */
+export const shifts = pgTable(
+  "shifts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    employeeId: uuid("employee_id")
+      .notNull()
+      .references(() => employees.id, { onDelete: "cascade" }),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("shifts_emp_idx").on(t.employeeId, t.startedAt),
+    // At most one open (not clocked-out) shift per employee — already
+    // existed live under this name; declaring it here keeps `db:push` from
+    // proposing to drop it.
+    uniqueIndex("shifts_open_uidx")
+      .on(t.employeeId)
+      .where(sql`${t.endedAt} is null`),
+  ]
+);
+
+export type Shift = typeof shifts.$inferSelect;
 
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;

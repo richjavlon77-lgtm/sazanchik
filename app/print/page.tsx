@@ -28,7 +28,9 @@ async function PrintPageInner({
 }) {
   const params = await searchParams;
   const locale: Locale =
-    params.lang === "uz" || params.lang === "en" ? params.lang : "ru";
+    params.lang === "uz" || params.lang === "en" || params.lang === "tr"
+      ? params.lang
+      : "ru";
 
   return (
     <div className="print-root">

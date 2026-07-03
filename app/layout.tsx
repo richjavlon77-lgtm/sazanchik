@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Golos_Text, Geist_Mono, Cormorant } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/components/I18nProvider";
@@ -7,10 +7,14 @@ import { ClientChrome } from "@/components/ClientChrome";
 import { CartProvider } from "@/lib/cart-context";
 import { FavoritesProvider } from "@/lib/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
+import { ErrorReporter } from "@/components/ErrorReporter";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
-const geistSans = Geist({
+// Body — Golos Text: Cyrillic-first, crisp UI sans (RU/UZ/EN/TR)
+const bodySans = Golos_Text({
   variable: "--font-sans",
   subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600"],
 });
 
 const geistMono = Geist_Mono({
@@ -18,10 +22,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const playfair = Playfair_Display({
+// Display — Cormorant: elegant serif for headings, prices, dish names
+const cormorant = Cormorant({
   variable: "--font-heading",
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 });
 
@@ -96,11 +101,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1a1611",
+  themeColor: "#fbf9f6",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  colorScheme: "dark light",
+  viewportFit: "cover",
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({
@@ -112,12 +118,12 @@ export default function RootLayout({
     <html
       lang="ru"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
+      className={`${bodySans.variable} ${geistMono.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col relative">
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
@@ -127,6 +133,8 @@ export default function RootLayout({
                 {children}
                 <ClientChrome />
                 <Toaster position="top-center" />
+                <ErrorReporter />
+                <ServiceWorkerRegister />
               </CartProvider>
             </FavoritesProvider>
           </I18nProvider>

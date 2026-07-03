@@ -1,6 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
+
+/** Wall-clock snapshot taken once on mount — stable across re-renders. */
+function useNow(): number {
+  const [now] = useState(() => Date.now());
+  return now;
+}
 import { toast } from "sonner";
 import { saveFootballEvent, deleteFootballEvent } from "@/lib/admin-actions";
 
@@ -28,6 +34,7 @@ function fmt(iso: string) {
 
 export function FootballManager({ initial }: { initial: EventRow[] }) {
   const [pending, start] = useTransition();
+  const now = useNow();
   const [form, setForm] = useState({
     homeTeam: "",
     awayTeam: "",
@@ -118,7 +125,7 @@ export function FootballManager({ initial }: { initial: EventRow[] }) {
         <div className="overflow-hidden rounded-xl border border-border bg-card/40">
           {initial.map((m) => {
             const label = `${m.homeTeam} — ${m.awayTeam}`;
-            const past = new Date(m.startsAt).getTime() < Date.now();
+            const past = new Date(m.startsAt).getTime() < now;
             return (
               <div
                 key={m.id}
