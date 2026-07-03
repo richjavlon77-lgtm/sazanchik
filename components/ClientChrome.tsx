@@ -11,6 +11,7 @@ import { OrderQueueFlusher } from "@/components/OrderQueueFlusher";
 // Staff/admin contours that must NOT show guest widgets.
 const STAFF_AREAS = [
   "/admin",
+  "/staff",
   "/waiter",
   "/bar",
   "/hookah",

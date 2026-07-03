@@ -33,15 +33,28 @@ const ROLE_HOME: Record<string, string> = {
 /** Shared PIN keypad for every staff contour. The destination after login
  *  follows the staff member's real role (returned by the API), so a single
  *  PIN always lands the person in their own panel. */
-export function PinLogin({ variant }: { variant: StaffVariant }) {
+export function PinLogin({
+  variant,
+  heading,
+}: {
+  variant: StaffVariant;
+  /** overrides the role name — the unified staff cover uses "Панель персонала" */
+  heading?: string;
+}) {
   return (
     <Suspense>
-      <PinPad variant={variant} />
+      <PinPad variant={variant} heading={heading} />
     </Suspense>
   );
 }
 
-function PinPad({ variant }: { variant: StaffVariant }) {
+function PinPad({
+  variant,
+  heading: headingOverride,
+}: {
+  variant: StaffVariant;
+  heading?: string;
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const explicitNext = params.get("next");
@@ -49,7 +62,7 @@ function PinPad({ variant }: { variant: StaffVariant }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const heading = HEADINGS[variant];
+  const heading = headingOverride ?? HEADINGS[variant];
 
   const submit = async (value: string) => {
     setBusy(true);
@@ -92,11 +105,16 @@ function PinPad({ variant }: { variant: StaffVariant }) {
   return (
     <main className="flex min-h-[100svh] flex-col items-center justify-center bg-background px-6">
       <div className="mb-8 flex flex-col items-center text-center">
-        <SazanFish className="mb-3 h-9 w-auto text-gold" />
-        <h1 className="font-heading text-2xl">
-          <span className="italic text-gold">{heading.charAt(0)}</span>
-          {heading.slice(1)}
-        </h1>
+        <SazanFish className="mb-3 h-10 w-auto text-foreground" />
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-heading text-[26px] font-semibold leading-none">
+            Сазанчик
+          </span>
+          <span className="text-[9px] font-semibold uppercase tracking-[0.24em] text-gold">
+            City
+          </span>
+        </div>
+        <p className="mt-3 font-heading text-lg text-foreground">{heading}</p>
         <p className="mt-1 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
           Введите свой PIN
         </p>
