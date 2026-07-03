@@ -6,6 +6,7 @@ import { createWaiterSession, SESSION_COOKIE } from "@/lib/auth";
 import { verifyPin, isValidPin } from "@/lib/staff-auth";
 import { rateLimitResponse } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/client-ip";
+import { openShift } from "@/lib/staff-shifts";
 
 export async function POST(request: Request) {
   const ip = clientIp(request);
@@ -65,6 +66,8 @@ export async function POST(request: Request) {
     ? (match.role as (typeof allowed)[number])
     : "waiter";
   const token = await createWaiterSession(match.id, match.name, role);
+  // Open a shift for this staff member (best-effort — never blocks login)
+  await openShift(match.id, match.name, role);
   const res = NextResponse.json(
     { ok: true, name: match.name, role },
     { headers: rl.headers }

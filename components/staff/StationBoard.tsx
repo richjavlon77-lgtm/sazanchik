@@ -172,7 +172,7 @@ export function StationBoard({
 
   const logout = async () => {
     await fetch("/waiter/api/logout", { method: "POST" });
-    router.push(cfg.loginPath);
+    router.push("/staff");
     router.refresh();
   };
 
@@ -212,9 +212,10 @@ export function StationBoard({
           )}
           <button
             onClick={logout}
+            title="Закрыть смену и сменить сотрудника"
             className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
           >
-            Выйти
+            🔑 Сменить
           </button>
         </div>
       </header>

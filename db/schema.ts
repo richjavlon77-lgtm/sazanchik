@@ -372,6 +372,33 @@ export type Staff = typeof staff.$inferSelect;
 export type NewStaff = typeof staff.$inferInsert;
 
 /**
+ * Staff shifts: opened when a person logs in by PIN, closed on logout.
+ * Gives the manager a "who was on the floor, when, and what they did" log.
+ */
+export const staffShifts = pgTable(
+  "staff_shifts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "cascade" }),
+    // name/role snapshot so the log survives staff edits/deletes
+    name: text("name").notNull(),
+    role: text("role").notNull(),
+    openedAt: timestamp("opened_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("staff_shifts_staff_idx").on(t.staffId, t.openedAt),
+    index("staff_shifts_open_idx").on(t.openedAt),
+  ]
+);
+
+export type StaffShift = typeof staffShifts.$inferSelect;
+
+/**
  * Waiter calls: "call waiter / bill / water" buttons from a table.
  * Persisted so the waiter board never loses a call (survives offline).
  */
