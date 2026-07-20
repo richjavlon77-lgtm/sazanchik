@@ -161,7 +161,7 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
-    scroll-padding-top: 4rem;
+    scroll-padding-top: 5rem;
     /* safety: stray-wide content never forces a horizontal scrollbar on mobile
        (clip, unlike hidden, keeps position:sticky working) */
     overflow-x: clip;

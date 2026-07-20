@@ -46,7 +46,7 @@ export function MenuSection({
       id={category.id}
       ref={ref}
       className={cn(
-        "relative scroll-mt-16",
+        "relative scroll-mt-24 pt-16 md:pt-24",
         entered && "section-enter"
       )}
     >
@@ -99,8 +99,6 @@ export function MenuSection({
           </Reveal>
         ))}
       </div>
-
-      <div className="h-8 md:h-12" />
     </section>
   );
 }

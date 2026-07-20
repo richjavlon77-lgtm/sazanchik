@@ -6,6 +6,13 @@ import { useMenu } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/SearchBar";
 
+function scrollToCategory(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY - 64;
+  window.scroll({ top, behavior: "smooth", left: 0 });
+}
+
 export function CategoryNav() {
   const { locale } = useLocale();
   const { filteredMenu, isFiltering } = useMenu();
@@ -53,8 +60,7 @@ export function CategoryNav() {
   }, [filteredMenu, isFiltering]);
 
   const handleClick = useCallback((id: string) => {
-    setActive(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToCategory(id);
     window.dispatchEvent(new CustomEvent("section-navigate"));
   }, []);
 
