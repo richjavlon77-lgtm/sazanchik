@@ -180,7 +180,7 @@ export function WaiterBoard({
   useEffect(() => {
     let es: EventSource | null = null;
     try {
-      es = new EventSource("/waiter/api/stream");
+      es = new EventSource("/api/staff/stream");
       es.onmessage = (e) => {
         if (e.data === "update") router.refresh();
       };
@@ -234,7 +234,7 @@ export function WaiterBoard({
     });
 
   const logout = async () => {
-    await fetch("/waiter/api/logout", { method: "POST" });
+    await fetch("/api/staff/logout", { method: "POST" });
     router.push("/staff");
     router.refresh();
   };

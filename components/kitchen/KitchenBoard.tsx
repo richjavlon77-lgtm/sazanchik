@@ -70,7 +70,7 @@ export function KitchenBoard({
   };
 
   const logout = async () => {
-    await fetch("/waiter/api/logout", { method: "POST" });
+    await fetch("/api/staff/logout", { method: "POST" });
     router.push("/kitchen/login");
     router.refresh();
   };

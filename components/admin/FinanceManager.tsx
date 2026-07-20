@@ -143,22 +143,52 @@ export function FinanceManager({ data }: { data: FinanceData }) {
 
       {/* Daily revenue chart */}
       <section>
-        <h3 className="mb-3 font-heading text-lg">Выручка по дням · 14 дней</h3>
-        <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-card/40 p-4">
-          {data.daily.map((d, i) => (
-            <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
-              <div className="flex h-32 w-full items-end">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-heading text-lg">Выручка по дням · 14 дней</h3>
+          <span className="text-[10px] tabular-nums text-muted-foreground">
+            макс. {fmt(maxDaily)}
+          </span>
+        </div>
+        <div className="relative rounded-2xl border border-border bg-card/40 p-4 pt-8">
+          {/* Y-axis reference lines */}
+          <div className="pointer-events-none absolute inset-0 px-4">
+            {[0.25, 0.5, 0.75].map((pct) => (
+              <div
+                key={pct}
+                className="absolute left-4 right-4 border-t border-border/30"
+                style={{ bottom: `${pct * 100}%` }}
+              />
+            ))}
+          </div>
+          <div className="flex items-end gap-1.5">
+            {data.daily.map((d, i) => {
+              const pct = (d.revenue / maxDaily) * 100;
+              return (
                 <div
-                  className="w-full rounded-t bg-gold/70 transition-all hover:bg-gold"
-                  style={{ height: `${Math.max(2, (d.revenue / maxDaily) * 100)}%` }}
-                  title={fmt(d.revenue)}
-                />
-              </div>
-              <span className="text-[9px] tabular-nums text-muted-foreground">
-                {d.label}
-              </span>
-            </div>
-          ))}
+                  key={i}
+                  className="group relative flex flex-1 flex-col items-center gap-1"
+                >
+                  {/* Tooltip on hover */}
+                  <div className="pointer-events-none absolute -top-7 z-10 scale-0 rounded-lg bg-foreground px-2 py-1 text-[10px] tabular-nums text-background opacity-0 shadow-lg transition-all group-hover:scale-100 group-hover:opacity-100">
+                    {fmt(d.revenue)}
+                  </div>
+                  <div className="flex h-36 w-full items-end">
+                    <div
+                      className="w-full rounded-t transition-all duration-500"
+                      style={{
+                        height: `${Math.max(2, pct)}%`,
+                        background:
+                          `linear-gradient(to top, hsl(42, 40%, 55%), hsl(42, 50%, 70%))`,
+                      }}
+                    />
+                  </div>
+                  <span className="text-[9px] tabular-nums text-muted-foreground">
+                    {d.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 

@@ -8,10 +8,11 @@ export default async function CashPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="font-heading text-3xl">Касса</h1>
+        <h1 className="font-heading text-3xl">Касса · Закрытые счета</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Архив закрытых счетов — деньги, фактически принятые по столам. Счёт
-          закрывает официант в /waiter/bills.
+          Фактически закрытые счета по столам. Счёт закрывает официант в
+          панели «Счета». Это кассовый учёт — в отличие от «Финансов», где
+          учитываются все заказы (включая открытые).
         </p>
       </div>
       <CashRegister data={data} />

@@ -4,10 +4,11 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
-import { readLocal, useLocalString, writeLocal } from "@/lib/local-store";
+import { readLocal, writeLocal } from "@/lib/local-store";
 
 export type CartLine = {
   id: string;
@@ -60,18 +61,29 @@ function parseLines(raw: string | null): CartLine[] {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  // The cart lives in localStorage and is read via useSyncExternalStore —
-  // SSR-safe (server sees an empty cart) and synced across tabs for free.
-  const raw = useLocalString(STORAGE_KEY);
-  const lines = useMemo(() => parseLines(raw), [raw]);
+  const [lines, setLinesState] = useState<CartLine[]>(() => {
+    return parseLines(readLocal(STORAGE_KEY));
+  });
   const [isOpen, setOpen] = useState(false);
   const [isBirthday, setBirthday] = useState(false);
 
-  /** Read-modify-write against the store (single source of truth). */
+  // Sync to localStorage on every change
+  useEffect(() => {
+    writeLocal(STORAGE_KEY, JSON.stringify(lines));
+  }, [lines]);
+
+  // Cross-tab sync via storage event
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) setLinesState(parseLines(e.newValue));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const setLines = useCallback(
     (updater: (prev: CartLine[]) => CartLine[]) => {
-      const next = updater(parseLines(readLocal(STORAGE_KEY)));
-      writeLocal(STORAGE_KEY, JSON.stringify(next));
+      setLinesState((prev) => updater(prev));
     },
     []
   );

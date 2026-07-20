@@ -81,18 +81,26 @@ export default async function AdminMenuPage() {
 
       {/* Stats */}
       <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Категорий" value={String(cats.length)} />
-        <StatCard
-          label="Блюд"
-          value={String(totalDishes)}
-          hint={`${published} опубл. · ${hidden} скрыто`}
-        />
-        <StatCard label="Средний чек" value={formatPrice(avgPrice, "ru")} />
-        <StatCard
-          label="Опубликовано"
-          value={`${totalDishes ? Math.round((published / totalDishes) * 100) : 0}%`}
-          hint={`${hidden} скрытых`}
-        />
+        <div className="card-enter card-enter-d1">
+          <StatCard label="Категорий" value={String(cats.length)} />
+        </div>
+        <div className="card-enter card-enter-d2">
+          <StatCard
+            label="Блюд"
+            value={String(totalDishes)}
+            hint={`${published} опубл. · ${hidden} скрыто`}
+          />
+        </div>
+        <div className="card-enter card-enter-d3">
+          <StatCard label="Средний чек" value={formatPrice(avgPrice, "ru")} />
+        </div>
+        <div className="card-enter card-enter-d4">
+          <StatCard
+            label="Опубликовано"
+            value={`${totalDishes ? Math.round((published / totalDishes) * 100) : 0}%`}
+            hint={`${hidden} скрытых`}
+          />
+        </div>
       </div>
 
       <div className="space-y-8">

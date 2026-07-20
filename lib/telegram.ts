@@ -54,7 +54,8 @@ export async function sendOrderToTelegram(
     `<b>ИТОГО К ОПЛАТЕ: ${formatPrice(total)}</b>`,
   ]
     .filter(Boolean)
-    .join("\n");
+    .join("\n")
+    .slice(0, 4000); // Telegram soft-limit is 4096 chars
 
   const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
 

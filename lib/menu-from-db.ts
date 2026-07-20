@@ -63,12 +63,11 @@ export async function getMenuFromDb(): Promise<MenuCategory[]> {
       }
 
       const tags: Localized[] = [];
-      const len = Math.max(d.tagsRu.length, d.tagsUz.length, d.tagsEn.length);
-      for (let i = 0; i < len; i++) {
+      for (let i = 0; i < d.tagsRu.length; i++) {
         tags.push({
           ru: d.tagsRu[i] ?? "",
-          uz: d.tagsUz[i] ?? "",
-          en: d.tagsEn[i] ?? "",
+          uz: d.tagsUz[i] ?? d.tagsRu[i] ?? "",
+          en: d.tagsEn[i] ?? d.tagsRu[i] ?? "",
         });
       }
 
