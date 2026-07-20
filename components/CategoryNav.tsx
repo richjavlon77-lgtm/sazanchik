@@ -6,29 +6,6 @@ import { useMenu } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/SearchBar";
 
-function smoothScrollTo(targetId: string) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-
-  const target = el.getBoundingClientRect().top + window.scrollY - 80;
-  const start = window.scrollY;
-  const diff = target - start;
-  const duration = Math.min(Math.abs(diff) * 0.5, 900);
-  const startTime = performance.now();
-
-  function ease(t: number): number {
-    return 1 - Math.pow(1 - t, 3);
-  }
-
-  function step(now: number) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    window.scrollTo(0, start + diff * ease(progress));
-    if (progress < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
 export function CategoryNav() {
   const { locale } = useLocale();
   const { filteredMenu, isFiltering } = useMenu();
@@ -75,16 +52,11 @@ export function CategoryNav() {
     return () => observer.disconnect();
   }, [filteredMenu, isFiltering]);
 
-  const handleClick = useCallback(
-    (id: string) => {
-      setActive(id);
-      smoothScrollTo(id);
-      window.dispatchEvent(
-        new CustomEvent("section-navigate", { detail: { id } })
-      );
-    },
-    []
-  );
+  const handleClick = useCallback((id: string) => {
+    setActive(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.dispatchEvent(new CustomEvent("section-navigate"));
+  }, []);
 
   return (
     <div className="sticky top-0 z-40 -mx-6 border-b border-border bg-background/85 px-6 backdrop-blur-md">
