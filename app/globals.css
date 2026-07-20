@@ -346,6 +346,71 @@
     animation: fadeInUp 0.7s ease-out both;
   }
 
+  /* Section entrance — triggers when a category scrolls into view */
+  .section-enter {
+    animation: sectionEnter 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes sectionEnter {
+    from {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Brief glow-chase when navigating to a category via nav click */
+  .section-nav-in {
+    animation: sectionNavIn 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes sectionNavIn {
+    0% {
+      opacity: 0.6;
+      transform: translateY(-6px);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(2px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Per-item stagger container — items animate when the section activates */
+  .item-stagger > * {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: itemStaggerIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .item-stagger > *:nth-child(1) { animation-delay: 0.02s; }
+  .item-stagger > *:nth-child(2) { animation-delay: 0.04s; }
+  .item-stagger > *:nth-child(3) { animation-delay: 0.06s; }
+  .item-stagger > *:nth-child(4) { animation-delay: 0.08s; }
+  .item-stagger > *:nth-child(5) { animation-delay: 0.1s; }
+  .item-stagger > *:nth-child(6) { animation-delay: 0.12s; }
+  .item-stagger > *:nth-child(7) { animation-delay: 0.14s; }
+  .item-stagger > *:nth-child(8) { animation-delay: 0.16s; }
+  .item-stagger > *:nth-child(9) { animation-delay: 0.18s; }
+  .item-stagger > *:nth-child(10) { animation-delay: 0.2s; }
+  .item-stagger > *:nth-child(11) { animation-delay: 0.22s; }
+  .item-stagger > *:nth-child(12) { animation-delay: 0.24s; }
+  .item-stagger > *:nth-child(13) { animation-delay: 0.26s; }
+  .item-stagger > *:nth-child(14) { animation-delay: 0.28s; }
+  .item-stagger > *:nth-child(15) { animation-delay: 0.3s; }
+  .item-stagger > *:nth-child(n+16) { animation-delay: 0.32s; }
+
+  @keyframes itemStaggerIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   /* Scale-in for cards entering viewport */
   .card-enter {
     animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;

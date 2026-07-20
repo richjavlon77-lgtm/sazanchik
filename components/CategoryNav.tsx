@@ -1,10 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, t } from "@/lib/i18n";
 import { useMenu } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/SearchBar";
+
+function smoothScrollTo(targetId: string) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+
+  const target = el.getBoundingClientRect().top + window.scrollY - 80;
+  const start = window.scrollY;
+  const diff = target - start;
+  const duration = Math.min(Math.abs(diff) * 0.5, 900);
+  const startTime = performance.now();
+
+  function ease(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function step(now: number) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    window.scrollTo(0, start + diff * ease(progress));
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
 
 export function CategoryNav() {
   const { locale } = useLocale();
@@ -12,8 +35,6 @@ export function CategoryNav() {
   const [active, setActive] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
 
-  // "Adjust state during render" (react.dev pattern): when the visible menu
-  // changes, reset the active chip to its first category — no effect needed.
   const firstId = !isFiltering && filteredMenu.length ? filteredMenu[0].id : null;
   const [prevFirstId, setPrevFirstId] = useState<string | null>(firstId);
   if (firstId !== prevFirstId) {
@@ -21,7 +42,6 @@ export function CategoryNav() {
     if (firstId) setActive(firstId);
   }
 
-  // Keep the active chip in view as you scroll through the menu
   useEffect(() => {
     if (!active || !navRef.current) return;
     const btn = navRef.current.querySelector<HTMLElement>(
@@ -55,12 +75,16 @@ export function CategoryNav() {
     return () => observer.disconnect();
   }, [filteredMenu, isFiltering]);
 
-  const handleClick = (id: string) => {
-    setActive(id);
-    document
-      .getElementById(id)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  const handleClick = useCallback(
+    (id: string) => {
+      setActive(id);
+      smoothScrollTo(id);
+      window.dispatchEvent(
+        new CustomEvent("section-navigate", { detail: { id } })
+      );
+    },
+    []
+  );
 
   return (
     <div className="sticky top-0 z-40 -mx-6 border-b border-border bg-background/85 px-6 backdrop-blur-md">
