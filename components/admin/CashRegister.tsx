@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CashData, ClosedCheck } from "@/lib/cash-data";
+import { tableLabel } from "@/lib/tables";
 import { cn } from "@/lib/utils";
 
 const money = (n: number) => n.toLocaleString("ru-RU") + " сум";
@@ -85,7 +86,7 @@ export function CashRegister({ data }: { data: CashData }) {
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">Стол №{c.tableNumber}</span>
+                        <span className="font-medium">{tableLabel(c.tableNumber)}</span>
                         <span className="text-[11px] text-muted-foreground">
                           {c.orderCount} заказ. · {c.durationMin} мин
                         </span>

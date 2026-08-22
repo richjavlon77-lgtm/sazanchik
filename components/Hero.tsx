@@ -3,6 +3,7 @@
 import { useLocale, t, UI_STRINGS } from "@/lib/i18n";
 import { useContent } from "@/lib/content-context";
 import { useTableNumber } from "@/lib/table";
+import { guestTableLabel } from "@/lib/tables";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ReservationSheet } from "@/components/ReservationSheet";
 import { SazanFish } from "@/components/icons/SazanFish";
@@ -42,7 +43,7 @@ export function Hero() {
         {table && (
           <span className="mb-1.5 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/[0.08] px-3.5 py-2 text-xs font-semibold text-primary">
             <span className="size-1.5 rounded-full bg-gold" />
-            {t(UI_STRINGS.table, locale)} {table}
+            {guestTableLabel(table, t(UI_STRINGS.table, locale))}
           </span>
         )}
       </div>

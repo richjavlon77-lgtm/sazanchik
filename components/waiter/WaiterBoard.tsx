@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { advanceOrder, resolveCall, toggleItemDelivered } from "@/lib/waiter-actions";
 import { OrderComposer } from "@/components/waiter/OrderComposer";
 import type { ComposerItem } from "@/lib/composer-data";
+import { tableLabel } from "@/lib/tables";
 import { cn } from "@/lib/utils";
 
 export type BoardOrder = {
@@ -219,7 +220,7 @@ export function WaiterBoard({
     });
 
   const doCancel = (id: string, table: string) => {
-    if (!confirm(`Отменить заказ стола №${table}? Склад вернётся.`)) return;
+    if (!confirm(`Отменить заказ · ${tableLabel(table)}? Склад вернётся.`)) return;
     doOrder(id, "cancelled", "Заказ отменён");
   };
 
@@ -319,7 +320,7 @@ export function WaiterBoard({
                   <span className="text-2xl">{m.icon}</span>
                   <div>
                     <div className="font-heading text-lg">
-                      Стол №{c.tableNumber}
+                      {tableLabel(c.tableNumber)}
                     </div>
                     <div className="text-xs text-red-300">
                       {m.label} · {timeAgo(c.createdAt)}
@@ -361,7 +362,7 @@ export function WaiterBoard({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-heading text-xl">
-                      Стол №{o.tableNumber}
+                      {tableLabel(o.tableNumber)}
                     </span>
                     <span
                       className={cn(

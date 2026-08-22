@@ -1,3 +1,4 @@
+import { tableLabel } from "@/lib/tables";
 
 type TelegramEnv = {
   botToken?: string;
@@ -45,7 +46,7 @@ export async function sendOrderToTelegram(
 
   const message = [
     `<b>Поступил ЗАКАЗ №${orderId.slice(0, 8)}</b>`,
-    `Стол №${tableNumber}`,
+    tableLabel(tableNumber),
     `───────────────────────────`,
     lines,
     `───────────────────────────`,
@@ -174,7 +175,7 @@ export async function sendWaiterCallToTelegram(
 
   const message = [
     `<b>${labelMap[type]}</b>`,
-    `Стол №${tableNumber}`,
+    tableLabel(tableNumber),
     type === "waiter" ? `⏱ Срочно!` : "",
   ]
     .filter(Boolean)
@@ -231,7 +232,7 @@ export async function sendReservationToTelegram(input: {
     `Телефон: ${escapeHtml(input.phone)}`,
     `Когда: <b>${when}</b> (Ташкент)`,
     `Гостей: ${input.guests}`,
-    input.tableNumber ? `Стол: №${escapeHtml(input.tableNumber)}` : "",
+    input.tableNumber ? escapeHtml(tableLabel(input.tableNumber)) : "",
     input.isBirthday ? `🎂 День рождения — скидка 10% (проверить документ)` : "",
     input.comment ? `Комментарий: ${escapeHtml(input.comment)}` : "",
   ]

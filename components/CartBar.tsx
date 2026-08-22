@@ -4,6 +4,7 @@ import { useCart } from "@/lib/cart-context";
 import { writeLocal } from "@/lib/local-store";
 import { useLocale, t, formatPrice, UI_STRINGS } from "@/lib/i18n";
 import { useTableNumber } from "@/lib/table";
+import { guestTableLabel, tableAlias } from "@/lib/tables";
 import { getRecommendations } from "@/lib/pairings";
 import { useMenuOptional } from "@/lib/menu-context";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,8 @@ export function CartBar() {
     add,
   } = useCart();
   const { table, tableToken, setTable } = useTableNumber();
+  // У VIP-кабины собственное имя («VIP 1»), номер гостю показывать незачем.
+  const vipName = table ? tableAlias(table) : null;
   const [placing, startTransition] = useTransition();
   const [placed, setPlaced] = useState(false);
 
@@ -212,7 +215,7 @@ export function CartBar() {
             </SheetTitle>
             <SheetDescription className="text-xs">
               {totalItems > 0
-                ? `${totalItems} ${t(UI_STRINGS.cart_items, locale).toLowerCase()}${table ? ` · ${t(UI_STRINGS.table, locale)} #${table}` : ""}`
+                ? `${totalItems} ${t(UI_STRINGS.cart_items, locale).toLowerCase()}${table ? ` · ${guestTableLabel(table, t(UI_STRINGS.table, locale))}` : ""}`
                 : t(UI_STRINGS.cart_empty, locale)}
             </SheetDescription>
           </SheetHeader>
@@ -369,7 +372,7 @@ export function CartBar() {
               <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-gold/20 bg-gold/[0.04] px-4 py-3">
                 <span className="text-sm">
                   <span className="font-heading text-base">
-                    {t(UI_STRINGS.table, locale)}
+                    {vipName ?? t(UI_STRINGS.table, locale)}
                   </span>
                   {!table && (
                     <span className="ml-2 text-[11px] text-gold">
@@ -384,9 +387,11 @@ export function CartBar() {
                 </span>
                 {tableToken ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-center font-heading text-lg tabular-nums">
-                      {table}
-                    </span>
+                    {!vipName && (
+                      <span className="w-20 rounded-lg border border-border bg-background px-3 py-2 text-center font-heading text-lg tabular-nums">
+                        {table}
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={() => {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createManualOrder } from "@/lib/waiter-actions";
 import type { ComposerItem } from "@/lib/composer-data";
+import { tableAlias, VIP_TABLE_NUMBERS } from "@/lib/tables";
 import { cn } from "@/lib/utils";
 
 export function OrderComposer({
@@ -121,7 +122,7 @@ export function OrderComposer({
       <div className="space-y-2 border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-xs uppercase tracking-wider text-muted-foreground">
-            Стол №
+            {tableAlias(table) ?? "Стол №"}
           </span>
           <input
             value={table}
@@ -130,6 +131,24 @@ export function OrderComposer({
             placeholder="5"
             className="w-20 rounded-lg border border-border bg-background px-3 py-1.5 text-sm tabular-nums outline-none focus:border-gold/60"
           />
+          {/* Кабины идут отдельной нумерацией — официанту не нужно помнить, что VIP 1 это 33 */}
+          <span className="flex gap-1">
+            {VIP_TABLE_NUMBERS.map((num) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => setTable(num)}
+                className={cn(
+                  "rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider transition-colors",
+                  table === num
+                    ? "border-gold/60 bg-gold/15 text-gold"
+                    : "border-border text-muted-foreground hover:border-gold/40 hover:text-gold"
+                )}
+              >
+                {tableAlias(num)}
+              </button>
+            ))}
+          </span>
           <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
             <input
               type="checkbox"

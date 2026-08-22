@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useLocale, t, UI_STRINGS } from "@/lib/i18n";
 import { useTableNumber } from "@/lib/table";
+import { guestTableLabel } from "@/lib/tables";
 import { useCart } from "@/lib/cart-context";
 import { cn } from "@/lib/utils";
 import {
@@ -60,19 +61,19 @@ export function WaiterButton() {
           console.error("Waiter call API error:", data.error ?? res.status);
           setOptimisticStatus(null);
           toast.error("Не удалось вызвать — попробуйте ещё раз", {
-            description: `${t(UI_STRINGS.table, locale)} ${t1}`,
+            description: guestTableLabel(t1, t(UI_STRINGS.table, locale)),
           });
           return;
         }
 
         toast.success(t(UI_STRINGS.call_sent, locale), {
-          description: `${t(UI_STRINGS.table, locale)} ${t1} · ${t(messages[type], locale)}`,
+          description: `${guestTableLabel(t1, t(UI_STRINGS.table, locale))} · ${t(messages[type], locale)}`,
         });
       } catch (err) {
         console.error("Waiter call network error:", err);
         setOptimisticStatus(null);
         toast.error("Нет сети — вызов не отправлен, попробуйте ещё раз", {
-          description: `${t(UI_STRINGS.table, locale)} ${t1}`,
+          description: guestTableLabel(t1, t(UI_STRINGS.table, locale)),
         });
         return;
       }
@@ -87,7 +88,7 @@ export function WaiterButton() {
       bill: "Счёт запрошен",
       water: "Вода запрошена",
     };
-    return `${labels[optimisticStatus.type]} · Стол #${optimisticStatus.tableNum}`;
+    return `${labels[optimisticStatus.type]} · ${guestTableLabel(optimisticStatus.tableNum, t(UI_STRINGS.table, locale))}`;
   })();
 
   return (

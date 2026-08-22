@@ -7,6 +7,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { closeBill } from "@/lib/bills-actions";
 import type { Bill } from "@/lib/bills-data";
+import { tableLabel } from "@/lib/tables";
 import { cn } from "@/lib/utils";
 
 function timeAgo(iso: string): string {
@@ -55,14 +56,14 @@ export function BillsBoard({ bills, name }: { bills: Bill[]; name: string }) {
   const close = (b: Bill) => {
     if (
       !confirm(
-        `Закрыть счёт стола №${b.tableNumber} на ${b.total.toLocaleString("ru-RU")} сум? Гость оплатил.`
+        `Закрыть счёт · ${tableLabel(b.tableNumber)} на ${b.total.toLocaleString("ru-RU")} сум? Гость оплатил.`
       )
     )
       return;
     start(async () => {
       try {
         await closeBill(b.id);
-        toast.success(`Счёт стола №${b.tableNumber} закрыт`);
+        toast.success(`Счёт закрыт · ${tableLabel(b.tableNumber)}`);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Не удалось закрыть");
       }
@@ -116,7 +117,7 @@ export function BillsBoard({ bills, name }: { bills: Bill[]; name: string }) {
               >
                 <div className="flex items-center justify-between">
                   <span className="font-heading text-xl">
-                    Стол №{b.tableNumber}
+                    {tableLabel(b.tableNumber)}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
                     {b.orderCount} заказ. · {timeAgo(b.openedAt)}

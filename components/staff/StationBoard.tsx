@@ -14,6 +14,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { markStationReady, toggleItemReady } from "@/lib/station-actions";
 import { STATIONS, type StationKey } from "@/lib/stations";
+import { tableLabel } from "@/lib/tables";
 import { cn } from "@/lib/utils";
 
 export type StationOrder = {
@@ -241,7 +242,7 @@ export function StationBoard({
               >
                 <div className="flex items-center justify-between">
                   <span className="font-heading text-xl">
-                    Стол №{o.tableNumber}
+                    {tableLabel(o.tableNumber)}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
                     {timeAgo(o.createdAt)}

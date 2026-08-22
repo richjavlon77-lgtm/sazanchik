@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { reservations } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import { ReservationActions } from "@/components/admin/ReservationActions";
+import { tableLabel } from "@/lib/tables";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,7 @@ export default async function ReservationsPage() {
                       {r.phone}
                     </a>{" "}
                     · {fmt(r.reservedAt)} · {r.guests} гость(ей)
-                    {r.tableNumber ? ` · стол №${r.tableNumber}` : ""}
+                    {r.tableNumber ? ` · ${tableLabel(r.tableNumber)}` : ""}
                   </div>
                   {r.comment && (
                     <div className="mt-1 text-xs text-muted-foreground/80 italic">
