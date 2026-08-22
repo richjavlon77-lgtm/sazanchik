@@ -450,6 +450,50 @@ export type Upload = typeof uploads.$inferSelect;
  * Football events: match screenings the restaurant hosts ("watch the game here")
  */
 /**
+ * Онлайн-платежи по счёту стола (Payme / Click). Одна строка — одна
+ * транзакция провайдера; жизненный цикл по протоколу провайдера:
+ * created → paid, или отмена (cancelled). Якорь платежа — счёт стола
+ * (table_sessions.id), его и передаём в account/transaction_param.
+ */
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => tableSessions.id, { onDelete: "restrict" }),
+    provider: text("provider").$type<"payme" | "click">().notNull(),
+    /** id транзакции на стороне провайдера */
+    providerTxnId: text("provider_txn_id").notNull(),
+    /** сумма в сумах (Payme шлёт тийины — конверсия в адаптере) */
+    amount: integer("amount").notNull(),
+    state: text("state")
+      .$type<"created" | "paid" | "cancelled">()
+      .notNull()
+      .default("created"),
+    /** millis-время протокола Payme (create/perform/cancel) */
+    providerCreateTime: timestamp("provider_create_time", { withTimezone: true }),
+    performTime: timestamp("perform_time", { withTimezone: true }),
+    cancelTime: timestamp("cancel_time", { withTimezone: true }),
+    /** код причины отмены (Payme reason / Click error) */
+    cancelReason: integer("cancel_reason"),
+    /** было ли оплачено до отмены (Payme state -2 vs -1) */
+    paidBeforeCancel: boolean("paid_before_cancel").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("payments_provider_txn_uidx").on(t.provider, t.providerTxnId),
+    index("payments_session_idx").on(t.sessionId),
+    index("payments_state_idx").on(t.state, t.createdAt),
+  ]
+);
+
+/**
  * Аудит-лог чувствительных действий персонала: отмена заказа, закрытие
  * счёта, ручная корректировка склада, выплата зарплаты, удаление расхода.
  * Классическая дыра общепита — бесследная отмена; лог делает её видимой.

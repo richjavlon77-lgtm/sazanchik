@@ -270,3 +270,38 @@ function escapeHtml(s: string): string {
 function formatPrice(amount: number): string {
   return `${amount.toLocaleString("ru-RU")} сум`;
 }
+
+/** Уведомление об успешной онлайн-оплате счёта (Payme/Click). */
+export async function sendPaymentToTelegram(
+  provider: "payme" | "click",
+  tableNumber: string,
+  amount: number
+): Promise<{ ok: boolean }> {
+  const env = getEnv();
+  if (!isConfigured(env)) return { ok: false };
+
+  const label = provider === "payme" ? "Payme" : "Click";
+  const message = [
+    `<b>💳 Оплата онлайн (${label})</b>`,
+    tableLabel(tableNumber),
+    `Сумма: <b>${formatPrice(amount)}</b>`,
+    `Проверьте и закройте счёт.`,
+  ].join("\n");
+
+  const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_notification: false,
+    }),
+  });
+  if (!res.ok) {
+    console.error("Telegram payment notify failed:", res.status);
+    return { ok: false };
+  }
+  return { ok: true };
+}

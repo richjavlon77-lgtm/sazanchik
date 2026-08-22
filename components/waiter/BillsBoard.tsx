@@ -132,6 +132,37 @@ export function BillsBoard({ bills, name }: { bills: Bill[]; name: string }) {
                   ))}
                 </ul>
 
+                {/* Онлайн-оплата: бейдж «оплачено» / ссылки, когда провайдер включён */}
+                {b.paidOnline >= b.total && b.total > 0 && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-400">
+                    💳 Оплачено онлайн · {b.paidOnline.toLocaleString("ru-RU")} сум
+                  </div>
+                )}
+                {b.paidOnline < b.total && (b.paymeUrl || b.clickUrl) && (
+                  <div className="mt-2 flex gap-2">
+                    {b.paymeUrl && (
+                      <a
+                        href={b.paymeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+                      >
+                        Payme
+                      </a>
+                    )}
+                    {b.clickUrl && (
+                      <a
+                        href={b.clickUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+                      >
+                        Click
+                      </a>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <span className="font-heading text-lg tabular-nums text-gold">
                     {b.total.toLocaleString("ru-RU")} сум
