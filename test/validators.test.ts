@@ -82,6 +82,21 @@ describe("createReservationSchema", () => {
     expect(r.success).toBe(true);
   });
 
+  it("treats the input as Tashkent time, not server time", () => {
+    // «Час назад по Ташкенту»: naive new Date() на UTC-сервере посчитал бы
+    // эту строку будущим (+5ч слак) — parseTashkentLocal режет корректно.
+    const hourAgoTashkent = new Date(Date.now() + 5 * 3_600_000 - 3_600_000)
+      .toISOString()
+      .slice(0, 16);
+    const r = createReservationSchema.safeParse({
+      name: "Иван",
+      phone: "+998901234567",
+      guests: 4,
+      reservedAt: hourAgoTashkent,
+    });
+    expect(r.success).toBe(false);
+  });
+
   it("rejects a past reservation date", () => {
     const past = new Date(Date.now() - 86_400_000).toISOString().slice(0, 16);
     const r = createReservationSchema.safeParse({

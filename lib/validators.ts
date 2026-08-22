@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseTashkentLocal } from "@/lib/tz";
 
 const cartLineSchema = z.object({
   id: z.string().min(1),
@@ -48,11 +49,13 @@ export const createReservationSchema = z.object({
     .max(25)
     .regex(/^[+\d][\d\s()-]{6,}$/, "Некорректный телефон"),
   guests: z.number().int().min(1, "Минимум 1 гость").max(50),
-  // Local datetime string from <input type=datetime-local>; must be in the future
+  // Local datetime string from <input type=datetime-local>; must be in the future.
+  // Гость вводит ташкентское время — сравниваем через parseTashkentLocal, иначе
+  // naive new Date() на UTC-сервере Vercel даёт слак ±5 часов.
   reservedAt: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, "Укажите дату и время")
-    .refine((v) => new Date(v).getTime() > Date.now() - 60_000, {
+    .refine((v) => parseTashkentLocal(v).getTime() > Date.now() - 60_000, {
       message: "Дата должна быть в будущем",
     }),
   tableNumber: z.string().trim().max(10).optional().or(z.literal("")),

@@ -4,7 +4,6 @@ import {
   STATION_READY_COLUMN,
   stationForCategory,
   itemStation,
-  type StationKey,
 } from "@/lib/stations";
 
 describe("STATIONS config", () => {
