@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { generateTableQRs } from "@/lib/admin-actions";
+import { tableLabel } from "@/lib/tables";
 
 type TableQR = { num: number; url: string; qr: string };
 
 export function TablesQR() {
-  const [count, setCount] = useState(10);
+  const [count, setCount] = useState(35);
   const [items, setItems] = useState<TableQR[]>([]);
   const [pending, start] = useTransition();
 
@@ -47,14 +48,14 @@ export function TablesQR() {
         >
           {pending ? "Генерируем…" : "Сгенерировать QR"}
         </button>
-        {items.length > 0 && (
-          <button
-            onClick={() => window.print()}
-            className="rounded-full border border-border px-5 py-2 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
-          >
-            🖨 Распечатать
-          </button>
-        )}
+        <a
+          href={`/print/qr?count=${count}`}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-full border border-border px-5 py-2 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+        >
+          🖨 Файл для типографии
+        </a>
       </div>
 
       {items.length === 0 ? (
@@ -70,9 +71,9 @@ export function TablesQR() {
               className="flex break-inside-avoid flex-col items-center rounded-2xl border border-border bg-white p-4 text-center"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={it.qr} alt={`Стол ${it.num}`} className="w-full" />
+              <img src={it.qr} alt={tableLabel(it.num)} className="w-full" />
               <div className="mt-2 font-heading text-lg text-[#1a1611]">
-                Стол №{it.num}
+                {tableLabel(it.num)}
               </div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-[#1a1611]/50">
                 Сазанчик · меню

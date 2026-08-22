@@ -1,0 +1,214 @@
+/* ─────────────────────────────────────────────────────────────
+   QR-карточки столов — полиграфия
+   Трим-размер карточки: 90 × 125 мм, вылеты 2 мм на сторону
+   (тёмный фон уходит за линию реза), метки реза по углам.
+   Лист A4 — 2×2 карточки. Стиль — в тон печатного меню.
+   ───────────────────────────────────────────────────────────── */
+
+@page {
+  size: A4;
+  margin: 8mm;
+}
+
+:root {
+  --ink: #101613;
+  --paper: #f7f2e8;
+  --gold: #c5a35c;
+  --gold-deep: #9c7f3f;
+}
+
+/* Скрыть оверлеи приложения */
+body > .fixed,
+body [class*="sonner"] {
+  display: none !important;
+}
+
+.qr-root {
+  font-family: var(--font-heading), Georgia, serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    background-image: none !important;
+  }
+  body::before,
+  body::after {
+    display: none !important;
+  }
+}
+
+/* Экранный предпросмотр — листы на тёмном сукне */
+@media screen {
+  body {
+    background: #0c110f;
+  }
+  .qr-root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 40px 0;
+  }
+  .qr-sheet {
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    padding: 8mm;
+  }
+}
+
+/* ── Лист: 2×2 ── */
+.qr-sheet {
+  display: grid;
+  grid-template-columns: repeat(2, 94mm);
+  justify-content: center;
+  align-content: center;
+  gap: 6mm;
+  page-break-after: always;
+}
+
+.qr-sheet:last-child {
+  page-break-after: auto;
+}
+
+/* Ячейка = карточка с вылетами (94×129) + место под метки */
+.qr-cell {
+  position: relative;
+  width: 94mm;
+  height: 129mm;
+}
+
+/* ── Метки реза ──
+   Точка (0×0) ставится на угол трим-линии (2 мм от края вылета),
+   от неё наружу выходят две черты, продолжающие линии реза. */
+.crop {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 2;
+}
+
+.crop::before,
+.crop::after {
+  content: "";
+  position: absolute;
+  background: #8a8a8a;
+}
+
+/* горизонтальная черта */
+.crop::before {
+  width: 3mm;
+  height: 0.25mm;
+}
+
+/* вертикальная черта */
+.crop::after {
+  width: 0.25mm;
+  height: 3mm;
+}
+
+.crop.tl { top: 2mm; left: 2mm; }
+.crop.tl::before { left: -4mm; top: 0; }
+.crop.tl::after { top: -4mm; left: 0; }
+
+.crop.tr { top: 2mm; right: 2mm; }
+.crop.tr::before { right: -4mm; top: 0; }
+.crop.tr::after { top: -4mm; right: 0; }
+
+.crop.bl { bottom: 2mm; left: 2mm; }
+.crop.bl::before { left: -4mm; bottom: 0; }
+.crop.bl::after { bottom: -4mm; left: 0; }
+
+.crop.br { bottom: 2mm; right: 2mm; }
+.crop.br::before { right: -4mm; bottom: 0; }
+.crop.br::after { bottom: -4mm; right: 0; }
+
+/* ── Карточка ── */
+.qr-card {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  /* вылет 2 мм + отступ до рамки */
+  padding: 7mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Двойная золотая рамка — как на обложке меню */
+.qr-frame {
+  flex: 1;
+  border: 1px solid rgba(197, 163, 92, 0.75);
+  outline: 1px solid rgba(197, 163, 92, 0.3);
+  outline-offset: 1.2mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4.5mm;
+  text-align: center;
+  padding: 6mm 5mm;
+}
+
+.qr-fish {
+  width: 17mm;
+  height: 8.5mm;
+  color: var(--gold);
+  opacity: 0.9;
+}
+
+/* Светлая площадка под QR — контраст для сканера */
+.qr-panel {
+  background: var(--paper);
+  border-radius: 2.5mm;
+  padding: 3mm;
+  line-height: 0;
+}
+
+.qr-panel img {
+  width: 46mm;
+  height: 46mm;
+  display: block;
+}
+
+.qr-menu-word {
+  font-size: 21pt;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  margin-top: 0.5mm;
+}
+
+.qr-table {
+  display: flex;
+  align-items: baseline;
+  gap: 2.5mm;
+  color: var(--gold);
+}
+
+.qr-word {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+}
+
+.qr-digit {
+  font-size: 26pt;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+}
+
+.qr-hint {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 5.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: rgba(197, 163, 92, 0.8);
+}
