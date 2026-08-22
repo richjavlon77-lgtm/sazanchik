@@ -19,6 +19,8 @@ type Variant = {
   labelUz: string;
   labelEn: string;
   price: number;
+  /** Доля рецепта блюда, списываемая за эту порцию (1 = целый рецепт) */
+  stockFactor?: number;
 };
 
 export function DishForm({
@@ -283,7 +285,7 @@ export function DishForm({
             onClick={() =>
               set("variants", [
                 ...(form.variants ?? []),
-                { labelRu: "", labelUz: "", labelEn: "", price: 0 },
+                { labelRu: "", labelUz: "", labelEn: "", price: 0, stockFactor: 1 },
               ])
             }
             className="rounded-full border border-gold/40 px-3 py-1 text-xs uppercase tracking-wider text-gold hover:bg-gold/10"
@@ -296,8 +298,14 @@ export function DishForm({
             Используется одна цена (см. поле «Цена» выше). Добавь варианты если у блюда несколько порций (малая/большая, 4 шт/8 шт).
           </p>
         )}
+        {(form.variants?.length ?? 0) > 0 && (
+          <p className="text-xs text-muted-foreground">
+            «Коэф. склада» — какая доля рецепта блюда списывается за эту
+            порцию: малая 0.7, большая 1, двойная 2. Пусто = 1.
+          </p>
+        )}
         {form.variants?.map((v, i) => (
-          <div key={i} className="grid grid-cols-1 gap-2 md:grid-cols-5">
+          <div key={i} className="grid grid-cols-1 gap-2 md:grid-cols-6">
             <input
               placeholder="Порция RU (малая)"
               value={v.labelRu}
@@ -335,6 +343,24 @@ export function DishForm({
               onChange={(e) => {
                 const next = [...(form.variants ?? [])];
                 next[i] = { ...next[i], price: Number(e.target.value) };
+                set("variants", next);
+              }}
+              className={input}
+            />
+            <input
+              type="number"
+              step="0.1"
+              min="0.1"
+              placeholder="Коэф. склада (1)"
+              title="Доля рецепта блюда за эту порцию: 0.7 = малая, 2 = двойная"
+              value={v.stockFactor ?? ""}
+              onChange={(e) => {
+                const next = [...(form.variants ?? [])];
+                const raw = e.target.value;
+                next[i] = {
+                  ...next[i],
+                  stockFactor: raw === "" ? undefined : Number(raw),
+                };
                 set("variants", next);
               }}
               className={input}

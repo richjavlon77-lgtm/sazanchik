@@ -41,7 +41,12 @@ export async function advanceOrder(id: string, status: OrderStatus) {
     if (updated) {
       const restock = (updated.snap ?? [])
         .filter((it) => it.slug)
-        .map((it) => ({ id: it.slug as string, qty: it.quantity }));
+        .map((it) => ({
+          id: it.slug as string,
+          qty: it.quantity,
+          // цена из снапшота → тот же фактор варианта, что был при списании
+          price: it.price,
+        }));
       await restockForOrder(restock);
     }
   } else {
@@ -157,7 +162,9 @@ export async function createManualOrder(input: {
     return created;
   });
 
-  await deductForOrder(lines.map((l) => ({ id: l.id, qty: l.qty })));
+  await deductForOrder(
+    lines.map((l) => ({ id: l.id, qty: l.qty, price: l.price }))
+  );
   await notifyWaiters();
 
   try {

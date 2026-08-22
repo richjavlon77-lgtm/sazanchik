@@ -150,7 +150,9 @@ export async function POST(request: Request) {
     });
 
     // Deduct recipe ingredients from stock (best-effort, never blocks the order)
-    await deductForOrder(lines.map((l) => ({ id: l.id, qty: l.qty })));
+    await deductForOrder(
+      lines.map((l) => ({ id: l.id, qty: l.qty, price: l.price }))
+    );
 
     // Push to the waiter board in real time
     await notifyWaiters();

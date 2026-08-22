@@ -110,6 +110,9 @@ export const dishVariants = pgTable(
     labelEn: text("label_en").notNull(),
     labelTr: text("label_tr"),
     price: integer("price").notNull(),
+    /** Коэффициент списания склада: «малая» порция = 0.7 от рецепта блюда.
+     *  Рецепт задаётся на блюдо; вариант масштабирует его. По умолчанию 1. */
+    stockFactor: doublePrecision("stock_factor").notNull().default(1),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

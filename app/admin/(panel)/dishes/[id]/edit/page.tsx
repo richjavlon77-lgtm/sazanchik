@@ -57,6 +57,7 @@ export default async function EditDishPage({
             labelUz: v.labelUz,
             labelEn: v.labelEn,
             price: v.price,
+            stockFactor: v.stockFactor,
           })),
         }}
       />

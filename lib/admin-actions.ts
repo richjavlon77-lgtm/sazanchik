@@ -107,6 +107,8 @@ export type DishFormInput = {
     labelUz: string;
     labelEn: string;
     price: number;
+    /** Доля рецепта блюда за эту порцию (по умолчанию 1) */
+    stockFactor?: number;
   }[];
 };
 
@@ -175,6 +177,9 @@ export async function saveDish(id: string | null, input: DishFormInput) {
         labelUz: v.labelUz,
         labelEn: v.labelEn,
         price: v.price,
+        // защита от мусора из формы: фактор всегда положительный
+        stockFactor:
+          v.stockFactor && v.stockFactor > 0 ? v.stockFactor : 1,
         sortOrder: i,
       });
     }
