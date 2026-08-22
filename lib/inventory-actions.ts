@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { ingredients, stockMovements } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { sendLowStockToTelegram } from "@/lib/telegram";
+import { logAudit } from "@/lib/audit";
 
 const UNITS = ["g", "kg", "ml", "l", "pcs"] as const;
 type Unit = (typeof UNITS)[number];
@@ -112,5 +113,11 @@ export async function adjustStock(input: {
       ).catch(() => {});
     }
   }
+  await logAudit("stock.adjust", input.ingredientId, {
+    name: before?.name,
+    direction: input.direction,
+    delta,
+    note: input.note?.trim() || undefined,
+  });
   revalidatePath("/admin/inventory");
 }

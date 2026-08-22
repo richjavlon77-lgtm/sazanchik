@@ -42,6 +42,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/finance", label: "Прибыль" },
       { href: "/admin/cash", label: "Счета" },
       { href: "/admin/payroll", label: "Зарплаты" },
+      { href: "/admin/audit", label: "Журнал" },
     ],
   },
   {

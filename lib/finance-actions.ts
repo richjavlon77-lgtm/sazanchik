@@ -1,4 +1,5 @@
 "use server";
+import { logAudit } from "@/lib/audit";
 
 import { revalidatePath } from "next/cache";
 import { eq, sql } from "drizzle-orm";
@@ -46,6 +47,16 @@ export async function addExpense(input: {
 
 export async function deleteExpense(id: string) {
   await requireManager();
-  await db.delete(expenses).where(eq(expenses.id, id));
+  const [gone] = await db
+    .delete(expenses)
+    .where(eq(expenses.id, id))
+    .returning({ amount: expenses.amount, note: expenses.note, category: expenses.category });
+  if (gone) {
+    await logAudit("expense.delete", id, {
+      amount: gone.amount,
+      category: gone.category,
+      note: gone.note ?? undefined,
+    });
+  }
   revalidatePath("/admin/finance");
 }

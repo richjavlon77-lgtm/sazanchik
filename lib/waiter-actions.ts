@@ -11,6 +11,7 @@ import { priceOrder } from "@/lib/order-pricing";
 import { getOrCreateTableSession } from "@/lib/table-session";
 import { deductForOrder, restockForOrder } from "@/lib/stock-deduct";
 import { sendOrderToTelegram } from "@/lib/telegram";
+import { logAudit } from "@/lib/audit";
 
 async function requireStaff() {
   const session = await getSession();
@@ -37,8 +38,17 @@ export async function advanceOrder(id: string, status: OrderStatus) {
       .update(orders)
       .set({ status, updatedAt: sql`now()` })
       .where(and(eq(orders.id, id), ne(orders.status, "cancelled")))
-      .returning({ snap: orders.itemsSnapshot });
+      .returning({
+        snap: orders.itemsSnapshot,
+        tableNumber: orders.tableNumber,
+        totalPrice: orders.totalPrice,
+      });
     if (updated) {
+      await logAudit("order.cancel", id, {
+        table: updated.tableNumber,
+        total: updated.totalPrice,
+        items: (updated.snap ?? []).length,
+      });
       const restock = (updated.snap ?? [])
         .filter((it) => it.slug)
         .map((it) => ({

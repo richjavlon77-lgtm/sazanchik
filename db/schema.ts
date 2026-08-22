@@ -449,6 +449,35 @@ export type Upload = typeof uploads.$inferSelect;
 /**
  * Football events: match screenings the restaurant hosts ("watch the game here")
  */
+/**
+ * Аудит-лог чувствительных действий персонала: отмена заказа, закрытие
+ * счёта, ручная корректировка склада, выплата зарплаты, удаление расхода.
+ * Классическая дыра общепита — бесследная отмена; лог делает её видимой.
+ * Только запись и чтение менеджером — без update/delete.
+ */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** имя из сессии («Азиз»), для менеджера — "manager" */
+    actor: text("actor").notNull(),
+    role: text("role").notNull(),
+    /** машинное имя действия: order.cancel, bill.close, stock.adjust… */
+    action: text("action").notNull(),
+    /** id затронутой сущности (заказ, счёт, ингредиент, сотрудник) */
+    entityId: text("entity_id"),
+    /** человекочитаемые детали: стол, сумма, дельта — что покажем менеджеру */
+    details: jsonb("details").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("audit_created_idx").on(t.createdAt),
+    index("audit_action_idx").on(t.action, t.createdAt),
+  ]
+);
+
 export const footballEvents = pgTable(
   "football_events",
   {

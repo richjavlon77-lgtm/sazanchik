@@ -1,4 +1,5 @@
 "use server";
+import { logAudit } from "@/lib/audit";
 
 import { revalidatePath } from "next/cache";
 import { and, eq, sql } from "drizzle-orm";
@@ -101,6 +102,11 @@ export async function paySalary(input: {
   if (dup) throw new Error("Эта выплата уже проведена — не отправляйте дважды");
 
   await db.insert(expenses).values({ amount, category: "salary", note });
+  await logAudit("payroll.pay", input.employeeId, {
+    employee: emp.name,
+    days,
+    amount,
+  });
   revalidatePath("/admin/payroll");
   revalidatePath("/admin/finance");
 }

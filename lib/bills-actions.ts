@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { tableSessions, orders } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { notifyWaiters } from "@/lib/realtime";
+import { logAudit } from "@/lib/audit";
 
 async function requireStaff() {
   const session = await getSession();
@@ -39,7 +40,7 @@ export async function closeBill(sessionId: string) {
     );
   }
 
-  await db
+  const [closed] = await db
     .update(tableSessions)
     .set({
       status: "closed",
@@ -48,7 +49,11 @@ export async function closeBill(sessionId: string) {
     })
     .where(
       and(eq(tableSessions.id, sessionId), eq(tableSessions.status, "open"))
-    );
+    )
+    .returning({ tableNumber: tableSessions.tableNumber });
+  if (closed) {
+    await logAudit("bill.close", sessionId, { table: closed.tableNumber });
+  }
   await notifyWaiters();
   revalidatePath("/waiter/bills");
   revalidatePath("/waiter");

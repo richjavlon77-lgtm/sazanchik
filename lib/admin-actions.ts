@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { categories, dishes, dishVariants, restaurant, storyChapters, reservations, staff, footballEvents, uploads } from "@/db/schema";
 import { hashPin, verifyPin, isValidPin } from "@/lib/staff-auth";
 import { signTable } from "@/lib/table-sign";
+import { logAudit } from "@/lib/audit";
 import { slugify } from "@/lib/slug";
 import { getSession } from "@/lib/session";
 import { parseTashkentLocal } from "@/lib/tz";
@@ -193,10 +194,11 @@ export async function saveDish(id: string | null, input: DishFormInput) {
 export async function deleteDish(id: string) {
   await requireManager();
   const [prev] = await db
-    .select({ imageUrl: dishes.imageUrl })
+    .select({ imageUrl: dishes.imageUrl, nameRu: dishes.nameRu })
     .from(dishes)
     .where(eq(dishes.id, id));
   await db.delete(dishes).where(eq(dishes.id, id));
+  if (prev) await logAudit("dish.delete", id, { name: prev.nameRu });
   await cleanupOldDishImage(prev?.imageUrl, null, id);
   revalidatePath("/");
   revalidatePath("/admin");
