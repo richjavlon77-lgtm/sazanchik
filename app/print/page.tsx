@@ -1,8 +1,10 @@
-import { MENU } from "@/data/menu";
+import { MENU as STATIC_MENU } from "@/data/menu";
 import { applyIntros } from "@/data/category-intros";
 import { enrichMenuWithDiet } from "@/lib/auto-diet";
+import { getMenuFromDb } from "@/lib/menu-from-db";
 import { t, formatPrice } from "@/lib/i18n-core";
-import type { Locale } from "@/types/menu";
+import type { Locale, MenuCategory } from "@/types/menu";
+import { FishMark, Diamond } from "@/components/print/marks";
 import "./print.css";
 
 export const metadata = {
@@ -11,7 +13,27 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-const MENU_DATA = applyIntros(enrichMenuWithDiet(MENU));
+export const dynamic = "force-dynamic";
+
+/** Меню из БД (как на сайте и ТВ) — печать всегда с актуальными ценами.
+ *  Статика — только аварийный фолбэк, если БД недоступна. */
+async function loadMenu(): Promise<MenuCategory[]> {
+  try {
+    const dbMenu = await getMenuFromDb();
+    if (dbMenu.length > 0) return applyIntros(enrichMenuWithDiet(dbMenu));
+  } catch (e) {
+    console.error("print: menu from DB failed, falling back to static:", e);
+  }
+  return applyIntros(enrichMenuWithDiet(STATIC_MENU));
+}
+
+/** В админке категории могут называться с эмодзи («🥩 СТЕЙКИ») — на сайте
+ *  это уместно, в печатном люкс-меню нет. Чистим только для печати. */
+function stripEmoji(s: string): string {
+  return s
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, "")
+    .trim();
+}
 
 /** Римская нумерация разделов — I, II, III… */
 function roman(n: number): string {
@@ -32,38 +54,6 @@ function roman(n: number): string {
   return out;
 }
 
-/** Тонкая линия-рыба — единственный «знак» на обложке, без логотипа */
-function FishMark({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 96 48"
-      fill="none"
-      aria-hidden
-    >
-      <path
-        d="M6 24 Q36 4 66 24 Q36 44 6 24 Z"
-        stroke="currentColor"
-        strokeWidth="1.1"
-      />
-      <path
-        d="M66 24 Q80 14 90 8 Q86 18 86 24 Q86 30 90 40 Q80 34 66 24 Z"
-        stroke="currentColor"
-        strokeWidth="1.1"
-      />
-      <circle cx="20" cy="21" r="1.4" fill="currentColor" />
-    </svg>
-  );
-}
-
-const Diamond = () => (
-  <span className="orn" aria-hidden>
-    <i />
-    <b>◆</b>
-    <i />
-  </span>
-);
-
 export default function PrintPage({
   searchParams,
 }: {
@@ -82,6 +72,8 @@ async function PrintPageInner({
     params.lang === "uz" || params.lang === "en" || params.lang === "tr"
       ? params.lang
       : "ru";
+
+  const MENU_DATA = await loadMenu();
 
   return (
     <div className="print-root">
@@ -114,7 +106,7 @@ async function PrintPageInner({
           {MENU_DATA.map((cat, i) => (
             <li key={cat.id}>
               <span className="toc-num">{roman(i + 1)}</span>
-              <span className="toc-name">{t(cat.name, locale)}</span>
+              <span className="toc-name">{stripEmoji(t(cat.name, locale))}</span>
             </li>
           ))}
         </ol>
@@ -125,7 +117,7 @@ async function PrintPageInner({
         <section key={cat.id} className="print-section">
           <header>
             <div className="sec-num">{roman(i + 1)}</div>
-            <h2>{t(cat.name, locale)}</h2>
+            <h2>{stripEmoji(t(cat.name, locale))}</h2>
             <Diamond />
             {cat.intro && <p className="intro">{t(cat.intro, locale)}</p>}
           </header>
