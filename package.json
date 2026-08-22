@@ -9,7 +9,6 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "qr": "node scripts/generate-qr.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "og": "node scripts/generate-og.mjs",
     "seed": "tsx scripts/seed-db.ts",
