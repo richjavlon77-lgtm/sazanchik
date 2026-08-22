@@ -107,49 +107,55 @@ export async function createManualOrder(input: {
   const stationMap = await tagLineStations(lines.map((l) => l.id));
   const sessionId = await getOrCreateTableSession(table);
 
-  const [order] = await db
-    .insert(orders)
-    .values({
-      tableNumber: table,
-      status: "pending",
-      totalPrice: total,
-      serviceCharge: service,
-      isBirthday: input.isBirthday ?? false,
-      servedBy: session.name ?? null,
-      sessionId,
-      itemsSnapshot: lines.map((l) => {
-        const st = stationMap.get(l.id) ?? "kitchen";
-        return {
-          slug: l.id,
-          nameRu: l.nameRu,
-          nameUz: l.nameUz,
-          nameEn: l.nameEn,
-          variantLabelRu: l.variantLabelRu,
-          variantLabelUz: l.variantLabelUz,
-          variantLabelEn: l.variantLabelEn,
-          quantity: l.qty,
-          price: l.price,
-          station: st,
-          isDrink: st === "bar",
-          isHookah: st === "hookah",
-        };
-      }),
-    })
-    .returning({ id: orders.id });
+  // Заказ и позиции — атомарно (как в /api/orders/create): упавший второй
+  // insert не должен оставить заказ без строк в order_items.
+  const order = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(orders)
+      .values({
+        tableNumber: table,
+        status: "pending",
+        totalPrice: total,
+        serviceCharge: service,
+        isBirthday: input.isBirthday ?? false,
+        servedBy: session.name ?? null,
+        sessionId,
+        itemsSnapshot: lines.map((l) => {
+          const st = stationMap.get(l.id) ?? "kitchen";
+          return {
+            slug: l.id,
+            nameRu: l.nameRu,
+            nameUz: l.nameUz,
+            nameEn: l.nameEn,
+            variantLabelRu: l.variantLabelRu,
+            variantLabelUz: l.variantLabelUz,
+            variantLabelEn: l.variantLabelEn,
+            quantity: l.qty,
+            price: l.price,
+            station: st,
+            isDrink: st === "bar",
+            isHookah: st === "hookah",
+          };
+        }),
+      })
+      .returning({ id: orders.id });
 
-  await db.insert(orderItems).values(
-    lines.map((l) => ({
-      orderId: order.id,
-      dishNameRu: l.nameRu,
-      dishNameUz: l.nameUz,
-      dishNameEn: l.nameEn,
-      variantLabelRu: l.variantLabelRu ?? null,
-      variantLabelUz: l.variantLabelUz ?? null,
-      variantLabelEn: l.variantLabelEn ?? null,
-      quantity: l.qty,
-      price: l.price,
-    }))
-  );
+    await tx.insert(orderItems).values(
+      lines.map((l) => ({
+        orderId: created.id,
+        dishNameRu: l.nameRu,
+        dishNameUz: l.nameUz,
+        dishNameEn: l.nameEn,
+        variantLabelRu: l.variantLabelRu ?? null,
+        variantLabelUz: l.variantLabelUz ?? null,
+        variantLabelEn: l.variantLabelEn ?? null,
+        quantity: l.qty,
+        price: l.price,
+      }))
+    );
+
+    return created;
+  });
 
   await deductForOrder(lines.map((l) => ({ id: l.id, qty: l.qty })));
   await notifyWaiters();

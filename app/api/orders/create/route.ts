@@ -11,7 +11,7 @@ import { getOrCreateTableSession } from "@/lib/table-session";
 import { deductForOrder } from "@/lib/stock-deduct";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/client-ip";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const TOO_FAST = "Слишком много заказов подряд. Подождите немного.";
 
@@ -94,45 +94,47 @@ export async function POST(request: Request) {
   const sessionId = await getOrCreateTableSession(table);
 
   try {
-    const [order] = await db
-      .insert(orders)
-      .values({
-        tableNumber: table,
-        status: "pending",
-        totalPrice: total,
-        serviceCharge: service,
-        isBirthday: isBirthday ?? false,
-        idempotencyKey: idempotencyKey ?? null,
-        sessionId,
-        itemsSnapshot: lines.map((l) => {
-          const st = lineStation(l.id) as
-            | "bar"
-            | "hookah"
-            | "cold"
-            | "meat"
-            | "kitchen";
-          return {
-            slug: l.id,
-            nameRu: l.name.ru,
-            nameUz: l.name.uz,
-            nameEn: l.name.en,
-            variantLabelRu: l.variantLabel?.ru,
-            variantLabelUz: l.variantLabel?.uz,
-            variantLabelEn: l.variantLabel?.en,
-            quantity: l.qty,
-            price: l.price,
-            station: st,
-            isDrink: st === "bar",
-            isHookah: st === "hookah",
-          };
-        }),
-      })
-      .returning({ id: orders.id });
+    // Заказ и его позиции пишутся атомарно: упавший второй insert не должен
+    // оставить заказ без строк в order_items (отчёты бы разошлись со snapshot).
+    const order = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(orders)
+        .values({
+          tableNumber: table,
+          status: "pending",
+          totalPrice: total,
+          serviceCharge: service,
+          isBirthday: isBirthday ?? false,
+          idempotencyKey: idempotencyKey ?? null,
+          sessionId,
+          itemsSnapshot: lines.map((l) => {
+            const st = lineStation(l.id) as
+              | "bar"
+              | "hookah"
+              | "cold"
+              | "meat"
+              | "kitchen";
+            return {
+              slug: l.id,
+              nameRu: l.name.ru,
+              nameUz: l.name.uz,
+              nameEn: l.name.en,
+              variantLabelRu: l.variantLabel?.ru,
+              variantLabelUz: l.variantLabel?.uz,
+              variantLabelEn: l.variantLabel?.en,
+              quantity: l.qty,
+              price: l.price,
+              station: st,
+              isDrink: st === "bar",
+              isHookah: st === "hookah",
+            };
+          }),
+        })
+        .returning({ id: orders.id });
 
-    if (lines.length > 0) {
-      await db.insert(orderItems).values(
+      await tx.insert(orderItems).values(
         lines.map((l) => ({
-          orderId: order.id,
+          orderId: created.id,
           dishNameRu: l.name.ru,
           dishNameUz: l.name.uz,
           dishNameEn: l.name.en,
@@ -143,12 +145,9 @@ export async function POST(request: Request) {
           price: l.price,
         }))
       );
-    }
 
-    await db
-      .update(orders)
-      .set({ updatedAt: sql`now()` })
-      .where(eq(orders.id, order.id));
+      return created;
+    });
 
     // Deduct recipe ingredients from stock (best-effort, never blocks the order)
     await deductForOrder(lines.map((l) => ({ id: l.id, qty: l.qty })));
