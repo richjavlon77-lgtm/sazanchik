@@ -1,22 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sazanchik CITY
+
+QR-меню + мини-POS ресторана «Сазанчик CITY» (Ташкент): гостевое меню на
+4 языках, заказы со стола по подписанному QR, доски официанта и цехов
+(SSE-realtime), счета столов, касса, финансы, склад с рецептами, зарплаты,
+ТВ-экран и печатные материалы (люкс-меню, QR-карточки для типографии).
+
+Архитектура, контуры и известные ограничения — в [docs/overview.md](docs/overview.md).
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+cp .env.example .env.local   # заполнить значения
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 ## Environment variables
 
@@ -26,6 +25,9 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 | `DATABASE_URL_UNPOOLED` / `POSTGRES_URL_NON_POOLING` | yes (realtime) | Direct connection used by the waiter SSE stream (`LISTEN/NOTIFY`). |
 | `SESSION_SECRET` | yes | Signs session JWTs and table QR HMAC tokens. |
 | `ADMIN_PASSWORD` | yes | Manager (admin) login password. |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | no | Order / call / reservation / error notifications to Telegram. |
+| `BLOB_READ_WRITE_TOKEN` | yes (photos) | Vercel Blob for dish photo uploads. |
+| `NEXT_PUBLIC_SITE_URL` | no | Public site URL for QR links, SEO, sitemap (defaults to sazanchik.vercel.app). |
 | `REQUIRE_TABLE_TOKEN` | no (default off) | **Strict-QR mode.** When `1`/`true`, dine-in orders and waiter calls must carry a valid signed QR token — a bare `?table=N` is rejected. Turn on once every physical QR is a signed one, to fully close table-spoofing. |
 
 ## Testing
