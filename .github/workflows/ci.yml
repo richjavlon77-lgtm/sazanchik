@@ -26,3 +26,33 @@ jobs:
 
       - name: Test
         run: npm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: e2e
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: sazanchik_e2e
+        ports: ["54329:5432"]
+        options: >-
+          --health-cmd "pg_isready -U e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: E2E (изолированная БД из service-контейнера)
+        env:
+          E2E_DATABASE_URL: postgres://e2e:e2e@localhost:54329/sazanchik_e2e
+        run: npm run e2e
