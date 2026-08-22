@@ -32,9 +32,11 @@ export default async function EditCategoryPage({
           nameRu: c.nameRu,
           nameUz: c.nameUz,
           nameEn: c.nameEn,
+          nameTr: c.nameTr ?? "",
           introRu: c.introRu ?? "",
           introUz: c.introUz ?? "",
           introEn: c.introEn ?? "",
+          introTr: c.introTr ?? "",
           isPublished: c.isPublished,
           sortOrder: c.sortOrder,
         }}

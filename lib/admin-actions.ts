@@ -91,9 +91,11 @@ export type DishFormInput = {
   nameRu: string;
   nameUz: string;
   nameEn: string;
+  nameTr?: string;
   descriptionRu?: string;
   descriptionUz?: string;
   descriptionEn?: string;
+  descriptionTr?: string;
   price?: number | null;
   weight?: string;
   imageUrl?: string;
@@ -107,6 +109,7 @@ export type DishFormInput = {
     labelRu: string;
     labelUz: string;
     labelEn: string;
+    labelTr?: string;
     price: number;
     /** Доля рецепта блюда за эту порцию (по умолчанию 1) */
     stockFactor?: number;
@@ -139,9 +142,11 @@ export async function saveDish(id: string | null, input: DishFormInput) {
     nameRu: ru,
     nameUz: input.nameUz?.trim() || ru,
     nameEn: input.nameEn?.trim() || ru,
+    nameTr: input.nameTr?.trim() || null,
     descriptionRu: descRu,
     descriptionUz: input.descriptionUz?.trim() || descRu,
     descriptionEn: input.descriptionEn?.trim() || descRu,
+    descriptionTr: input.descriptionTr?.trim() || null,
     price: useVariants ? null : input.price ?? null,
     imageUrl: input.imageUrl || null,
     weight: input.weight || null,
@@ -177,6 +182,7 @@ export async function saveDish(id: string | null, input: DishFormInput) {
         labelRu: v.labelRu,
         labelUz: v.labelUz,
         labelEn: v.labelEn,
+        labelTr: v.labelTr?.trim() || null,
         price: v.price,
         // защита от мусора из формы: фактор всегда положительный
         stockFactor:
@@ -213,9 +219,11 @@ export type CategoryFormInput = {
   nameRu: string;
   nameUz: string;
   nameEn: string;
+  nameTr?: string;
   introRu?: string;
   introUz?: string;
   introEn?: string;
+  introTr?: string;
   isPublished: boolean;
   sortOrder?: number;
 };
@@ -237,9 +245,11 @@ export async function saveCategory(id: string | null, input: CategoryFormInput) 
     nameRu: input.nameRu,
     nameUz: input.nameUz,
     nameEn: input.nameEn,
+    nameTr: input.nameTr?.trim() || null,
     introRu: input.introRu || null,
     introUz: input.introUz || null,
     introEn: input.introEn || null,
+    introTr: input.introTr?.trim() || null,
     isPublished: input.isPublished,
     sortOrder: input.sortOrder ?? 0,
   };

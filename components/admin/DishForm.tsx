@@ -18,6 +18,7 @@ type Variant = {
   labelRu: string;
   labelUz: string;
   labelEn: string;
+  labelTr?: string;
   price: number;
   /** Доля рецепта блюда, списываемая за эту порцию (1 = целый рецепт) */
   stockFactor?: number;
@@ -42,9 +43,11 @@ export function DishForm({
     slug: initial?.slug ?? "",
     nameRu: initial?.nameRu ?? "",
     nameUz: initial?.nameUz ?? "",
+    nameTr: initial?.nameTr ?? "",
     nameEn: initial?.nameEn ?? "",
     descriptionRu: initial?.descriptionRu ?? "",
     descriptionUz: initial?.descriptionUz ?? "",
+    descriptionTr: initial?.descriptionTr ?? "",
     descriptionEn: initial?.descriptionEn ?? "",
     price: initial?.price ?? null,
     weight: initial?.weight ?? "",
@@ -127,7 +130,7 @@ export function DishForm({
       </Field>
 
       {/* Names */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Field label="Название RU" hint="обязательно">
           <input value={form.nameRu} onChange={(e) => set("nameRu", e.target.value)} className={input} placeholder="Плов" />
         </Field>
@@ -137,10 +140,13 @@ export function DishForm({
         <Field label="Название EN" hint="можно пусто = RU">
           <input value={form.nameEn} onChange={(e) => set("nameEn", e.target.value)} className={input} />
         </Field>
+        <Field label="Название TR" hint="можно пусто = RU">
+          <input value={form.nameTr ?? ""} onChange={(e) => set("nameTr", e.target.value)} className={input} />
+        </Field>
       </div>
 
       {/* Descriptions */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Field label="Описание RU" hint="необязательно">
           <textarea
             value={form.descriptionRu}
@@ -160,6 +166,13 @@ export function DishForm({
           <textarea
             value={form.descriptionEn}
             onChange={(e) => set("descriptionEn", e.target.value)}
+            className={`${input} min-h-[88px] resize-y`}
+          />
+        </Field>
+        <Field label="Описание TR" hint="можно пусто = RU">
+          <textarea
+            value={form.descriptionTr ?? ""}
+            onChange={(e) => set("descriptionTr", e.target.value)}
             className={`${input} min-h-[88px] resize-y`}
           />
         </Field>
@@ -305,7 +318,7 @@ export function DishForm({
           </p>
         )}
         {form.variants?.map((v, i) => (
-          <div key={i} className="grid grid-cols-1 gap-2 md:grid-cols-6">
+          <div key={i} className="grid grid-cols-1 gap-2 md:grid-cols-7">
             <input
               placeholder="Порция RU (малая)"
               value={v.labelRu}
@@ -332,6 +345,16 @@ export function DishForm({
               onChange={(e) => {
                 const next = [...(form.variants ?? [])];
                 next[i] = { ...next[i], labelEn: e.target.value };
+                set("variants", next);
+              }}
+              className={input}
+            />
+            <input
+              placeholder="TR (küçük)"
+              value={v.labelTr ?? ""}
+              onChange={(e) => {
+                const next = [...(form.variants ?? [])];
+                next[i] = { ...next[i], labelTr: e.target.value };
                 set("variants", next);
               }}
               className={input}

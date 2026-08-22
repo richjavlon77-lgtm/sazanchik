@@ -21,9 +21,11 @@ export function CategoryForm({
     nameRu: initial?.nameRu ?? "",
     nameUz: initial?.nameUz ?? "",
     nameEn: initial?.nameEn ?? "",
+    nameTr: initial?.nameTr ?? "",
     introRu: initial?.introRu ?? "",
     introUz: initial?.introUz ?? "",
     introEn: initial?.introEn ?? "",
+    introTr: initial?.introTr ?? "",
     isPublished: initial?.isPublished ?? true,
     sortOrder: initial?.sortOrder ?? 0,
   });
@@ -93,7 +95,7 @@ export function CategoryForm({
         </Field>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Field label="Название RU">
           <input value={form.nameRu} onChange={(e) => set("nameRu", e.target.value)} className={input} />
         </Field>
@@ -103,9 +105,12 @@ export function CategoryForm({
         <Field label="Название EN">
           <input value={form.nameEn} onChange={(e) => set("nameEn", e.target.value)} className={input} />
         </Field>
+        <Field label="Название TR" hint="можно пусто = RU">
+          <input value={form.nameTr ?? ""} onChange={(e) => set("nameTr", e.target.value)} className={input} />
+        </Field>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Field label="Вступление RU" hint="редакторский текст под заголовком">
           <textarea
             value={form.introRu ?? ""}
@@ -124,6 +129,13 @@ export function CategoryForm({
           <textarea
             value={form.introEn ?? ""}
             onChange={(e) => set("introEn", e.target.value)}
+            className={`${input} min-h-[100px]`}
+          />
+        </Field>
+        <Field label="Вступление TR">
+          <textarea
+            value={form.introTr ?? ""}
+            onChange={(e) => set("introTr", e.target.value)}
             className={`${input} min-h-[100px]`}
           />
         </Field>
