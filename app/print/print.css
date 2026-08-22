@@ -1,46 +1,124 @@
-/* Print-optimised stylesheet — A4, cream paper, serif elegance */
+/* ─────────────────────────────────────────────────────────────
+   Печатное меню — «тихий люкс»
+   Обложка: чернильно-изумрудная, без логотипа, тонкое золото.
+   Внутри: слоновая кость, всё по оси, Cormorant, римские разделы.
+   ───────────────────────────────────────────────────────────── */
 
 @page {
   size: A4;
-  margin: 20mm 18mm;
+  margin: 18mm 16mm;
 }
 
-/* Hide overlays (waiter FAB, cart bar, toaster) on the print route */
+:root {
+  --ink: #101613; /* чернильно-изумрудный */
+  --paper: #f7f2e8; /* слоновая кость */
+  --gold: #c5a35c;
+  --gold-deep: #9c7f3f;
+  --muted: #6d6455;
+  --hairline: rgba(16, 22, 19, 0.14);
+}
+
+/* Скрыть оверлеи приложения (FAB официанта, корзина, тосты) */
 body > .fixed,
 body [class*="sonner"] {
   display: none !important;
 }
 
 .print-root {
-  background: #f5efe6;
-  color: #1a1611;
-  font-family: Georgia, "Playfair Display", serif;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 40px 32px;
-  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-heading), Georgia, serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
+/* На печати бумага заливает весь лист (включая поля),
+   без экранных градиентов из globals */
 @media print {
-  .print-root {
-    padding: 0;
-    background: white;
+  html,
+  body {
+    background: var(--paper) !important;
+    background-image: none !important;
   }
-  .print-section {
-    page-break-inside: avoid;
-  }
-  .print-section + .print-section {
-    page-break-before: auto;
+  /* Глоу-подложки гостевого сайта из globals.css */
+  body::before,
+  body::after {
+    display: none !important;
   }
 }
 
-/* Cover */
+/* Экранный предпросмотр: лист на тёмном сукне */
+@media screen {
+  body {
+    background: #0c110f;
+  }
+  .print-root {
+    max-width: 794px; /* ≈ A4 */
+    margin: 40px auto;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  }
+  .print-toc,
+  .print-section {
+    padding: 60px 72px;
+  }
+}
+
+/* ── Орнамент: линия — ромб — линия ── */
+.orn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: center;
+  color: var(--gold);
+  margin: 22px auto;
+}
+
+.orn i {
+  display: block;
+  width: 56px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.orn b {
+  font-size: 7px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* ── Обложка ── */
 .print-cover {
-  text-align: center;
-  padding: 80px 0 100px;
-  border-bottom: 1px solid #c9a961;
-  margin-bottom: 60px;
+  background: var(--ink);
+  color: var(--paper);
+  /* Тёмная «карточка» в границах печатных полей: 297мм − 2×18мм */
+  height: 260mm;
+  padding: 12mm;
+  display: flex;
   page-break-after: always;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media screen {
+  .print-cover {
+    height: 1050px;
+    padding: 48px;
+  }
+}
+
+/* Двойная тонкая рамка */
+.cover-frame {
+  flex: 1;
+  border: 1px solid rgba(197, 163, 92, 0.75);
+  outline: 1px solid rgba(197, 163, 92, 0.3);
+  outline-offset: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-align: center;
 }
 
 .cover-inner {
@@ -49,88 +127,126 @@ body [class*="sonner"] {
   align-items: center;
 }
 
-.cover-eyebrow,
-.cover-sub {
-  font-size: 11px;
+.cover-eyebrow {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.55em;
+  text-indent: 0.55em; /* компенсация трекинга при центровке */
   text-transform: uppercase;
-  letter-spacing: 0.5em;
-  color: #c9a961;
-  margin-bottom: 18px;
+  color: var(--gold);
+  margin-bottom: 44px;
 }
 
-.cover-sub {
-  margin-top: 12px;
+.cover-fish {
+  width: 92px;
+  height: 46px;
+  color: var(--gold);
+  margin-bottom: 30px;
+  opacity: 0.9;
 }
 
 .cover-title {
-  font-size: 96px;
-  font-weight: 500;
-  line-height: 0.95;
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.cover-title .italic {
+  font-size: 108px;
+  font-weight: 400;
   font-style: italic;
-  color: #c9a961;
-}
-
-.cover-line {
-  width: 80px;
-  height: 1px;
-  background: #c9a961;
-  opacity: 0.5;
-  margin: 28px 0;
+  line-height: 1;
+  margin: 0;
+  letter-spacing: 0.04em;
+  color: var(--paper);
 }
 
 .cover-tagline {
-  font-size: 16px;
+  font-size: 17px;
   font-style: italic;
-  max-width: 420px;
-  line-height: 1.5;
-  color: #5a5141;
+  line-height: 1.7;
+  color: rgba(247, 242, 232, 0.78);
   margin: 0;
+}
+
+.print-cover .orn {
+  margin: 30px auto;
 }
 
 .cover-meta {
-  font-size: 11px;
+  position: absolute;
+  bottom: 34px;
+  left: 0;
+  right: 0;
+  font-family: var(--font-sans), sans-serif;
+  font-size: 9px;
   letter-spacing: 0.4em;
+  text-indent: 0.4em;
   text-transform: uppercase;
-  color: #8a7f6b;
-  margin: 0;
+  color: rgba(197, 163, 92, 0.85);
 }
 
-/* Sections */
+/* ── Карта меню ── */
+.print-toc {
+  page-break-after: always;
+  text-align: center;
+  padding: 40px 0 0;
+}
+
+.print-toc header h2,
+.print-section h2 {
+  font-size: 40px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.print-toc ol {
+  list-style: none;
+  margin: 40px auto 0;
+  padding: 0;
+  max-width: 560px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px 40px;
+}
+
+.print-toc .toc-num {
+  display: block;
+  font-family: var(--font-sans), sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;
+  color: var(--gold-deep);
+  margin-bottom: 3px;
+}
+
+.print-toc .toc-name {
+  font-size: 21px;
+  font-weight: 500;
+}
+
+/* ── Разделы ── */
 .print-section {
-  margin-bottom: 48px;
+  page-break-before: always;
+  text-align: center;
 }
 
 .print-section header {
-  margin-bottom: 20px;
+  margin-bottom: 26px;
+  padding-top: 16px;
 }
 
-.print-section h2 {
-  font-size: 30px;
-  font-weight: 500;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.print-section .rule {
-  height: 1px;
-  width: 48px;
-  background: #c9a961;
-  opacity: 0.5;
-  margin: 8px 0 12px;
+.sec-num {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  color: var(--gold-deep);
+  margin-bottom: 12px;
 }
 
 .print-section .intro {
   font-style: italic;
-  font-size: 13px;
-  line-height: 1.6;
-  color: #5a5141;
-  max-width: 480px;
-  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 430px;
+  margin: 0 auto;
 }
 
 .print-section ul {
@@ -139,81 +255,100 @@ body [class*="sonner"] {
   margin: 0;
 }
 
-.print-section li {
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(26, 22, 17, 0.08);
+.print-section > ul > li {
+  padding: 14px 0;
+  page-break-inside: avoid;
 }
 
-.print-section li:last-child {
-  border-bottom: none;
+/* Тонкий разделитель между блюдами — короткая линия по центру */
+.print-section > ul > li + li {
+  position: relative;
 }
 
-.line {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 14px;
+.print-section > ul > li + li::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 1px;
+  background: var(--hairline);
 }
 
-.name {
-  font-weight: 500;
-}
-
-.dots {
-  flex: 1;
-  border-bottom: 1px dotted rgba(26, 22, 17, 0.25);
-  margin-bottom: 4px;
-}
-
-.price {
-  font-variant-numeric: tabular-nums;
-  color: #a68545;
-  font-weight: 500;
+.dish-name {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
 .desc {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #6a604f;
-  margin: 4px 0 0;
-  max-width: 480px;
+  font-size: 13.5px;
   font-style: italic;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 420px;
+  margin: 5px auto 0;
 }
 
+.price {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Варианты (порции) */
 .variants {
-  margin-top: 6px !important;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px 24px;
+  margin: 10px auto 0 !important;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .variants li {
   display: flex;
   justify-content: space-between;
-  padding: 2px 0;
-  border-bottom: none !important;
-  font-size: 12px;
+  align-items: baseline;
+  gap: 16px;
 }
 
 .vlabel {
+  font-family: var(--font-sans), sans-serif;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-size: 10px;
-  color: #6a604f;
+  letter-spacing: 0.18em;
+  font-size: 9.5px;
+  color: var(--muted);
 }
 
 .vprice {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--gold-deep);
   font-variant-numeric: tabular-nums;
-  color: #a68545;
+  white-space: nowrap;
 }
 
+/* ── Финальная страница ── */
 .print-footer {
-  margin-top: 80px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(26, 22, 17, 0.1);
+  page-break-before: always;
   text-align: center;
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: #8a7f6b;
+  height: 250mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.print-footer p {
+  font-size: 20px;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0;
 }
