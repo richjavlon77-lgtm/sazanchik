@@ -8,10 +8,12 @@ import { IntroSplash } from "@/components/IntroSplash";
 import { OrderTracker } from "@/components/OrderTracker";
 import { OrderQueueFlusher } from "@/components/OrderQueueFlusher";
 
-// Staff/admin contours that must NOT show guest widgets.
+// Staff/admin/signage contours that must NOT show guest widgets.
 const STAFF_AREAS = [
   "/admin",
   "/staff",
+  "/tv",
+  "/print",
   "/waiter",
   "/bar",
   "/hookah",

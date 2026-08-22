@@ -1,0 +1,759 @@
+/* ============================================================
+   TV / digital-signage stylesheet — «Сазанчик CITY»
+   One fixed screen, no scrolling. Every size is viewport-relative
+   so the same page looks right on a 24" monitor and a 75" TV.
+   ============================================================ */
+
+.tv-root {
+  /* Ivory paper · charcoal ink · champagne brass · deep forest */
+  --tv-bg: #fbf9f6;
+  --tv-panel: #ffffff;
+  --tv-ink: #1a1a1a;
+  --tv-soft: #8b8589;
+  --tv-accent: #b5945e;
+  --tv-deep: #1b362f;
+  --tv-line: rgba(58, 53, 48, 0.14);
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--tv-bg);
+  color: var(--tv-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  user-select: none;
+  cursor: none;
+}
+
+.tv-root[data-tv-theme="dark"] {
+  --tv-bg: #12100c;
+  --tv-panel: #1a1712;
+  --tv-ink: #f3ece0;
+  --tv-soft: #a2988a;
+  --tv-accent: #d9b678;
+  --tv-deep: #f3ece0;
+  --tv-line: rgba(255, 255, 255, 0.13);
+}
+
+.tv-root.is-active {
+  cursor: default;
+}
+
+/* Warm paper grain — keeps a huge flat screen from looking like plastic */
+.tv-root::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--tv-accent) 7%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      100% 80% at 50% 100%,
+      color-mix(in oklab, var(--tv-deep) 5%, transparent) 0%,
+      transparent 55%
+    );
+}
+
+/* ---------- slide shell ---------- */
+
+.tv-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.tv-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  animation: tvSlideIn 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tvSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(1.4vh) scale(1.012);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Every slide body fills the shell */
+.tv-brand,
+.tv-list,
+.tv-feature,
+.tv-events,
+.tv-empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- shared type ---------- */
+
+.tv-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 1.2vh;
+  font-size: clamp(10px, 1.5vh, 20px);
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--tv-soft);
+}
+
+.tv-eyebrow .tv-eyebrow-line {
+  width: clamp(24px, 4vh, 60px);
+  height: 1px;
+  background: color-mix(in oklab, var(--tv-accent) 70%, transparent);
+}
+
+.tv-title {
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 600;
+  line-height: 0.94;
+  letter-spacing: -0.015em;
+}
+
+/* ============================================================
+   1. BRAND slide
+   ============================================================ */
+
+.tv-brand {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6vh 8vw;
+  gap: 2.4vh;
+}
+
+.tv-brand-fish {
+  width: clamp(90px, 17vh, 260px);
+  color: var(--tv-accent);
+  animation: tvFloat 9s ease-in-out infinite;
+}
+
+@keyframes tvFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-1.4vh) rotate(1deg);
+  }
+}
+
+.tv-brand-name {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(56px, 15vh, 210px);
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+.tv-brand-name em {
+  font-style: italic;
+  color: var(--tv-accent);
+}
+
+.tv-brand-city {
+  font-size: clamp(12px, 2vh, 26px);
+  font-weight: 600;
+  letter-spacing: 0.55em;
+  text-transform: uppercase;
+  color: var(--tv-accent);
+  margin-left: 0.5em;
+}
+
+.tv-brand-tagline {
+  font-family: var(--font-heading), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(20px, 3.8vh, 56px);
+  line-height: 1.25;
+  max-width: 34ch;
+  text-wrap: balance;
+  color: color-mix(in oklab, var(--tv-ink) 82%, transparent);
+}
+
+.tv-brand-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.9em 2.4em;
+  font-size: clamp(13px, 2.1vh, 28px);
+  color: var(--tv-soft);
+}
+
+.tv-brand-meta strong {
+  color: var(--tv-ink);
+  font-weight: 600;
+}
+
+.tv-rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6vh;
+  width: min(46vw, 620px);
+}
+
+.tv-rule span {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--tv-accent) 60%, transparent)
+  );
+}
+
+.tv-rule span:last-child {
+  background: linear-gradient(
+    to left,
+    transparent,
+    color-mix(in oklab, var(--tv-accent) 60%, transparent)
+  );
+}
+
+.tv-rule svg {
+  width: clamp(18px, 3vh, 40px);
+  color: var(--tv-accent);
+}
+
+.tv-brand-hint {
+  margin-top: 1vh;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8em;
+  border-radius: 999px;
+  border: 1px solid var(--tv-line);
+  padding: 0.7em 1.6em;
+  font-size: clamp(12px, 1.9vh, 24px);
+  color: var(--tv-soft);
+}
+
+.tv-brand-hint b {
+  color: var(--tv-ink);
+  font-weight: 600;
+}
+
+/* ============================================================
+   2. LIST slide — the menu page
+   ============================================================ */
+
+.tv-list {
+  padding: 5.5vh 5vw 7vh;
+  gap: 2.4vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Big ghosted category number in the corner */
+.tv-watermark {
+  position: absolute;
+  top: 1vh;
+  right: 4vw;
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 26vh;
+  font-weight: 600;
+  line-height: 1;
+  color: color-mix(in oklab, var(--tv-accent) 9%, transparent);
+  pointer-events: none;
+}
+
+.tv-list-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4vh;
+}
+
+.tv-list-title {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(34px, 8.2vh, 118px);
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+}
+
+.tv-list-intro {
+  font-family: var(--font-heading), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(15px, 2.5vh, 34px);
+  line-height: 1.35;
+  max-width: 60ch;
+  color: var(--tv-soft);
+}
+
+.tv-hairline {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--tv-accent) 70%, transparent),
+    var(--tv-line) 55%,
+    transparent
+  );
+}
+
+.tv-rows {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  /* spread the rows over the whole free height — a TV should be full, not
+     a small block of text floating in the middle */
+  align-content: space-evenly;
+  column-gap: 5vw;
+  grid-template-columns: 1fr;
+}
+
+.tv-rows.is-two {
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--tv-rows, 4), auto);
+}
+
+.tv-row {
+  padding: 1.15vh 0;
+  /* No rules between rows — the dotted leader already carries the eye */
+  animation: tvRowIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 120ms);
+}
+
+@keyframes tvRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(1.2vh);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tv-row-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+
+.tv-row-name {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(20px, 4vh, 58px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.tv-row-weight {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.42em;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--tv-soft);
+  white-space: nowrap;
+}
+
+.tv-dots {
+  flex: 1 1 auto;
+  min-width: 2ch;
+  border-bottom: 1px dotted color-mix(in oklab, var(--tv-soft) 55%, transparent);
+  transform: translateY(-0.32em);
+}
+
+.tv-row-price {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(19px, 3.7vh, 52px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--tv-accent);
+  white-space: nowrap;
+}
+
+.tv-row-price .tv-from {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.5em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tv-soft);
+  margin-right: 0.5em;
+}
+
+.tv-row-desc {
+  margin-top: 0.35vh;
+  font-size: clamp(12px, 1.85vh, 24px);
+  line-height: 1.35;
+  color: var(--tv-soft);
+  max-width: 72ch;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tv-badge-hot {
+  display: inline-block;
+  margin-left: 0.5em;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.34em;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tv-accent);
+  vertical-align: middle;
+}
+
+/* ============================================================
+   3. FEATURE slide — full-bleed dish photo
+   ============================================================ */
+
+.tv-feature {
+  flex-direction: row;
+}
+
+.tv-feature-photo {
+  position: relative;
+  flex: 1.25;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--tv-ink) 92%, black);
+}
+
+.tv-feature-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: tvKenBurns 22s ease-out both;
+}
+
+@keyframes tvKenBurns {
+  from {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.16) translate3d(-1.6%, -1.2%, 0);
+  }
+}
+
+/* Photo fades into the paper on the text side — no hard seam */
+.tv-feature-fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    transparent 55%,
+    color-mix(in oklab, var(--tv-bg) 75%, transparent) 88%,
+    var(--tv-bg) 100%
+  );
+}
+
+.tv-feature-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.2vh;
+  padding: 6vh 5vw 6vh 3vw;
+}
+
+.tv-feature-name {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(38px, 9vh, 130px);
+  font-weight: 600;
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+}
+
+.tv-feature-desc {
+  font-family: var(--font-heading), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(16px, 2.8vh, 38px);
+  line-height: 1.35;
+  max-width: 30ch;
+  color: color-mix(in oklab, var(--tv-ink) 72%, transparent);
+}
+
+.tv-feature-price {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(30px, 6vh, 84px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--tv-accent);
+  line-height: 1;
+}
+
+.tv-feature-price .tv-from {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.32em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tv-soft);
+  margin-right: 0.5em;
+}
+
+.tv-feature-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7em 1.6em;
+  font-size: clamp(12px, 1.9vh, 24px);
+  color: var(--tv-soft);
+}
+
+/* Portrait screens: photo on top, text below */
+@media (max-aspect-ratio: 1/1) {
+  .tv-feature {
+    flex-direction: column;
+  }
+  .tv-feature-photo {
+    flex: 1.1;
+  }
+  .tv-feature-fade {
+    background: linear-gradient(
+      to bottom,
+      transparent 55%,
+      color-mix(in oklab, var(--tv-bg) 75%, transparent) 88%,
+      var(--tv-bg) 100%
+    );
+  }
+  .tv-feature-body {
+    padding: 2vh 7vw 7vh;
+  }
+  .tv-rows.is-two {
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    grid-template-rows: none;
+  }
+}
+
+/* ============================================================
+   4. EVENTS slide — football nights
+   ============================================================ */
+
+.tv-events {
+  padding: 7vh 7vw;
+  gap: 3vh;
+  justify-content: center;
+}
+
+.tv-events-title {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(34px, 8vh, 112px);
+  font-weight: 600;
+  line-height: 0.95;
+}
+
+.tv-match {
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
+  padding: 1.6vh 0;
+  border-bottom: 1px solid var(--tv-line);
+  animation: tvRowIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 150ms);
+}
+
+.tv-match-teams {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(22px, 4.2vh, 60px);
+  font-weight: 600;
+}
+
+.tv-match-league {
+  font-size: clamp(11px, 1.7vh, 22px);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tv-soft);
+}
+
+.tv-match-when {
+  margin-left: auto;
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(18px, 3.4vh, 48px);
+  font-weight: 600;
+  color: var(--tv-accent);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   5. Chrome — progress, clock, footer, controls
+   ============================================================ */
+
+.tv-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: color-mix(in oklab, var(--tv-line) 60%, transparent);
+  z-index: 5;
+}
+
+.tv-progress i {
+  display: block;
+  height: 100%;
+  transform-origin: left center;
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--tv-accent) 55%, transparent),
+    var(--tv-accent)
+  );
+  animation: tvProgress linear both;
+}
+
+@keyframes tvProgress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.tv-corner {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  font-size: clamp(11px, 1.7vh, 22px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tv-soft);
+}
+
+.tv-corner-top {
+  top: 3.2vh;
+  right: 4vw;
+}
+
+.tv-corner-bottom {
+  bottom: 3.2vh;
+  left: 5vw;
+  right: 5vw;
+  justify-content: space-between;
+}
+
+.tv-corner-bottom b {
+  color: color-mix(in oklab, var(--tv-ink) 75%, transparent);
+  font-weight: 600;
+}
+
+.tv-hint {
+  transition: opacity 0.4s ease;
+}
+
+/* On a photo slide the picture bleeds to the bottom edge, and the brand slide
+   already shows the QR line in its own pill — hide the duplicate there. */
+.tv-root[data-slide="feature"] .tv-hint,
+.tv-root[data-slide="brand"] .tv-hint {
+  opacity: 0;
+}
+
+.tv-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 999px;
+  background: var(--tv-accent);
+}
+
+.tv-clock {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(15px, 2.4vh, 32px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--tv-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-controls {
+  position: absolute;
+  bottom: 3vh;
+  left: 50%;
+  transform: translateX(-50%) translateY(1.5vh);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.55em 0.7em;
+  border-radius: 999px;
+  border: 1px solid var(--tv-line);
+  background: color-mix(in oklab, var(--tv-panel) 88%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+.tv-controls.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tv-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6em;
+  height: 2.6em;
+  padding: 0 0.9em;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--tv-ink);
+  font-family: inherit;
+  font-size: clamp(12px, 1.8vh, 20px);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.tv-controls button:hover {
+  background: color-mix(in oklab, var(--tv-accent) 18%, transparent);
+}
+
+.tv-controls .tv-counter {
+  padding: 0 0.9em;
+  font-size: clamp(11px, 1.6vh, 18px);
+  letter-spacing: 0.14em;
+  color: var(--tv-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-empty {
+  align-items: center;
+  justify-content: center;
+  gap: 2vh;
+  text-align: center;
+  padding: 10vh;
+  color: var(--tv-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-slide,
+  .tv-row,
+  .tv-match,
+  .tv-brand-fish,
+  .tv-feature-photo img,
+  .tv-progress i {
+    animation: none !important;
+  }
+}
