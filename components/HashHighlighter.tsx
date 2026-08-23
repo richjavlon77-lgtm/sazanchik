@@ -10,8 +10,16 @@ export function HashHighlighter() {
   useEffect(() => {
     const apply = () => {
       const hash = window.location.hash;
-      if (!hash) return;
-      const el = document.querySelector<HTMLElement>(hash);
+      // Только наши якоря вида #dish-plov. Сторонние хэши — например
+      // #tgWebAppData=... от Telegram-мини-аппа — невалидны как CSS-селектор
+      // и роняли querySelector (SyntaxError) вместе со всей страницей.
+      if (!hash || !/^#[A-Za-z][\w-]*$/.test(hash)) return;
+      let el: HTMLElement | null = null;
+      try {
+        el = document.querySelector<HTMLElement>(hash);
+      } catch {
+        return;
+      }
       if (!el) return;
 
       el.classList.add("dish-highlight");

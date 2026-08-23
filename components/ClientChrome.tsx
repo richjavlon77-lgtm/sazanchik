@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { CartBar } from "@/components/CartBar";
 import { WaiterButton } from "@/components/WaiterButton";
 import { HashHighlighter } from "@/components/HashHighlighter";
+import { TelegramMiniApp } from "@/components/TelegramMiniApp";
 import { IntroSplash } from "@/components/IntroSplash";
 import { OrderTracker } from "@/components/OrderTracker";
 import { OrderQueueFlusher } from "@/components/OrderQueueFlusher";
@@ -37,6 +38,7 @@ export function ClientChrome() {
       <CartBar />
       <WaiterButton />
       <HashHighlighter />
+      <TelegramMiniApp />
       <IntroSplash />
       <OrderTracker />
       <OrderQueueFlusher />
