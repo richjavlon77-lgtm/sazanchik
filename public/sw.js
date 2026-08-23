@@ -2,7 +2,7 @@
    - Static assets (content-hashed) → cache-first (safe: new build = new names).
    - Pages → network-first, fall back to cache, then to the cached home page.
    - API requests are never cached. */
-const CACHE = "sazanchik-v1";
+const CACHE = "sazanchik-v2";
 const STATIC = /\/(_next\/static|images|fonts|favicon|icon)/;
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -26,6 +26,15 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/api") ||
     url.pathname.includes("/api/") ||
     url.pathname.endsWith("/stream")
+  )
+    return;
+
+  // Staff/admin/signage-контуры не кэшируем: офлайн-доска официанта с
+  // протухшими заказами опаснее честной ошибки сети. SW нужен только гостю.
+  if (
+    /^\/(admin|waiter|bar|hookah|kitchen|cold|meat|staff|tv|print|monitoring)(\/|$)/.test(
+      url.pathname
+    )
   )
     return;
 

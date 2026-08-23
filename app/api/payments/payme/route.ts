@@ -90,7 +90,11 @@ export async function POST(request: Request) {
         if (!bill) {
           return rpcError(id, PaymeError.AccountNotFound, "Счёт не найден или закрыт", "bill_id");
         }
-        if (fromTiyin(params.amount ?? 0) !== bill.total || bill.total <= 0) {
+        if (bill.due <= 0) {
+          return rpcError(id, PaymeError.AccountBusy, "Счёт уже оплачен", "bill_id");
+        }
+        // Сверяем с ОСТАТКОМ: после онлайн-оплаты и дозаказа платится разница
+        if (fromTiyin(params.amount ?? 0) !== bill.due) {
           return rpcError(id, PaymeError.InvalidAmount, "Неверная сумма");
         }
         return rpcResult(id, { allow: true });
@@ -118,7 +122,10 @@ export async function POST(request: Request) {
         if (!bill) {
           return rpcError(id, PaymeError.AccountNotFound, "Счёт не найден или закрыт", "bill_id");
         }
-        if (fromTiyin(params.amount ?? 0) !== bill.total || bill.total <= 0) {
+        if (bill.due <= 0) {
+          return rpcError(id, PaymeError.AccountBusy, "Счёт уже оплачен", "bill_id");
+        }
+        if (fromTiyin(params.amount ?? 0) !== bill.due) {
           return rpcError(id, PaymeError.InvalidAmount, "Неверная сумма");
         }
         // Одна активная транзакция на счёт: вторая параллельная — отказ
@@ -137,7 +144,7 @@ export async function POST(request: Request) {
             sessionId: bill.sessionId,
             provider: "payme",
             providerTxnId: txnId,
-            amount: bill.total,
+            amount: bill.due,
             providerCreateTime: createTime,
           })
           .returning();

@@ -87,13 +87,23 @@ export async function loadOpenBills(): Promise<Bill[]> {
       total,
       lines: [...agg.entries()].map(([name, qty]) => ({ name, qty })),
       paidOnline: paidBySession.get(s.id) ?? 0,
+      // Ссылки — на ОСТАТОК: счёт мог дорасти после частичной онлайн-оплаты
       paymeUrl:
-        payme && total > 0
-          ? buildPaymeCheckoutUrl(payme.merchantId, s.id, total)
+        payme && total - (paidBySession.get(s.id) ?? 0) > 0
+          ? buildPaymeCheckoutUrl(
+              payme.merchantId,
+              s.id,
+              total - (paidBySession.get(s.id) ?? 0)
+            )
           : undefined,
       clickUrl:
-        click && total > 0
-          ? buildClickPayUrl(click.serviceId, click.merchantId, s.id, total)
+        click && total - (paidBySession.get(s.id) ?? 0) > 0
+          ? buildClickPayUrl(
+              click.serviceId,
+              click.merchantId,
+              s.id,
+              total - (paidBySession.get(s.id) ?? 0)
+            )
           : undefined,
     };
   });

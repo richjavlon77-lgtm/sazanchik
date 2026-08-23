@@ -58,10 +58,11 @@ export async function POST(request: Request) {
   try {
     const bill = await loadOpenBill(req.merchant_trans_id);
 
-    // ── prepare: счёт существует и сумма верна ──
+    // ── prepare: счёт существует и сумма равна ОСТАТКУ к оплате ──
     if (req.action === "0") {
       if (!bill) return fail(req, ClickError.OrderNotFound, "Order not found");
-      if (Math.round(Number(req.amount)) !== bill.total || bill.total <= 0) {
+      if (bill.due <= 0) return fail(req, ClickError.AlreadyPaid, "Already paid");
+      if (Math.round(Number(req.amount)) !== bill.due) {
         return fail(req, ClickError.InvalidAmount, "Incorrect amount");
       }
 
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
           sessionId: bill.sessionId,
           provider: "click",
           providerTxnId: req.click_trans_id,
-          amount: bill.total,
+          amount: bill.due,
           providerCreateTime: new Date(),
         })
         .returning();

@@ -54,7 +54,10 @@ export async function loadFinance(): Promise<FinanceData> {
     from orders where status <> 'cancelled'
   `)) as unknown as Record<string, string | number>[];
 
-  // COGS = sum over sold order items of (dish recipe cost × qty), by period
+  // COGS = sum over sold order items of (dish recipe cost × qty × portion
+  // factor). Вариант порции определяется по цене линии из снапшота — та же
+  // логика, что при списании склада (lib/stock-factor.ts): «малая» порция
+  // стоит в закупке 0.7 рецепта, а не целый.
   const cogs = (await db.execute(sql`
     with item_cost as (
       select d.slug, coalesce(sum(ri.qty * i.cost_per_unit),0) as cost
@@ -63,12 +66,29 @@ export async function loadFinance(): Promise<FinanceData> {
       join ingredients i on ri.ingredient_id = i.id
       group by d.slug
     ),
+    variant_factor as (
+      select distinct on (d.slug, v.price)
+        d.slug, v.price, v.stock_factor
+      from dish_variants v
+      join dishes d on d.id = v.dish_id
+      order by d.slug, v.price, v.sort_order
+    ),
     order_cogs as (
       select o.id, o.created_at,
-        coalesce(sum(ic.cost * (elem->>'quantity')::numeric), 0) as cogs
+        coalesce(
+          sum(
+            ic.cost
+              * (elem->>'quantity')::numeric
+              * coalesce(vf.stock_factor, 1)
+          ),
+          0
+        ) as cogs
       from orders o
       cross join lateral jsonb_array_elements(coalesce(o.items_snapshot, '[]'::jsonb)) elem
       left join item_cost ic on ic.slug = (elem->>'slug')
+      left join variant_factor vf
+        on vf.slug = (elem->>'slug')
+       and vf.price = (elem->>'price')::numeric
       where o.status <> 'cancelled' and o.created_at >= now() - interval '30 days'
       group by o.id, o.created_at
     )

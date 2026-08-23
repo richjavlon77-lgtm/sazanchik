@@ -1,13 +1,23 @@
 import "server-only";
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
-import { orders, tableSessions } from "@/db/schema";
+import { orders, payments, tableSessions } from "@/db/schema";
 
-export type OpenBill = { sessionId: string; tableNumber: string; total: number };
+export type OpenBill = {
+  sessionId: string;
+  tableNumber: string;
+  /** полная сумма счёта (неотменённые заказы сессии) */
+  total: number;
+  /** уже оплачено онлайн (успешные Payme/Click) */
+  paidOnline: number;
+  /** остаток к оплате — именно его сверяем и выставляем в ссылках.
+   *  Счёт может дорасти дозаказом ПОСЛЕ онлайн-оплаты — платить надо
+   *  разницу, а не полный total второй раз. */
+  due: number;
+};
 
 /**
  * Открытый счёт стола по id сессии — якорь онлайн-платежа.
- * Сумма = все неотменённые заказы сессии (та же логика, что в bills-data).
  * null — если счёт не найден или уже закрыт: платить нечего.
  */
 export async function loadOpenBill(sessionId: string): Promise<OpenBill | null> {
@@ -28,5 +38,18 @@ export async function loadOpenBill(sessionId: string): Promise<OpenBill | null> 
       and(eq(orders.sessionId, sessionId), ne(orders.status, "cancelled"))
     );
   const total = rows.reduce((sum, r) => sum + r.total, 0);
-  return { sessionId: session.id, tableNumber: session.tableNumber, total };
+
+  const paidRows = await db
+    .select({ amount: payments.amount })
+    .from(payments)
+    .where(and(eq(payments.sessionId, sessionId), eq(payments.state, "paid")));
+  const paidOnline = paidRows.reduce((sum, r) => sum + r.amount, 0);
+
+  return {
+    sessionId: session.id,
+    tableNumber: session.tableNumber,
+    total,
+    paidOnline,
+    due: Math.max(0, total - paidOnline),
+  };
 }
