@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLocalString, writeLocal } from "@/lib/local-store";
+import { PayBill } from "@/components/PayBill";
 
 type Stored = { id: string; table: string; at: number };
 type Status = "pending" | "cooking" | "delivered" | "cancelled";
@@ -150,6 +151,10 @@ export function OrderTracker() {
             })}
           </div>
         )}
+
+        {/* Заказ подан → гостю сразу предлагается оплатить счёт со стола.
+            Пока мерчант не подключён, PayBill не рендерит ничего. */}
+        {done && <PayBill className="mt-3" />}
       </div>
     </div>
   );
