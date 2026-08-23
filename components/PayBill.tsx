@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { useTableNumber } from "@/lib/table";
 import { useLocale } from "@/lib/i18n";
 
@@ -29,12 +28,6 @@ const T = {
     uz: "Onlayn to'landi",
     en: "Paid online",
     tr: "Online ödendi",
-  },
-  soon: {
-    ru: "Онлайн-оплата скоро заработает — пока позовите официанта",
-    uz: "Onlayn to'lov tez orada ishlaydi — hozircha ofitsiantni chaqiring",
-    en: "Online payment is coming soon — please call the waiter for now",
-    tr: "Online ödeme yakında — şimdilik garsonu çağırın",
   },
 } as const;
 
@@ -94,22 +87,21 @@ export function PayBill({ className }: { className?: string }) {
             ✓ {t("paid")}
           </div>
         ) : bill.demo ? (
-          /* Демо-витрина: кнопки настоящие на вид, ведут в «скоро» */
+          /* Демо-витрина: кнопки ведут на демо-чекаут — воронка доигрывается
+             до «Оплачено», деньги не списываются */
           <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              onClick={() => toast.info(t("soon"))}
+            <a
+              href={`/pay/demo?provider=payme&amount=${bill.due ?? bill.total}`}
               className="flex-1 rounded-full bg-gold px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-primary-foreground transition-opacity hover:opacity-90"
             >
               Payme
-            </button>
-            <button
-              type="button"
-              onClick={() => toast.info(t("soon"))}
+            </a>
+            <a
+              href={`/pay/demo?provider=click&amount=${bill.due ?? bill.total}`}
               className="flex-1 rounded-full border border-gold/40 px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-gold transition-colors hover:bg-gold/10"
             >
               Click
-            </button>
+            </a>
           </div>
         ) : (
           (bill.paymeUrl || bill.clickUrl) && (

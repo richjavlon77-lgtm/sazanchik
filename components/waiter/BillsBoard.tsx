@@ -140,17 +140,16 @@ export function BillsBoard({ bills, name }: { bills: Bill[]; name: string }) {
                 )}
                 {b.paidOnline < b.total && b.demo && (
                   <div className="mt-2 flex items-center gap-2">
-                    {["Payme", "Click"].map((name) => (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() =>
-                          toast.info("Онлайн-оплата появится после подключения мерчанта")
-                        }
+                    {(["payme", "click"] as const).map((prov) => (
+                      <a
+                        key={prov}
+                        href={`/pay/demo?provider=${prov}&amount=${b.total - b.paidOnline}`}
+                        target="_blank"
+                        rel="noreferrer"
                         className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
                       >
-                        {name}
-                      </button>
+                        {prov === "payme" ? "Payme" : "Click"}
+                      </a>
                     ))}
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
                       демо
