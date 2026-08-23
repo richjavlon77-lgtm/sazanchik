@@ -66,6 +66,39 @@ export function answerCallback(callbackQueryId: string, text?: string) {
   });
 }
 
+/** Отредактировать текст+кнопки сообщения (навигация меню без спама). */
+export function editMessageText(
+  chatId: string | number,
+  messageId: number,
+  text: string,
+  inline?: InlineButton[][]
+) {
+  return call("editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+    parse_mode: "HTML",
+    link_preview_options: { is_disabled: true },
+    reply_markup: { inline_keyboard: inline ?? [] },
+  });
+}
+
+/** Фото с подписью и кнопками (обложка, карточка блюда). */
+export function sendPhoto(
+  chatId: string | number,
+  photoUrl: string,
+  caption: string,
+  inline?: InlineButton[][]
+) {
+  return call("sendPhoto", {
+    chat_id: chatId,
+    photo: photoUrl,
+    caption,
+    parse_mode: "HTML",
+    ...(inline ? { reply_markup: { inline_keyboard: inline } } : {}),
+  });
+}
+
 /** Убрать инлайн-кнопки у сообщения (после выбора), не трогая текст. */
 export function clearInlineKeyboard(chatId: string | number, messageId: number) {
   return call("editMessageReplyMarkup", {

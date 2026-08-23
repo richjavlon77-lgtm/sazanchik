@@ -12,7 +12,20 @@ import {
   tableSessions,
   reservations,
 } from "@/db/schema";
-import { sendMessage, answerCallback, clearInlineKeyboard, type InlineButton } from "@/lib/tg/api";
+import {
+  sendMessage,
+  sendPhoto,
+  editMessageText,
+  answerCallback,
+  clearInlineKeyboard,
+  type InlineButton,
+} from "@/lib/tg/api";
+import { getMenuFromDb, getRestaurantFromDb } from "@/lib/menu-from-db";
+import {
+  categoriesScreen,
+  categoryScreen,
+  dishCard,
+} from "@/lib/tg/menu-browser";
 import {
   bookingStep,
   START_REPLY,
@@ -85,19 +98,29 @@ const todayTashkent = () =>
 
 function guestMenu(): InlineButton[][] {
   return [
-    [{ text: "🍽 Открыть меню", web_app: { url: SITE() } }],
+    [{ text: "🍽 Меню", callback_data: "mc" }],
     [
-      { text: "📅 Забронировать стол", callback_data: "go_book" },
+      { text: "📅 Бронь стола", callback_data: "go_book" },
       { text: "🚚 Доставка", callback_data: "go_delivery" },
     ],
-    [{ text: "📞 Контакты", callback_data: "go_contacts" }],
+    [
+      { text: "🌐 Сайт", url: SITE() },
+      { text: "📞 Контакты", callback_data: "go_contacts" },
+    ],
   ];
 }
 
 const WELCOME =
-  "🐟 <b>Сазанчик CITY</b>\n" +
-  "Узбекская кухня с европейскими нотками · Ташкент\n\n" +
-  "Ежедневно 10:00–23:00";
+  "🐟 <b>САЗАНЧИК CITY</b>\n" +
+  "──────────────\n" +
+  "<i>В лучших традициях узбекской кухни\nс нотками европейской изысканности</i>\n\n" +
+  "📍 Ташкент · ⏰ 10:00–23:00";
+
+/** Приветствие с фирменной обложкой; фолбэк — текст, если фото не ушло. */
+async function sendWelcome(chatId: string) {
+  const ok = await sendPhoto(chatId, `${SITE()}/og-image.png`, WELCOME, guestMenu());
+  if (!ok) await sendMessage(chatId, WELCOME, { inline: guestMenu() });
+}
 
 // ── Диалоги (бронь/доставка) ────────────────────────────────────
 
@@ -291,8 +314,17 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
     const chatId = String(chat.id);
     await upsertUser(chatId, cq.from);
     await answerCallback(cq.id);
-    if (cq.message) await clearInlineKeyboard(chatId, cq.message.message_id);
-    await routeInput(chatId, { kind: "callback", data: cq.data ?? "" });
+    const data = cq.data ?? "";
+    const messageId = cq.message?.message_id;
+
+    // Навигация меню редактирует то же сообщение — клавиатуру не трогаем
+    if (data === "mc" || data.startsWith("mcat_") || data.startsWith("mdish_") || data === "go_home") {
+      await handleMenuNav(chatId, messageId, data);
+      return;
+    }
+
+    if (messageId) await clearInlineKeyboard(chatId, messageId);
+    await routeInput(chatId, { kind: "callback", data });
     return;
   }
 
@@ -353,12 +385,15 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
           }
         }
         await clearDialog(chatId);
-        await sendMessage(chatId, WELCOME, { inline: guestMenu() });
+        await sendWelcome(chatId);
         return;
       }
-      case "/menu":
-        await sendMessage(chatId, "Наше меню 👇", { inline: guestMenu() });
+      case "/menu": {
+        const menu = await getMenuFromDb();
+        const scr = categoriesScreen(menu);
+        await sendMessage(chatId, scr.text, { inline: scr.inline });
         return;
+      }
       case "/book":
         await setDialog(chatId, "bk:name", {});
         await sendFsmReply(chatId, START_REPLY);
@@ -431,12 +466,47 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
       }
     }
     // неизвестная команда / нет прав → главное меню
-    await sendMessage(chatId, WELCOME, { inline: guestMenu() });
+    await sendWelcome(chatId);
     return;
   }
 
   // обычный текст → в активный диалог
   await routeInput(chatId, { kind: "text", text });
+}
+
+// ── Меню-браузер ────────────────────────────────────────────────
+
+async function handleMenuNav(
+  chatId: string,
+  messageId: number | undefined,
+  data: string
+): Promise<void> {
+  if (data === "go_home") {
+    if (messageId) await clearInlineKeyboard(chatId, messageId);
+    await sendWelcome(chatId);
+    return;
+  }
+
+  const menu = await getMenuFromDb();
+
+  if (data.startsWith("mdish_")) {
+    const card = dishCard(menu, data.slice(6), SITE());
+    if (card) {
+      await sendPhoto(chatId, card.photo, card.caption, card.inline);
+    }
+    return;
+  }
+
+  const screen = data.startsWith("mcat_")
+    ? (categoryScreen(menu, data.slice(5)) ?? categoriesScreen(menu))
+    : categoriesScreen(menu);
+
+  // Пытаемся отредактировать текущее сообщение; из фото-приветствия
+  // текст не редактируется — шлём новое
+  const edited = messageId
+    ? await editMessageText(chatId, messageId, screen.text, screen.inline)
+    : false;
+  if (!edited) await sendMessage(chatId, screen.text, { inline: screen.inline });
 }
 
 // ── Роутинг в диалоги ───────────────────────────────────────────
@@ -458,9 +528,42 @@ async function routeInput(
       return;
     }
     if (input.data === "go_contacts") {
+      let phone = "+998 92 001 78 78";
+      let address = "Ташкент";
+      let hours = "Ежедневно 10:00–23:00";
+      let instagram = "";
+      try {
+        const r = await getRestaurantFromDb();
+        if (r) {
+          phone = r.phone || phone;
+          address = r.address?.ru || address;
+          hours = r.workingHours?.ru || hours;
+          instagram = r.instagram ?? "";
+        }
+      } catch {
+        /* дефолты выше */
+      }
+      const ig = instagram.replace(/^@/, "");
       await sendMessage(
         chatId,
-        `📍 Ташкент · Ежедневно 10:00–23:00\n🌐 ${SITE()}\n\nЖдём вас в «Сазанчике»! 🐟`
+        [
+          "📞 <b>КОНТАКТЫ</b>",
+          "──────────────",
+          `☎️ <a href="tel:${phone.replace(/[^+\d]/g, "")}">${phone}</a>`,
+          `📍 ${address}`,
+          `⏰ ${hours}`,
+          "",
+          "Ждём вас в «Сазанчике»! 🐟",
+        ].join("\n"),
+        {
+          inline: [
+            [
+              ...(ig ? [{ text: "📸 Instagram", url: `https://instagram.com/${ig}` }] : []),
+              { text: "🌐 Сайт", url: SITE() },
+            ],
+            [{ text: "‹ В начало", callback_data: "go_home" }],
+          ],
+        }
       );
       return;
     }
@@ -468,9 +571,7 @@ async function routeInput(
 
   const [dialog] = await db.select().from(tgDialogs).where(eq(tgDialogs.chatId, chatId));
   if (!dialog) {
-    if (input.kind === "text") {
-      await sendMessage(chatId, WELCOME, { inline: guestMenu() });
-    }
+    if (input.kind === "text") await sendWelcome(chatId);
     return;
   }
 

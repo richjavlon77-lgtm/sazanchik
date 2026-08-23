@@ -49,5 +49,11 @@ const commands = await api("setMyCommands", {
 });
 console.log("setMyCommands:", commands.ok ? "✓" : commands);
 
+// Синяя кнопка «Меню» слева от поля ввода — открывает сайт как мини-апп
+const menuBtn = await api("setChatMenuButton", {
+  menu_button: { type: "web_app", text: "Меню", web_app: { url: BASE } },
+});
+console.log("setChatMenuButton:", menuBtn.ok ? "✓" : menuBtn);
+
 const info = await api("getWebhookInfo", {});
 console.log("webhook url:", info.result?.url, "| pending:", info.result?.pending_update_count ?? 0);
