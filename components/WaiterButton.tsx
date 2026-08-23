@@ -7,6 +7,7 @@ import { useTableNumber } from "@/lib/table";
 import { guestTableLabel } from "@/lib/tables";
 import { useCart } from "@/lib/cart-context";
 import { cn } from "@/lib/utils";
+import { PayBill } from "@/components/PayBill";
 import {
   Dialog,
   DialogContent,
@@ -183,6 +184,10 @@ export function WaiterButton() {
               </button>
             </div>
           )}
+
+          {/* Онлайн-оплата счёта — рендерится только с подключённым
+              мерчантом (Payme/Click) и открытым счётом стола */}
+          <PayBill className="mt-2" />
 
           <div className="mt-2 grid gap-2">
             <ActionRow
