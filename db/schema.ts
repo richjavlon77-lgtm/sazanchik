@@ -493,6 +493,84 @@ export const payments = pgTable(
   ]
 );
 
+// ============================================================================
+// Telegram-бот (@Sazanchik_city_bot)
+// ============================================================================
+
+/**
+ * Пользователи бота. Роль определяет, что человеку доступно:
+ * guest — меню/бронь; staff — стоп-лист, столы; admin — финансы и
+ * приглашения работников; owner — всё + назначение админов (один, владелец).
+ */
+export const tgUsers = pgTable(
+  "tg_users",
+  {
+    /** Telegram chat id (private chat) */
+    chatId: text("chat_id").primaryKey(),
+    username: text("username"),
+    name: text("name").notNull().default(""),
+    role: text("role")
+      .$type<"guest" | "staff" | "admin" | "owner">()
+      .notNull()
+      .default("guest"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("tg_users_role_idx").on(t.role)]
+);
+
+/** Одноразовые коды-приглашения: /invite_staff → код → человек жмёт
+ *  deep-link t.me/bot?start=inv_<code> и получает роль. */
+export const tgInvites = pgTable(
+  "tg_invites",
+  {
+    code: text("code").primaryKey(),
+    role: text("role").$type<"staff" | "admin">().notNull(),
+    createdBy: text("created_by").notNull(),
+    usedBy: text("used_by"),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("tg_invites_used_idx").on(t.usedBy)]
+);
+
+/** Заявки на доставку из бота: телефон/адрес/список блюд — менеджер
+ *  перезванивает и подтверждает. Продублировано уведомлением в рабочий чат. */
+export const deliveryRequests = pgTable(
+  "delivery_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    chatId: text("chat_id").notNull(),
+    phone: text("phone").notNull(),
+    address: text("address").notNull(),
+    items: text("items").notNull(),
+    status: text("status")
+      .$type<"new" | "confirmed" | "done" | "cancelled">()
+      .notNull()
+      .default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("delivery_status_idx").on(t.status, t.createdAt)]
+);
+
+/** Пошаговые диалоги (бронь): текущее состояние и накопленные данные. */
+export const tgDialogs = pgTable("tg_dialogs", {
+  chatId: text("chat_id").primaryKey(),
+  state: text("state").notNull(),
+  data: jsonb("data").$type<Record<string, unknown>>().notNull().default({}),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 /**
  * Аудит-лог чувствительных действий персонала: отмена заказа, закрытие
  * счёта, ручная корректировка склада, выплата зарплаты, удаление расхода.
