@@ -14,6 +14,7 @@ const STAFF_AREAS = [
   "/staff",
   "/tv",
   "/print",
+  "/pay",
   "/waiter",
   "/bar",
   "/hookah",
