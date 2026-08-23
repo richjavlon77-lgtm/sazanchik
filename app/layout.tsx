@@ -7,7 +7,6 @@ import { ClientChrome } from "@/components/ClientChrome";
 import { CartProvider } from "@/lib/cart-context";
 import { FavoritesProvider } from "@/lib/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
-import { ErrorReporter } from "@/components/ErrorReporter";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 // Body — Golos Text: Cyrillic-first, crisp UI sans (RU/UZ/EN/TR)
@@ -136,7 +135,6 @@ export default function RootLayout({
                 {children}
                 <ClientChrome />
                 <Toaster position="top-center" />
-                <ErrorReporter />
                 <ServiceWorkerRegister />
               </CartProvider>
             </FavoritesProvider>

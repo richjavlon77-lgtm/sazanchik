@@ -21,12 +21,23 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.lang = l;
     };
 
-    // Use View Transitions API where available (Chrome/Edge/Safari 18+)
+    // Use View Transitions API where available (Chrome/Edge/Safari 18+).
+    // ready/finished реджектятся AbortError на слабых Android при повторном
+    // клике или скрытой вкладке — гасим, это косметика, не ошибка.
     const doc = document as Document & {
-      startViewTransition?: (cb: () => void) => { ready: Promise<void> };
+      startViewTransition?: (cb: () => void) => {
+        ready: Promise<void>;
+        finished?: Promise<void>;
+      };
     };
     if (doc.startViewTransition) {
-      doc.startViewTransition(apply);
+      try {
+        const t = doc.startViewTransition(apply);
+        t.ready.catch(() => {});
+        t.finished?.catch(() => {});
+      } catch {
+        apply();
+      }
     } else {
       apply();
     }
