@@ -434,6 +434,24 @@
     }
   }
 
+  /* На телефонах входные анимации не двигают и не масштабируют элементы:
+     карточка во всю ширину, «увеличивающаяся» при скролле, читается как
+     дёргание интерфейса. Оставляем только мягкий fade. */
+  @media (max-width: 767px) {
+    @keyframes sectionEnter {
+      from { opacity: 0; transform: none; }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes cardEnter {
+      from { opacity: 0; transform: none; }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: none; }
+      to { opacity: 1; transform: none; }
+    }
+  }
+
   /* View Transitions — soft crossfade on locale switch */
   ::view-transition-old(root),
   ::view-transition-new(root) {

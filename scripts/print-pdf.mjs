@@ -47,12 +47,49 @@ if (mode === "qr") {
   process.exit(1);
 }
 
+/**
+ * Менеджерская кука. ВАЖНО: подписанные QR столов зависят от секрета ТОГО
+ * сервера, где рендерится страница — PDF для типографии генерируй только
+ * с BASE_URL=https://sazanchik.vercel.app (локальный dev подпишет QR
+ * локальным секретом, и в зале они не пройдут проверку!).
+ * Сначала пробуем реальный логин (работает и на проде), затем — минт JWT
+ * локальным секретом (fallback для дев-серверов с чужим ADMIN_PASSWORD).
+ */
+async function managerCookie() {
+  const env = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
+  const m = env.match(/^ADMIN_PASSWORD=(.+)$/m);
+  const password = process.env.ADMIN_PASSWORD || (m ? m[1].trim().replace(/^(["'])(.*)\1$/, "$2") : null);
+  if (password) {
+    const res = await fetch(`${BASE_URL}/admin/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) {
+      const cookie = res.headers.get("set-cookie")?.split(";")[0];
+      if (cookie?.startsWith("sazanchik_session=")) {
+        return cookie.split("=").slice(1).join("=");
+      }
+    }
+    console.warn("⚠ Логин паролем не прошёл — пробую подписать сессию локальным секретом");
+  }
+  return managerToken();
+}
+
+const isProd = !BASE_URL.includes("localhost") && !BASE_URL.includes("127.0.0.1");
+if (mode === "qr" && !isProd) {
+  console.warn(
+    "⚠ ВНИМАНИЕ: QR генерируются НЕ с прода — подписи будут невалидны в зале.\n" +
+      "  Для типографии: BASE_URL=https://sazanchik.vercel.app npm run print:qr"
+  );
+}
+
 const browser = await chromium.launch({ channel: "chrome" });
 const context = await browser.newContext();
 await context.addCookies([
   {
     name: "sazanchik_session",
-    value: await managerToken(),
+    value: await managerCookie(),
     domain: new URL(BASE_URL).hostname,
     path: "/",
   },

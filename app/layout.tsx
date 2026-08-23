@@ -121,9 +121,12 @@ export default function RootLayout({
       className={`${bodySans.variable} ${geistMono.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col relative">
+        {/* Гостевой сайт — только светлый: forcedTheme перекрывает застрявший
+            в localStorage «dark» у гостей со старой (тёмной) версии сайта. */}
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
+          forcedTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
