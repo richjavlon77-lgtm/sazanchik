@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { tableSessions, orders, payments } from "@/db/schema";
-import { paymeConfig, clickConfig } from "@/lib/payments/config";
+import { paymeConfig, clickConfig, paymentsDemo } from "@/lib/payments/config";
 import { buildPaymeCheckoutUrl, buildClickPayUrl } from "@/lib/payments/core";
 
 export type BillLine = { name: string; qty: number };
@@ -18,6 +18,8 @@ export type Bill = {
   /** ссылки на оплату — только когда провайдер подключён (env-ключи) */
   paymeUrl?: string;
   clickUrl?: string;
+  /** демо-витрина: кнопки видны, но ведут в «скоро» */
+  demo?: boolean;
 };
 
 /** All open table bills with their aggregated items and total. */
@@ -62,6 +64,7 @@ export async function loadOpenBills(): Promise<Bill[]> {
 
   const payme = paymeConfig();
   const click = clickConfig();
+  const demo = paymentsDemo();
 
   const bySession = new Map<string, typeof orderRows>();
   for (const o of orderRows) {
@@ -87,6 +90,7 @@ export async function loadOpenBills(): Promise<Bill[]> {
       total,
       lines: [...agg.entries()].map(([name, qty]) => ({ name, qty })),
       paidOnline: paidBySession.get(s.id) ?? 0,
+      demo,
       // Ссылки — на ОСТАТОК: счёт мог дорасти после частичной онлайн-оплаты
       paymeUrl:
         payme && total - (paidBySession.get(s.id) ?? 0) > 0

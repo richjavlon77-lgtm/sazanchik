@@ -22,3 +22,12 @@ export function clickConfig() {
 }
 
 export const paymentsEnabled = () => !!(paymeConfig() || clickConfig());
+
+/**
+ * Демо-режим витрины оплаты: кнопки Payme/Click видны гостю и официанту,
+ * но ведут в тост «скоро» — для показа воронки до подключения мерчанта.
+ * Включается NEXT_PUBLIC_PAYMENTS_DEMO=1; при появлении реальных ключей
+ * боевой режим автоматически важнее демо.
+ */
+export const paymentsDemo = () =>
+  process.env.NEXT_PUBLIC_PAYMENTS_DEMO === "1" && !paymentsEnabled();

@@ -138,7 +138,26 @@ export function BillsBoard({ bills, name }: { bills: Bill[]; name: string }) {
                     💳 Оплачено онлайн · {b.paidOnline.toLocaleString("ru-RU")} сум
                   </div>
                 )}
-                {b.paidOnline < b.total && (b.paymeUrl || b.clickUrl) && (
+                {b.paidOnline < b.total && b.demo && (
+                  <div className="mt-2 flex items-center gap-2">
+                    {["Payme", "Click"].map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() =>
+                          toast.info("Онлайн-оплата появится после подключения мерчанта")
+                        }
+                        className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                      демо
+                    </span>
+                  </div>
+                )}
+                {b.paidOnline < b.total && !b.demo && (b.paymeUrl || b.clickUrl) && (
                   <div className="mt-2 flex gap-2">
                     {b.paymeUrl && (
                       <a

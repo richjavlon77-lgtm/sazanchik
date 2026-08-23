@@ -4,7 +4,12 @@ import { db } from "@/db";
 import { tableSessions } from "@/db/schema";
 import { verifyTableToken } from "@/lib/table-sign";
 import { loadOpenBill } from "@/lib/payments/bill";
-import { paymeConfig, clickConfig, paymentsEnabled } from "@/lib/payments/config";
+import {
+  paymeConfig,
+  clickConfig,
+  paymentsEnabled,
+  paymentsDemo,
+} from "@/lib/payments/config";
 import { buildPaymeCheckoutUrl, buildClickPayUrl } from "@/lib/payments/core";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/client-ip";
@@ -23,7 +28,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Слишком часто" }, { status: 429 });
   }
 
-  if (!paymentsEnabled()) {
+  const demo = paymentsDemo();
+  if (!paymentsEnabled() && !demo) {
     return NextResponse.json(
       { enabled: false },
       { headers: { "Cache-Control": "no-store" } }
@@ -63,6 +69,7 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       enabled: true,
+      demo,
       open: true,
       total: bill.total,
       paidOnline: bill.paidOnline,
