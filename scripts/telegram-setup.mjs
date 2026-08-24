@@ -49,9 +49,9 @@ const commands = await api("setMyCommands", {
 });
 console.log("setMyCommands:", commands.ok ? "✓" : commands);
 
-// Синяя кнопка «Меню» слева от поля ввода — открывает сайт как мини-апп
+// Синяя кнопка — мини-апп ДОСТАВКИ (не столовый сайт зала!)
 const menuBtn = await api("setChatMenuButton", {
-  menu_button: { type: "web_app", text: "Меню", web_app: { url: BASE } },
+  menu_button: { type: "web_app", text: "Доставка", web_app: { url: `${BASE}/delivery` } },
 });
 console.log("setChatMenuButton:", menuBtn.ok ? "✓" : menuBtn);
 

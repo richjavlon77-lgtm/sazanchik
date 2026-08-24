@@ -111,12 +111,15 @@ const todayTashkent = () =>
 
 function guestMenu(): InlineButton[][] {
   return [
-    [{ text: "🚚 Заказать доставку", callback_data: "dmenu" }],
+    [{ text: "🚚 Заказать доставку", web_app: { url: `${SITE()}/delivery` } }],
     [
-      { text: "🍽 Посмотреть меню", callback_data: "mc" },
+      { text: "🛒 Заказ в чате", callback_data: "dmenu" },
       { text: "📅 Бронь стола", callback_data: "go_book" },
     ],
-    [{ text: "📞 Контакты", callback_data: "go_contacts" }],
+    [
+      { text: "🍽 Меню с фото", callback_data: "mc" },
+      { text: "📞 Контакты", callback_data: "go_contacts" },
+    ],
   ];
 }
 
