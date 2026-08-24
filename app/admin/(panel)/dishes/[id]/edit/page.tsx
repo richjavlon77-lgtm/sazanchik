@@ -23,7 +23,7 @@ export default async function EditDishPage({
     <div>
       <div className="mb-6">
         <Link
-          href="/admin"
+          href="/admin/menu"
           className="mb-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground"
         >
           ← Меню

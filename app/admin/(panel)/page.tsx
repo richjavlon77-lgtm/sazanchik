@@ -1,158 +1,277 @@
 import Link from "next/link";
+import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, dishes } from "@/db/schema";
-import { asc } from "drizzle-orm";
-import { formatPrice } from "@/lib/i18n-core";
-import { DishSortList } from "@/components/admin/DishSortList";
+import {
+  tableSessions,
+  reservations,
+  reviews,
+  dishes,
+  deliveryRequests,
+  waiterCalls,
+} from "@/db/schema";
+import { tableLabel } from "@/lib/tables";
 
 export const dynamic = "force-dynamic";
 
-function StatCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
+const TZ = "Asia/Tashkent";
+const money = (n: number) => `${Math.round(n).toLocaleString("ru-RU")}`;
+
+const fmtTime = (d: Date) =>
+  new Date(d).toLocaleString("ru-RU", {
+    timeZone: TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+/** Живой дашборд дня — всё важное одним экраном, каждая карточка кликабельна. */
+export default async function AdminDashboard() {
+  const [today] = (await db.execute(sql`
+    select
+      coalesce(sum(total_price),0)::bigint as revenue,
+      count(*)::int as cnt,
+      coalesce(sum(total_price) filter (where (created_at at time zone ${TZ}) >=
+        date_trunc('day', now() at time zone ${TZ}) - interval '1 day'
+        and (created_at at time zone ${TZ}) < date_trunc('day', now() at time zone ${TZ})),0)::bigint as _ignore
+    from orders
+    where status <> 'cancelled'
+      and (created_at at time zone ${TZ}) >= date_trunc('day', now() at time zone ${TZ})
+  `)) as unknown as { revenue: string; cnt: number }[];
+
+  const [yesterday] = (await db.execute(sql`
+    select coalesce(sum(total_price),0)::bigint as revenue
+    from orders
+    where status <> 'cancelled'
+      and (created_at at time zone ${TZ}) >= date_trunc('day', now() at time zone ${TZ}) - interval '1 day'
+      and (created_at at time zone ${TZ}) < date_trunc('day', now() at time zone ${TZ})
+  `)) as unknown as { revenue: string }[];
+
+  const openSessions = await db
+    .select({ id: tableSessions.id, table: tableSessions.tableNumber })
+    .from(tableSessions)
+    .where(eq(tableSessions.status, "open"));
+  let openTotal = 0;
+  if (openSessions.length) {
+    const [sum] = (await db.execute(sql`
+      select coalesce(sum(total_price),0)::bigint as s
+      from orders o join table_sessions ts on ts.id = o.session_id
+      where ts.status = 'open' and o.status <> 'cancelled'
+    `)) as unknown as { s: string }[];
+    openTotal = Number(sum.s);
+  }
+
+  const upcoming = await db
+    .select()
+    .from(reservations)
+    .where(and(gte(reservations.reservedAt, new Date()), ne(reservations.status, "cancelled")))
+    .orderBy(reservations.reservedAt)
+    .limit(4);
+
+  const [pendingReviews] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(reviews)
+    .where(and(eq(reviews.isPublished, false), sql`${reviews.comment} <> ''`));
+
+  const [stops] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(dishes)
+    .where(and(eq(dishes.isPublished, true), eq(dishes.inStock, false)));
+
+  const [newDeliveries] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(deliveryRequests)
+    .where(eq(deliveryRequests.status, "new"));
+
+  const [openCalls] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(waiterCalls)
+    .where(eq(waiterCalls.status, "new"));
+
+  const revenue = Number(today.revenue);
+  const prevRevenue = Number(yesterday.revenue);
+  const trend =
+    prevRevenue > 0 ? Math.round(((revenue - prevRevenue) / prevRevenue) * 100) : null;
+
+  const now = new Date().toLocaleString("ru-RU", {
+    timeZone: TZ,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
   return (
-    <div className="rounded-2xl border border-border bg-card/40 p-5">
-      <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-        {label}
+    <div>
+      <div className="mb-6">
+        <div className="text-[10px] uppercase tracking-[0.35em] text-gold">
+          — {now} —
+        </div>
+        <h1 className="mt-1 font-heading text-3xl md:text-4xl">
+          Добрый день<span className="text-gold">.</span>
+        </h1>
       </div>
-      <div className="mt-2 font-heading text-3xl tabular-nums text-gold">
-        {value}
+
+      {/* Главная метрика */}
+      <Link
+        href="/admin/finance"
+        className="block rounded-3xl border border-gold/25 bg-gradient-to-br from-gold/[0.08] to-transparent p-5 transition-colors hover:border-gold/50 md:p-6"
+      >
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              Выручка сегодня
+            </div>
+            <div className="mt-1 font-heading text-4xl tabular-nums text-gold md:text-5xl">
+              {money(revenue)} <span className="text-lg">сум</span>
+            </div>
+          </div>
+          <div className="text-right text-sm text-muted-foreground">
+            <div>
+              {today.cnt} заказ.
+              {today.cnt > 0 && <> · средний чек {money(revenue / today.cnt)}</>}
+            </div>
+            {trend !== null && (
+              <div className={trend >= 0 ? "text-emerald-600" : "text-red-500"}>
+                {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}% ко вчера
+              </div>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      {/* Пульс зала */}
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Pulse
+          href="/admin/cash"
+          icon="🍽"
+          label="Открытые столы"
+          value={String(openSessions.length)}
+          hint={openSessions.length ? `${money(openTotal)} сум на столах` : "зал свободен"}
+          alert={false}
+        />
+        <Pulse
+          href="/admin/reviews"
+          icon="⭐"
+          label="Отзывы ждут"
+          value={String(pendingReviews.n)}
+          hint={pendingReviews.n ? "на модерации" : "все разобраны"}
+          alert={pendingReviews.n > 0}
+        />
+        <Pulse
+          href="/admin/menu"
+          icon="⛔"
+          label="Стоп-лист"
+          value={String(stops.n)}
+          hint={stops.n ? "блюд недоступно" : "всё в наличии"}
+          alert={stops.n > 0}
+        />
+        <Pulse
+          href="/admin/reservations"
+          icon="🚚"
+          label="Доставка"
+          value={String(newDeliveries.n)}
+          hint={newDeliveries.n ? "новых заявок" : "заявок нет"}
+          alert={newDeliveries.n > 0}
+        />
       </div>
-      {hint && (
-        <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div>
+
+      {openCalls.n > 0 && (
+        <div className="mt-3 rounded-2xl border border-red-300 bg-red-500/[0.06] px-4 py-3 text-sm text-red-600">
+          🔔 {openCalls.n} неотвеченных вызова официанта — проверьте доску зала
+        </div>
       )}
+
+      {/* Брони + быстрые действия */}
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <section className="rounded-3xl border border-border bg-card/40 p-5">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-heading text-xl">Ближайшие брони</h2>
+            <Link href="/admin/reservations" className="text-xs uppercase tracking-wider text-gold">
+              все →
+            </Link>
+          </div>
+          {upcoming.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">Предстоящих броней нет.</p>
+          ) : (
+            <ul className="mt-3 space-y-2.5">
+              {upcoming.map((r) => (
+                <li key={r.id} className="flex items-baseline gap-3 text-sm">
+                  <span className="font-heading tabular-nums text-gold">
+                    {fmtTime(r.reservedAt)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">
+                    {r.name} · {r.guests} гост.
+                  </span>
+                  {r.tableNumber && (
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {tableLabel(r.tableNumber)}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="rounded-3xl border border-border bg-card/40 p-5">
+          <h2 className="font-heading text-xl">Быстрые действия</h2>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Action href="/admin/dishes/new" icon="＋" label="Новое блюдо" />
+            <Action href="/admin/menu" icon="🍽" label="Меню и стоп-лист" />
+            <Action href="/admin/tables" icon="🔗" label="QR столов" />
+            <Action href="/admin/audit" icon="🧾" label="Журнал действий" />
+            <Action href="/admin/inventory" icon="📦" label="Склад" />
+            <Action href="/admin/payroll" icon="💸" label="Зарплаты" />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
 
-export default async function AdminMenuPage() {
-  const cats = await db
-    .select()
-    .from(categories)
-    .orderBy(asc(categories.sortOrder));
-
-  const allDishes = await db
-    .select()
-    .from(dishes)
-    .orderBy(asc(dishes.categoryId), asc(dishes.sortOrder));
-
-  // Stats
-  const totalDishes = allDishes.length;
-  const published = allDishes.filter((d) => d.isPublished).length;
-  const hidden = totalDishes - published;
-  const priced = allDishes.filter((d) => d.price !== null) as {
-    price: number;
-  }[];
-  const avgPrice =
-    priced.length > 0
-      ? Math.round(priced.reduce((s, d) => s + d.price, 0) / priced.length)
-      : 0;
-
-  const dishesByCat = new Map<string, typeof allDishes>();
-  for (const d of allDishes) {
-    const list = dishesByCat.get(d.categoryId) ?? [];
-    list.push(d);
-    dishesByCat.set(d.categoryId, list);
-  }
-
+function Pulse({
+  href,
+  icon,
+  label,
+  value,
+  hint,
+  alert,
+}: {
+  href: string;
+  icon: string;
+  label: string;
+  value: string;
+  hint: string;
+  alert: boolean;
+}) {
   return (
-    <div>
-      <div className="mb-6 flex items-end justify-between">
-        <div>
-          <h1 className="font-heading text-3xl">Меню</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Перетаскивай блюда за <span className="text-gold">⠿</span> для
-            сортировки
-          </p>
-        </div>
-        <Link
-          href="/admin/dishes/new"
-          className="rounded-full bg-gold px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          + Новое блюдо
-        </Link>
+    <Link
+      href={href}
+      className={
+        "rounded-2xl border p-4 transition-colors " +
+        (alert
+          ? "border-gold/50 bg-gold/[0.07] hover:border-gold"
+          : "border-border bg-card/40 hover:border-gold/40")
+      }
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          {label}
+        </span>
+        <span aria-hidden>{icon}</span>
       </div>
+      <div className="mt-1.5 font-heading text-3xl tabular-nums">{value}</div>
+      <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>
+    </Link>
+  );
+}
 
-      {/* Stats */}
-      <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="card-enter card-enter-d1">
-          <StatCard label="Категорий" value={String(cats.length)} />
-        </div>
-        <div className="card-enter card-enter-d2">
-          <StatCard
-            label="Блюд"
-            value={String(totalDishes)}
-            hint={`${published} опубл. · ${hidden} скрыто`}
-          />
-        </div>
-        <div className="card-enter card-enter-d3">
-          <StatCard label="Средний чек" value={formatPrice(avgPrice, "ru")} />
-        </div>
-        <div className="card-enter card-enter-d4">
-          <StatCard
-            label="Опубликовано"
-            value={`${totalDishes ? Math.round((published / totalDishes) * 100) : 0}%`}
-            hint={`${hidden} скрытых`}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-8">
-        {cats.map((c) => {
-          const items = dishesByCat.get(c.id) ?? [];
-          return (
-            <section
-              key={c.id}
-              className="overflow-hidden rounded-xl border border-border bg-card/40"
-            >
-              <header className="flex items-center justify-between border-b border-border px-5 py-3">
-                <div>
-                  <h2 className="font-heading text-lg">{c.nameRu}</h2>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                    {items.length} блюд · {c.isPublished ? "published" : "hidden"}
-                  </p>
-                </div>
-                <Link
-                  href={`/admin/categories/${c.id}/edit`}
-                  className="text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-gold"
-                >
-                  Править
-                </Link>
-              </header>
-
-              {items.length === 0 ? (
-                <div className="px-5 py-6 text-sm text-muted-foreground">
-                  Нет блюд.{" "}
-                  <Link
-                    href={`/admin/dishes/new?category=${c.slug}`}
-                    className="text-gold hover:underline"
-                  >
-                    Добавить первое
-                  </Link>
-                </div>
-              ) : (
-                <DishSortList
-                  dishes={items.map((d) => ({
-                    id: d.id,
-                    slug: d.slug,
-                    nameRu: d.nameRu,
-                    descriptionRu: d.descriptionRu,
-                    price: d.price,
-                    isPublished: d.isPublished,
-                    spicy: d.spicy,
-                  }))}
-                />
-              )}
-            </section>
-          );
-        })}
-      </div>
-    </div>
+function Action({ href, icon, label }: { href: string; icon: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2.5 rounded-xl border border-border bg-background/60 px-3 py-2.5 text-sm transition-colors hover:border-gold/50 hover:text-gold"
+    >
+      <span aria-hidden>{icon}</span>
+      <span className="min-w-0 truncate">{label}</span>
+    </Link>
   );
 }

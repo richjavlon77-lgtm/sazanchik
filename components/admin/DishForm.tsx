@@ -79,7 +79,7 @@ export function DishForm({
       try {
         await saveDish(dishId, form);
         toast.success(dishId ? "Блюдо обновлено" : "Блюдо создано");
-        router.push("/admin");
+        router.push("/admin/menu");
         router.refresh();
       } catch (err) {
         setError((err as Error).message);
@@ -95,7 +95,7 @@ export function DishForm({
       try {
         await deleteDish(dishId);
         toast.success("Блюдо удалено");
-        router.push("/admin");
+        router.push("/admin/menu");
         router.refresh();
       } catch {
         toast.error("Ошибка удаления");

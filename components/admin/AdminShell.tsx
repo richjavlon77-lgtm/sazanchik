@@ -15,9 +15,13 @@ type NavGroup = {
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    label: "Обзор",
+    items: [{ href: "/admin", label: "Дашборд" }],
+  },
+  {
     label: "Меню",
     items: [
-      { href: "/admin", label: "Меню" },
+      { href: "/admin/menu", label: "Меню" },
       { href: "/admin/categories", label: "Категории" },
     ],
   },
@@ -149,68 +153,97 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               ↗ Сайт
             </Link>
             <LogoutButton />
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted md:hidden"
-              aria-label="Меню"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5">
-                {mobileOpen ? (
-                  <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
-                ) : (
-                  <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-                )}
-              </svg>
-            </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile nav drawer */}
+      {/* Мобильный шит «Ещё» — сгруппированные разделы плиткой */}
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <nav className="fixed bottom-0 left-0 right-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-gold/20 bg-card p-4 pb-safe-3 shadow-2xl md:hidden">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30" />
+          <nav className="fixed bottom-0 left-0 right-0 z-50 max-h-[78vh] overflow-y-auto rounded-t-3xl border-t border-gold/25 bg-card px-4 pb-24 pt-3 shadow-2xl md:hidden">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/30" />
             {NAV_GROUPS.map((group) => (
-              <div key={group.label} className="mb-3">
-                <div className="mb-1.5 px-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                  {group.label}
+              <div key={group.label} className="mb-4">
+                <div className="mb-2 px-1 text-[10px] uppercase tracking-[0.3em] text-gold">
+                  — {group.label} —
                 </div>
-                {group.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "block rounded-lg px-3 py-2 text-sm transition-colors",
-                      isActive(pathname, item.href)
-                        ? "bg-gold/10 text-gold"
-                        : "text-foreground hover:bg-muted"
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                <div className="grid grid-cols-2 gap-2">
+                  {group.items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "rounded-xl border px-3 py-2.5 text-sm transition-colors",
+                        isActive(pathname, item.href)
+                          ? "border-gold/60 bg-gold/10 text-gold"
+                          : "border-border text-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             ))}
             <Link
               href="/"
               target="_blank"
-              className="mt-2 block rounded-lg border border-border px-3 py-2 text-center text-sm text-muted-foreground"
+              className="block rounded-xl border border-border px-3 py-2.5 text-center text-sm text-muted-foreground"
               onClick={() => setMobileOpen(false)}
             >
-              ↗ Сайт
+              ↗ Открыть сайт
             </Link>
           </nav>
         </>
       )}
 
-      <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
+      {/* Мобильный нижний таб-бар: главное всегда под пальцем */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 pb-safe-1 backdrop-blur-md md:hidden">
+        <div className="grid grid-cols-5">
+          {[
+            { href: "/admin", icon: "◆", label: "Обзор" },
+            { href: "/admin/menu", icon: "🍽", label: "Меню" },
+            { href: "/admin/reservations", icon: "📅", label: "Брони" },
+            { href: "/admin/finance", icon: "📊", label: "Финансы" },
+          ].map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "flex flex-col items-center gap-0.5 py-2 text-[10px]",
+                isActive(pathname, t.href) && !mobileOpen
+                  ? "text-gold"
+                  : "text-muted-foreground"
+              )}
+            >
+              <span className="text-base leading-none" aria-hidden>
+                {t.icon}
+              </span>
+              {t.label}
+            </Link>
+          ))}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className={cn(
+              "flex flex-col items-center gap-0.5 py-2 text-[10px]",
+              mobileOpen ? "text-gold" : "text-muted-foreground"
+            )}
+          >
+            <span className="text-base leading-none" aria-hidden>
+              ☰
+            </span>
+            Ещё
+          </button>
+        </div>
+      </nav>
+
+      <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-6 md:py-8 md:pb-8">
         {children}
       </main>
     </div>
