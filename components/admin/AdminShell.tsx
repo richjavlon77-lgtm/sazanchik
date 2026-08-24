@@ -178,10 +178,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
-                        "rounded-xl border px-3 py-2.5 text-sm transition-colors",
+                        "rounded-2xl border px-4 py-3.5 text-[15px] transition-colors",
                         isActive(pathname, item.href)
                           ? "border-gold/60 bg-gold/10 text-gold"
-                          : "border-border text-foreground"
+                          : "border-border bg-white/60 text-foreground"
                       )}
                     >
                       {item.label}
@@ -216,13 +216,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               href={t.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex flex-col items-center gap-0.5 py-2 text-[10px]",
+                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
                 isActive(pathname, t.href) && !mobileOpen
                   ? "text-gold"
                   : "text-muted-foreground"
               )}
             >
-              <span className="text-base leading-none" aria-hidden>
+              <span className="text-xl leading-none" aria-hidden>
                 {t.icon}
               </span>
               {t.label}
@@ -231,11 +231,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className={cn(
-              "flex flex-col items-center gap-0.5 py-2 text-[10px]",
+              "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
               mobileOpen ? "text-gold" : "text-muted-foreground"
             )}
           >
-            <span className="text-base leading-none" aria-hidden>
+            <span className="text-xl leading-none" aria-hidden>
               ☰
             </span>
             Ещё

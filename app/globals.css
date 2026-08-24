@@ -577,3 +577,11 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Админка: светлый люкс — тёплая бумага, мягкое золотое свечение ── */
+.admin-shell {
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(197, 163, 92, 0.1), transparent 60%),
+    radial-gradient(900px 420px at -10% 108%, rgba(197, 163, 92, 0.07), transparent 55%),
+    #faf7f1;
+}

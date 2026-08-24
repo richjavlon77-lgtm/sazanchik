@@ -112,7 +112,7 @@ export default async function AdminDashboard() {
       {/* Главная метрика */}
       <Link
         href="/admin/finance"
-        className="block rounded-3xl border border-gold/25 bg-gradient-to-br from-gold/[0.08] to-transparent p-5 transition-colors hover:border-gold/50 md:p-6"
+        className="block rounded-[28px] border border-gold/30 bg-gradient-to-br from-gold/[0.1] via-white/60 to-transparent p-6 shadow-[0_16px_40px_-24px_rgba(197,163,92,0.5)] transition-colors hover:border-gold/60 md:p-8"
       >
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -181,7 +181,7 @@ export default async function AdminDashboard() {
 
       {/* Брони + быстрые действия */}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <section className="rounded-3xl border border-border bg-card/40 p-5">
+        <section className="rounded-3xl border border-border bg-white/70 p-6 shadow-[0_10px_30px_-20px_rgba(23,21,15,0.25)]">
           <div className="flex items-baseline justify-between">
             <h2 className="font-heading text-xl">Ближайшие брони</h2>
             <Link href="/admin/reservations" className="text-xs uppercase tracking-wider text-gold">
@@ -211,7 +211,7 @@ export default async function AdminDashboard() {
           )}
         </section>
 
-        <section className="rounded-3xl border border-border bg-card/40 p-5">
+        <section className="rounded-3xl border border-border bg-white/70 p-6 shadow-[0_10px_30px_-20px_rgba(23,21,15,0.25)]">
           <h2 className="font-heading text-xl">Быстрые действия</h2>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Action href="/admin/dishes/new" icon="＋" label="Новое блюдо" />
@@ -246,10 +246,10 @@ function Pulse({
     <Link
       href={href}
       className={
-        "rounded-2xl border p-4 transition-colors " +
+        "rounded-3xl border p-5 shadow-[0_10px_30px_-18px_rgba(23,21,15,0.25)] transition-all hover:-translate-y-0.5 " +
         (alert
-          ? "border-gold/50 bg-gold/[0.07] hover:border-gold"
-          : "border-border bg-card/40 hover:border-gold/40")
+          ? "border-gold/60 bg-gradient-to-br from-gold/[0.12] to-transparent hover:border-gold"
+          : "border-border bg-white/70 hover:border-gold/50")
       }
     >
       <div className="flex items-center justify-between">
@@ -258,8 +258,8 @@ function Pulse({
         </span>
         <span aria-hidden>{icon}</span>
       </div>
-      <div className="mt-1.5 font-heading text-3xl tabular-nums">{value}</div>
-      <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>
+      <div className="mt-2 font-heading text-4xl tabular-nums">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
     </Link>
   );
 }
@@ -268,9 +268,9 @@ function Action({ href, icon, label }: { href: string; icon: string; label: stri
   return (
     <Link
       href={href}
-      className="flex items-center gap-2.5 rounded-xl border border-border bg-background/60 px-3 py-2.5 text-sm transition-colors hover:border-gold/50 hover:text-gold"
+      className="flex items-center gap-3 rounded-2xl border border-border bg-white/70 px-4 py-3.5 text-[15px] shadow-[0_8px_24px_-18px_rgba(23,21,15,0.3)] transition-all hover:-translate-y-0.5 hover:border-gold/60 hover:text-gold"
     >
-      <span aria-hidden>{icon}</span>
+      <span className="text-lg" aria-hidden>{icon}</span>
       <span className="min-w-0 truncate">{label}</span>
     </Link>
   );
