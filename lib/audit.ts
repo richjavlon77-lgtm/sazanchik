@@ -9,7 +9,8 @@ export type AuditAction =
   | "stock.adjust"
   | "payroll.pay"
   | "expense.delete"
-  | "dish.delete";
+  | "dish.delete"
+  | "review.delete";
 
 /**
  * Запись в аудит-лог чувствительного действия персонала. Сессию берёт сам

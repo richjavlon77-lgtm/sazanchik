@@ -3,6 +3,7 @@ import {
   createOrderSchema,
   callWaiterSchema,
   createReservationSchema,
+  createReviewSchema,
 } from "@/lib/validators";
 
 const validLine = {
@@ -125,5 +126,27 @@ describe("createReservationSchema", () => {
     expect(
       createReservationSchema.safeParse({ name: "Иван", phone: "+998901234567", guests: 99, reservedAt: future }).success
     ).toBe(false);
+  });
+});
+
+describe("createReviewSchema", () => {
+  it("валидный отзыв: рейтинг + комментарий ≤100", () => {
+    const r = createReviewSchema.safeParse({ rating: 5, comment: "Всё супер!", guestName: "Жавлон" });
+    expect(r.success).toBe(true);
+  });
+
+  it("рейтинг обязателен и в диапазоне 1–5", () => {
+    expect(createReviewSchema.safeParse({ rating: 0, comment: "" }).success).toBe(false);
+    expect(createReviewSchema.safeParse({ rating: 6, comment: "" }).success).toBe(false);
+    expect(createReviewSchema.safeParse({ comment: "без оценки" }).success).toBe(false);
+  });
+
+  it("комментарий длиннее 100 символов отклоняется", () => {
+    const r = createReviewSchema.safeParse({ rating: 4, comment: "х".repeat(101) });
+    expect(r.success).toBe(false);
+  });
+
+  it("комментарий необязателен", () => {
+    expect(createReviewSchema.safeParse({ rating: 5 }).success).toBe(true);
   });
 });

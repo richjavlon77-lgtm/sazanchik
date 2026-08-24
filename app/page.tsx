@@ -10,6 +10,7 @@ import { db } from "@/db";
 import { footballEvents } from "@/db/schema";
 import { and, eq, gt, asc } from "drizzle-orm";
 import { Footer } from "@/components/Footer";
+import { ReviewsSection } from "@/components/ReviewsSection";
 import { OrnamentBackground } from "@/components/Ornament";
 import { TimeAwareMenuProvider } from "@/components/TimeAwareMenuProvider";
 import { ContentProvider } from "@/lib/content-context";
@@ -85,6 +86,7 @@ export default async function Home() {
             <FootballBanner matches={matches} />
             <FeaturedDishes />
             <MenuList />
+            <ReviewsSection />
             <Footer />
           </main>
         </TimeAwareMenuProvider>

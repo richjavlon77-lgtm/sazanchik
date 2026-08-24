@@ -66,3 +66,11 @@ export const createReservationSchema = z.object({
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type CallWaiterInput = z.infer<typeof callWaiterSchema>;
 export type CreateReservationInput = z.infer<typeof createReservationSchema>;
+
+/** Отзыв гостя: 1–5 звёзд, комментарий до 100 символов, имя опционально */
+export const createReviewSchema = z.object({
+  rating: z.number().int().min(1, "Поставьте оценку").max(5),
+  comment: z.string().trim().max(100, "До 100 символов").default(""),
+  guestName: z.string().trim().max(40).optional().or(z.literal("")),
+  tableToken: z.string().max(64).optional(),
+});

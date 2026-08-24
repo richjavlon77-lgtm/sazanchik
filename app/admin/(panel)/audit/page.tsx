@@ -13,6 +13,7 @@ const ACTION_LABEL: Record<string, { text: string; cls: string }> = {
   "payroll.pay": { text: "Выплата ЗП", cls: "bg-gold/15 text-gold" },
   "expense.delete": { text: "Удалён расход", cls: "bg-red-500/15 text-red-400" },
   "dish.delete": { text: "Удалено блюдо", cls: "bg-orange-500/15 text-orange-400" },
+  "review.delete": { text: "Удалён отзыв", cls: "bg-red-500/15 text-red-400" },
 };
 
 function fmt(d: Date) {

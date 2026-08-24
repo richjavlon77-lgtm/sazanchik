@@ -493,6 +493,30 @@ export const payments = pgTable(
   ]
 );
 
+/**
+ * Отзывы гостей: 1–5 звёзд + короткий комментарий (до 100 символов).
+ * Публикуются на сайте только после модерации менеджером (is_published).
+ */
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    rating: integer("rating").notNull(),
+    comment: text("comment").notNull().default(""),
+    /** имя гостя (необязательно) */
+    guestName: text("guest_name"),
+    tableNumber: text("table_number"),
+    isPublished: boolean("is_published").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("reviews_pub_idx").on(t.isPublished, t.createdAt),
+    check("rating_range", sql`${t.rating} between 1 and 5`),
+  ]
+);
+
 // ============================================================================
 // Telegram-бот (@Sazanchik_city_bot)
 // ============================================================================

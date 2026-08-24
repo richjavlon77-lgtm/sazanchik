@@ -265,3 +265,42 @@ export async function sendPaymentToTelegram(
   }
   return { ok: true };
 }
+
+/** Уведомление о новом отзыве гостя (модерация — в админке, «Отзывы»). */
+export async function sendReviewToTelegram(
+  rating: number,
+  comment: string,
+  guestName: string | null,
+  tableNumber: string | null
+): Promise<{ ok: boolean }> {
+  const env = getEnv();
+  if (!isConfigured(env)) return { ok: false };
+
+  const stars = "⭐".repeat(rating) + "☆".repeat(5 - rating);
+  const message = [
+    `<b>${stars}</b> Новый отзыв`,
+    guestName ? `От: ${escapeHtml(guestName)}` : "",
+    tableNumber ? tableLabel(tableNumber) : "",
+    comment ? `«${escapeHtml(comment)}»` : "<i>без комментария</i>",
+    `Опубликовать: админка → Отзывы`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const url = `https://api.telegram.org/bot${env.botToken}/sendMessage`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: env.chatId,
+      text: message,
+      parse_mode: "HTML",
+      disable_notification: true,
+    }),
+  });
+  if (!res.ok) {
+    console.error("Telegram review notify failed:", res.status);
+    return { ok: false };
+  }
+  return { ok: true };
+}
