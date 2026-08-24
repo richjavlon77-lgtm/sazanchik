@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { getSession } from "@/lib/session";
 import { signTable } from "@/lib/table-sign";
-import { tableAlias } from "@/lib/tables";
+import { tableAlias, vipName } from "@/lib/tables";
 import { FishMark } from "@/components/print/marks";
 import "./qr.css";
 
@@ -45,12 +45,21 @@ export default async function QRPrintPage({
       return {
         num,
         qr,
-        // «VIP 1» → VIP / 1; обычный — СТОЛ / 12
-        word: alias ? alias.replace(/\s.*$/, "") : "Стол",
-        digit: alias ? alias.replace(/^\D+/, "") : String(num),
+        // «STREET 15» → STREET / 15, «VIP 1» → VIP / 1 (+имя кабины)
+        word: alias ? alias.replace(/\s+\d+$/, "") : "Стол",
+        digit: alias ? (alias.match(/(\d+)$/)?.[1] ?? String(num)) : String(num),
+        cabin: vipName(num),
       };
     })
   );
+
+  // Мини-QR на бота доставки — один на все карточки
+  const botQr = await QRCode.toDataURL("https://t.me/Sazanchik_city_bot", {
+    width: 240,
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: "#101613", light: "#f7f2e8" },
+  });
 
   const sheets: (typeof cards)[] = [];
   for (let i = 0; i < cards.length; i += PER_SHEET) {
@@ -81,6 +90,7 @@ export default async function QRPrintPage({
 
                   <div className="qr-menu-word">Menu</div>
 
+                  {c.cabin && <div className="qr-cabin">{c.cabin}</div>}
                   <div className="qr-table">
                     <span className="qr-word">{c.word}</span>
                     <span className="qr-digit">{c.digit}</span>
@@ -88,6 +98,22 @@ export default async function QRPrintPage({
 
                   <div className="qr-hint">
                     Наведите камеру · Kamerani qarating
+                  </div>
+
+                  {/* Реклама доставки: гость уносит бота с собой */}
+                  <div className="qr-delivery">
+                    <div className="qr-delivery-text">
+                      <div className="qr-delivery-title">🚚 Доставка на дом</div>
+                      <div className="qr-delivery-handle">
+                        Telegram · @Sazanchik_city_bot
+                      </div>
+                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      className="qr-delivery-qr"
+                      src={botQr}
+                      alt="QR — Telegram-бот доставки"
+                    />
                   </div>
                 </div>
               </div>

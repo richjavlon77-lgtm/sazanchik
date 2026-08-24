@@ -1,24 +1,40 @@
 /**
  * Имена столов в зале.
  *
- * Технически стол — это всегда число: номер подписывается в QR-токене
- * (см. `lib/table-sign.ts`) и хранится в `orders.table_number`. Но часть мест
- * в зале — VIP-кабины со своей нумерацией, и персонал не должен видеть
- * «Стол №33» там, где стоит «VIP 1».
+ * Технически стол — это всегда число 1–35: номер подписывается в QR-токене
+ * (см. `lib/table-sign.ts`) и хранится в `orders.table_number`. Зал размечен
+ * зонами, и персонал видит «STREET 5», а не «Стол №5»:
+ *
+ *   1–20  → STREET 1–20   (улица)
+ *   21–32 → HALL 1–12     (зал)
+ *   33–35 → VIP 1–3       (кабины)
  *
  * Это единственное место, где номер превращается в подпись. Меняется зал —
  * правится только эта карта.
  */
-const TABLE_ALIASES: Record<string, string> = {
-  "33": "VIP 1",
-  "34": "VIP 2",
-  "35": "VIP 3",
-};
+const TABLE_ALIASES: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (let n = 1; n <= 20; n++) map[String(n)] = `STREET ${n}`;
+  for (let n = 21; n <= 32; n++) map[String(n)] = `HALL ${n - 20}`;
+  for (let n = 33; n <= 35; n++) map[String(n)] = `VIP ${n - 32}`;
+  return map;
+})();
+
 
 /** Номера, отданные под кабины — в порядке нумерации VIP. */
-export const VIP_TABLE_NUMBERS = Object.keys(TABLE_ALIASES).sort(
-  (a, b) => Number(a) - Number(b)
-);
+export const VIP_TABLE_NUMBERS = ["33", "34", "35"];
+
+/** Собственные имена VIP-кабин (печать, вывески). */
+export const VIP_NAMES: Record<string, string> = {
+  "33": "SILK ROAD",
+  "34": "SAMARQAND",
+  "35": "XIVA",
+};
+
+/** Имя кабины («SILK ROAD») или null для обычного стола. */
+export function vipName(num: string | number): string | null {
+  return VIP_NAMES[key(num)] ?? null;
+}
 
 const key = (num: string | number) => String(num).trim();
 
@@ -28,7 +44,7 @@ export function tableAlias(num: string | number): string | null {
 }
 
 export function isVipTable(num: string | number): boolean {
-  return tableAlias(num) !== null;
+  return VIP_TABLE_NUMBERS.includes(key(num));
 }
 
 /**

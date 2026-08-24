@@ -149,9 +149,9 @@ body [class*="sonner"] {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4.5mm;
+  gap: 3.2mm;
   text-align: center;
-  padding: 6mm 5mm;
+  padding: 5mm 5mm 4mm;
 }
 
 .qr-fish {
@@ -170,8 +170,8 @@ body [class*="sonner"] {
 }
 
 .qr-panel img {
-  width: 46mm;
-  height: 46mm;
+  width: 42mm;
+  height: 42mm;
   display: block;
 }
 
@@ -211,4 +211,53 @@ body [class*="sonner"] {
   text-transform: uppercase;
   letter-spacing: 0.28em;
   color: rgba(197, 163, 92, 0.8);
+}
+
+/* Имя VIP-кабины над номером */
+.qr-cabin {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 8.5pt;
+  letter-spacing: 0.45em;
+  text-indent: 0.45em;
+  color: var(--paper);
+  margin-bottom: -2.2mm;
+}
+
+/* ── Реклама бота доставки ── */
+.qr-delivery {
+  margin-top: 1mm;
+  padding-top: 2.6mm;
+  border-top: 1px solid rgba(197, 163, 92, 0.35);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5mm;
+}
+
+.qr-delivery-text {
+  text-align: right;
+}
+
+.qr-delivery-title {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 7pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.qr-delivery-handle {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 6.5pt;
+  letter-spacing: 0.06em;
+  color: rgba(247, 242, 232, 0.75);
+  margin-top: 0.8mm;
+}
+
+.qr-delivery-qr {
+  width: 13mm;
+  height: 13mm;
+  border-radius: 1.5mm;
+  background: var(--paper);
 }
