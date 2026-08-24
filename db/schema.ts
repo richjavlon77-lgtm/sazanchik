@@ -506,6 +506,9 @@ export const reviews = pgTable(
     /** имя гостя (необязательно) */
     guestName: text("guest_name"),
     tableNumber: text("table_number"),
+    /** оценка конкретного блюда (slug); null — отзыв о ресторане в целом */
+    dishSlug: text("dish_slug"),
+    dishName: text("dish_name"),
     isPublished: boolean("is_published").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -513,6 +516,7 @@ export const reviews = pgTable(
   },
   (t) => [
     index("reviews_pub_idx").on(t.isPublished, t.createdAt),
+    index("reviews_dish_idx").on(t.dishSlug),
     check("rating_range", sql`${t.rating} between 1 and 5`),
   ]
 );

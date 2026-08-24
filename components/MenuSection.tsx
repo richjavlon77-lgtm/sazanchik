@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useLocale, t } from "@/lib/i18n";
 import type { MenuCategory } from "@/types/menu";
 import { MenuItemCard } from "@/components/MenuItemCard";
 import { Reveal } from "@/components/Reveal";
-import { cn } from "@/lib/utils";
 
 export function MenuSection({
   category,
@@ -15,40 +13,15 @@ export function MenuSection({
   index?: number;
 }) {
   const { locale } = useLocale();
-  const ref = useRef<HTMLElement>(null);
-  const [entered, setEntered] = useState(false);
-  const [replay, setReplay] = useState(0);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setEntered(true);
-          obs.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.05, rootMargin: "0px 0px -60px 0px" }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const handler = () => setReplay((k) => k + 1);
-    window.addEventListener("section-navigate", handler);
-    return () => window.removeEventListener("section-navigate", handler);
-  }, []);
-
+  // Перф на длинном меню (150+ блюд): никакого пересоздания DOM при
+  // навигации (старый replay-механизм ремонтировал ВСЕ карточки на каждый
+  // клик категории) и никаких секционных анимаций; content-visibility
+  // отдаёт браузеру рендер только видимых секций.
   return (
     <section
       id={category.id}
-      ref={ref}
-      className={cn(
-        "relative scroll-mt-24 pt-16 md:pt-24",
-        entered && "section-enter"
-      )}
+      className="cv-section relative scroll-mt-24 pt-16 md:pt-24"
     >
       {index != null && (
         <span
@@ -59,13 +32,8 @@ export function MenuSection({
         </span>
       )}
 
-      <div key={replay}>
-        <header
-          className={cn(
-            "relative",
-            replay > 0 && "section-nav-in"
-          )}
-        >
+      <div>
+        <header className="relative">
           <h2 className="font-heading text-[32px] font-medium leading-[0.95] md:text-[48px]">
             {t(category.name, locale)}
           </h2>
@@ -89,10 +57,7 @@ export function MenuSection({
         )}
       </div>
 
-      <div
-        key={`items-${replay}`}
-        className={cn("mt-5", replay > 0 && "item-stagger")}
-      >
+      <div className="mt-5">
         {category.items.map((item, i) => (
           <Reveal key={item.id} delay={Math.min(i * 35, 280)}>
             <MenuItemCard item={item} />

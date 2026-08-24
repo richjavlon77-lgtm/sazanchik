@@ -7,6 +7,7 @@ import type { MenuItem } from "@/types/menu";
 import { DietBadge } from "@/components/DietBadge";
 import { useCart } from "@/lib/cart-context";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { DishRating } from "@/components/DishRating";
 import { ShareButton } from "@/components/ShareButton";
 import { SpicyMeter } from "@/components/SpicyMeter";
 import { cn } from "@/lib/utils";
@@ -200,6 +201,9 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
               </span>
             </div>
           )}
+
+          {/* Оценка блюда: «★ 4,8 · 12» + звёзды в один тап */}
+          <DishRating slug={item.id} name={t(item.name, locale)} />
 
           {/* Allergens */}
           {item.allergens && item.allergens.length > 0 && (

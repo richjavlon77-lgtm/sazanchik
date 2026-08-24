@@ -434,21 +434,20 @@
     }
   }
 
-  /* На телефонах входные анимации не двигают и не масштабируют элементы:
-     карточка во всю ширину, «увеличивающаяся» при скролле, читается как
-     дёргание интерфейса. Оставляем только мягкий fade. */
+  /* Длинное меню: браузер рендерит только видимые секции. Запасная высота
+     ~1100px держит скроллбар стабильным до материализации. */
+  .cv-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 1100px;
+  }
+
+  /* На телефонах входные анимации отключены полностью: на слабых устройствах
+     каскад появлений читается как тормоз, мгновенный рендер = «плавно». */
   @media (max-width: 767px) {
-    @keyframes sectionEnter {
-      from { opacity: 0; transform: none; }
-      to { opacity: 1; transform: none; }
-    }
-    @keyframes cardEnter {
-      from { opacity: 0; transform: none; }
-      to { opacity: 1; transform: none; }
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: none; }
-      to { opacity: 1; transform: none; }
+    .section-enter,
+    .fade-in-up,
+    [class*="card-enter"] {
+      animation: none !important;
     }
   }
 

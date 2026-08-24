@@ -27,6 +27,7 @@ export default async function ReviewsPage() {
           comment: r.comment,
           guestName: r.guestName,
           tableNumber: r.tableNumber,
+          dishName: r.dishName,
           isPublished: r.isPublished,
           createdAt: r.createdAt.toISOString(),
         }))}

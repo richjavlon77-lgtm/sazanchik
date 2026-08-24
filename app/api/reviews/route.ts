@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       { status: 422 }
     );
   }
-  const { rating, comment, guestName, tableToken } = parsed.data;
+  const { rating, comment, guestName, tableToken, dishSlug, dishName } = parsed.data;
   const table = tableToken ? verifyTableToken(tableToken) : null;
 
   await db.insert(reviews).values({
@@ -42,8 +42,13 @@ export async function POST(request: Request) {
     comment,
     guestName: guestName || null,
     tableNumber: table,
+    dishSlug: dishSlug || null,
+    dishName: dishName || null,
   });
 
-  await sendReviewToTelegram(rating, comment, guestName || null, table).catch(() => {});
+  // Быстрые звёзды у блюда — тихие (иначе чат зальёт); текстовые — с уведомлением
+  if (comment || !dishSlug) {
+    await sendReviewToTelegram(rating, comment, guestName || null, table).catch(() => {});
+  }
   return NextResponse.json({ ok: true }, { status: 201 });
 }

@@ -61,7 +61,6 @@ export function CategoryNav() {
 
   const handleClick = useCallback((id: string) => {
     scrollToCategory(id);
-    window.dispatchEvent(new CustomEvent("section-navigate"));
   }, []);
 
   return (

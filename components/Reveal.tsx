@@ -22,9 +22,12 @@ export function Reveal({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // На телефонах reveal-каскад по 150+ карточкам ощущается как тормоз —
+    // показываем мгновенно (как и при prefers-reduced-motion)
     const reduced =
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        window.matchMedia("(max-width: 767px)").matches);
 
     if (reduced) {
       // Show on the next frame — async, so no cascading sync render

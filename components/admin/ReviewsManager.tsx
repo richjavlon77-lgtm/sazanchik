@@ -13,6 +13,7 @@ type Row = {
   comment: string;
   guestName: string | null;
   tableNumber: string | null;
+  dishName: string | null;
   isPublished: boolean;
   createdAt: string;
 };
@@ -76,6 +77,11 @@ export function ReviewsManager({ rows }: { rows: Row[] }) {
             <span className="text-gold">{"★".repeat(r.rating)}</span>
             <span className="text-muted-foreground/40">{"★".repeat(5 - r.rating)}</span>
             {r.guestName && <span className="text-sm">{r.guestName}</span>}
+            {r.dishName && (
+              <span className="rounded-full bg-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-gold">
+                🍽 {r.dishName}
+              </span>
+            )}
             {r.tableNumber && (
               <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                 {tableLabel(r.tableNumber)}

@@ -73,4 +73,7 @@ export const createReviewSchema = z.object({
   comment: z.string().trim().max(100, "До 100 символов").default(""),
   guestName: z.string().trim().max(40).optional().or(z.literal("")),
   tableToken: z.string().max(64).optional(),
+  /** оценка конкретного блюда (быстрые звёзды в карточке) */
+  dishSlug: z.string().trim().max(64).optional(),
+  dishName: z.string().trim().max(120).optional(),
 });
