@@ -223,41 +223,28 @@ body [class*="sonner"] {
   margin-bottom: -2.2mm;
 }
 
-/* ── Реклама бота доставки ── */
+/* ── Реклама бота доставки: только текст, по центру ── */
 .qr-delivery {
   margin-top: 1mm;
-  padding-top: 2.6mm;
+  padding-top: 2.8mm;
   border-top: 1px solid rgba(197, 163, 92, 0.35);
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3.5mm;
-}
-
-.qr-delivery-text {
-  text-align: right;
+  text-align: center;
 }
 
 .qr-delivery-title {
   font-family: var(--font-sans), sans-serif;
-  font-size: 7pt;
-  letter-spacing: 0.18em;
+  font-size: 7.5pt;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
   text-transform: uppercase;
   color: var(--gold);
 }
 
 .qr-delivery-handle {
   font-family: var(--font-sans), sans-serif;
-  font-size: 6.5pt;
-  letter-spacing: 0.06em;
-  color: rgba(247, 242, 232, 0.75);
-  margin-top: 0.8mm;
-}
-
-.qr-delivery-qr {
-  width: 13mm;
-  height: 13mm;
-  border-radius: 1.5mm;
-  background: var(--paper);
+  font-size: 7pt;
+  letter-spacing: 0.08em;
+  color: rgba(247, 242, 232, 0.8);
+  margin-top: 1mm;
 }

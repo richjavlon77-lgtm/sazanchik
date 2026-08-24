@@ -53,14 +53,6 @@ export default async function QRPrintPage({
     })
   );
 
-  // Мини-QR на бота доставки — один на все карточки
-  const botQr = await QRCode.toDataURL("https://t.me/Sazanchik_city_bot", {
-    width: 240,
-    margin: 1,
-    errorCorrectionLevel: "M",
-    color: { dark: "#101613", light: "#f7f2e8" },
-  });
-
   const sheets: (typeof cards)[] = [];
   for (let i = 0; i < cards.length; i += PER_SHEET) {
     sheets.push(cards.slice(i, i + PER_SHEET));
@@ -100,20 +92,12 @@ export default async function QRPrintPage({
                     Наведите камеру · Kamerani qarating
                   </div>
 
-                  {/* Реклама доставки: гость уносит бота с собой */}
+                  {/* Реклама доставки — только текстом, QR на карточке один */}
                   <div className="qr-delivery">
-                    <div className="qr-delivery-text">
-                      <div className="qr-delivery-title">🚚 Доставка на дом</div>
-                      <div className="qr-delivery-handle">
-                        Telegram · @Sazanchik_city_bot
-                      </div>
+                    <div className="qr-delivery-title">🚚 Доставка на дом</div>
+                    <div className="qr-delivery-handle">
+                      Telegram · @Sazanchik_city_bot
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      className="qr-delivery-qr"
-                      src={botQr}
-                      alt="QR — Telegram-бот доставки"
-                    />
                   </div>
                 </div>
               </div>
