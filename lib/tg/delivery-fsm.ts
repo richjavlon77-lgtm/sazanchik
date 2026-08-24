@@ -84,15 +84,33 @@ export function deliveryStep(
           reply: { text: "Напишите адрес подробнее, чтобы курьер нашёл вас 🙂" },
         };
       }
+      const withAddr = { ...data, address: input.text.trim().slice(0, 300) };
+      // Корзина уже собрана в меню доставки → сразу к подтверждению
+      if (withAddr.items) {
+        const d = withAddr as Required<DeliveryData>;
+        return {
+          done: false,
+          state: "confirm",
+          data: d,
+          reply: {
+            text: `Проверим заказ:\n\n📞 ${d.phone}\n📍 ${d.address}\n\n${d.items}\n\nОтправляем?`,
+            inline: [
+              [
+                { text: "✅ Отправить", callback_data: "dl_ok" },
+                { text: "✖ Отмена", callback_data: "dl_cancel" },
+              ],
+            ],
+          },
+        };
+      }
       return {
         done: false,
         state: "items",
-        data: { ...data, address: input.text.trim().slice(0, 300) },
+        data: withAddr,
         reply: {
           text:
             "Что закажете? Напишите списком, например:\n" +
-            "<i>Плов ×2, ачичук, лимонад тархун</i>\n\n" +
-            "Меню с ценами — по кнопке «🍽 Меню» в /start.",
+            "<i>Плов ×2, ачичук, лимонад тархун</i>",
         },
       };
     }

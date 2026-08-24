@@ -6,6 +6,7 @@ import {
   tgUsers,
   tgInvites,
   tgDialogs,
+  tgCarts,
   deliveryRequests,
   dishes,
   orders,
@@ -26,6 +27,18 @@ import {
   categoryScreen,
   dishCard,
 } from "@/lib/tg/menu-browser";
+import {
+  deliveryHome,
+  deliveryCategory,
+  deliveryVariants,
+  deliveryCart,
+  resolveCartItem,
+  cartAdd,
+  cartBump,
+  cartText,
+  cartTotal,
+  type CartItem,
+} from "@/lib/tg/delivery-menu";
 import {
   bookingStep,
   START_REPLY,
@@ -98,15 +111,12 @@ const todayTashkent = () =>
 
 function guestMenu(): InlineButton[][] {
   return [
-    [{ text: "🍽 Меню", callback_data: "mc" }],
+    [{ text: "🚚 Заказать доставку", callback_data: "dmenu" }],
     [
+      { text: "🍽 Посмотреть меню", callback_data: "mc" },
       { text: "📅 Бронь стола", callback_data: "go_book" },
-      { text: "🚚 Доставка", callback_data: "go_delivery" },
     ],
-    [
-      { text: "🌐 Сайт", url: SITE() },
-      { text: "📞 Контакты", callback_data: "go_contacts" },
-    ],
+    [{ text: "📞 Контакты", callback_data: "go_contacts" }],
   ];
 }
 
@@ -136,6 +146,20 @@ async function setDialog(chatId: string, state: string, data: Record<string, unk
 
 const clearDialog = (chatId: string) =>
   db.delete(tgDialogs).where(eq(tgDialogs.chatId, chatId));
+
+// ── Корзина доставки ────────────────────────────────────────────
+
+async function getCart(chatId: string): Promise<CartItem[]> {
+  const [row] = await db.select().from(tgCarts).where(eq(tgCarts.chatId, chatId));
+  return row?.items ?? [];
+}
+
+async function saveCart(chatId: string, items: CartItem[]) {
+  await db
+    .insert(tgCarts)
+    .values({ chatId, items })
+    .onConflictDoUpdate({ target: tgCarts.chatId, set: { items, updatedAt: new Date() } });
+}
 
 async function sendFsmReply(chatId: string, reply: FsmReply) {
   await sendMessage(chatId, reply.text, {
@@ -317,9 +341,13 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
     const data = cq.data ?? "";
     const messageId = cq.message?.message_id;
 
-    // Навигация меню редактирует то же сообщение — клавиатуру не трогаем
+    // Навигация меню/корзины редактирует то же сообщение — клавиатуру не трогаем
     if (data === "mc" || data.startsWith("mcat_") || data.startsWith("mdish_") || data === "go_home") {
       await handleMenuNav(chatId, messageId, data);
+      return;
+    }
+    if (data.startsWith("d") && data !== "dl_ok" && data !== "dl_cancel") {
+      await handleDeliveryNav(chatId, messageId, data);
       return;
     }
 
@@ -398,10 +426,12 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
         await setDialog(chatId, "bk:name", {});
         await sendFsmReply(chatId, START_REPLY);
         return;
-      case "/delivery":
-        await setDialog(chatId, "dl:phone", {});
-        await sendFsmReply(chatId, DELIVERY_START);
+      case "/delivery": {
+        const menu = await getMenuFromDb();
+        const scr = deliveryHome(menu, await getCart(chatId));
+        await sendMessage(chatId, scr.text, { inline: scr.inline });
         return;
+      }
       case "/cancel":
       case "/отмена":
         await clearDialog(chatId);
@@ -509,6 +539,85 @@ async function handleMenuNav(
   if (!edited) await sendMessage(chatId, screen.text, { inline: screen.inline });
 }
 
+// ── Меню доставки с корзиной ────────────────────────────────────
+
+async function showDeliveryScreen(
+  chatId: string,
+  messageId: number | undefined,
+  screen: { text: string; inline: InlineButton[][] }
+) {
+  const edited = messageId
+    ? await editMessageText(chatId, messageId, screen.text, screen.inline)
+    : false;
+  if (!edited) await sendMessage(chatId, screen.text, { inline: screen.inline });
+}
+
+async function handleDeliveryNav(
+  chatId: string,
+  messageId: number | undefined,
+  data: string
+): Promise<void> {
+  const menu = await getMenuFromDb();
+  let cart = await getCart(chatId);
+
+  if (data === "dmenu") {
+    await showDeliveryScreen(chatId, messageId, deliveryHome(menu, cart));
+    return;
+  }
+  if (data.startsWith("dcat_")) {
+    const scr = deliveryCategory(menu, data.slice(5), cart) ?? deliveryHome(menu, cart);
+    await showDeliveryScreen(chatId, messageId, scr);
+    return;
+  }
+  if (data.startsWith("dvar_")) {
+    const scr = deliveryVariants(menu, data.slice(5), cart);
+    await showDeliveryScreen(chatId, messageId, scr ?? deliveryHome(menu, cart));
+    return;
+  }
+  if (data.startsWith("dadd_")) {
+    // dadd_<slug> или dadd_<slug>_<i>
+    const m = data.slice(5).match(/^(.+?)(?:_(\d+))?$/);
+    const found = m ? resolveCartItem(menu, m[1], m[2] ? Number(m[2]) : undefined) : null;
+    if (found) {
+      cart = cartAdd(cart, found.item);
+      await saveCart(chatId, cart);
+      // остаёмся в разделе — счётчик корзины обновится в кнопках
+      const scr = deliveryCategory(menu, found.catId, cart) ?? deliveryHome(menu, cart);
+      await showDeliveryScreen(chatId, messageId, scr);
+    }
+    return;
+  }
+  if (data === "dcart") {
+    await showDeliveryScreen(chatId, messageId, deliveryCart(cart));
+    return;
+  }
+  if (data.startsWith("dinc_") || data.startsWith("ddec_")) {
+    const idx = Number(data.slice(5));
+    if (Number.isInteger(idx)) {
+      cart = cartBump(cart, idx, data.startsWith("dinc_") ? 1 : -1);
+      await saveCart(chatId, cart);
+    }
+    await showDeliveryScreen(chatId, messageId, deliveryCart(cart));
+    return;
+  }
+  if (data === "dclr") {
+    await saveCart(chatId, []);
+    await showDeliveryScreen(chatId, messageId, deliveryCart([]));
+    return;
+  }
+  if (data === "dchk") {
+    if (!cart.length) {
+      await showDeliveryScreen(chatId, messageId, deliveryCart([]));
+      return;
+    }
+    // корзина → диалог: телефон → адрес → подтверждение
+    const items = `🍽 <b>Заказ:</b>\n${cartText(cart)}\n${"─".repeat(14)}\nИтого: <b>${cartTotal(cart).toLocaleString("ru-RU")} сум</b>`;
+    await setDialog(chatId, "dl:phone", { items });
+    await sendFsmReply(chatId, DELIVERY_START);
+    return;
+  }
+}
+
 // ── Роутинг в диалоги ───────────────────────────────────────────
 
 async function routeInput(
@@ -523,8 +632,9 @@ async function routeInput(
       return;
     }
     if (input.data === "go_delivery") {
-      await setDialog(chatId, "dl:phone", {});
-      await sendFsmReply(chatId, DELIVERY_START);
+      const menu = await getMenuFromDb();
+      const scr = deliveryHome(menu, await getCart(chatId));
+      await sendMessage(chatId, scr.text, { inline: scr.inline });
       return;
     }
     if (input.data === "go_contacts") {
@@ -631,6 +741,7 @@ async function routeInput(
         address: r.address,
         items: r.items,
       });
+      await saveCart(chatId, []);
       await notifyWorkChat(
         `🚚 <b>ЗАЯВКА НА ДОСТАВКУ</b>\n📞 ${r.phone}\n📍 ${r.address}\n🍽 ${r.items}\n\nПерезвоните клиенту в течение 10 минут!`
       );

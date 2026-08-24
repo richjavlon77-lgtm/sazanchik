@@ -540,6 +540,19 @@ export const tgInvites = pgTable(
   (t) => [index("tg_invites_used_idx").on(t.usedBy)]
 );
 
+/** Корзина доставки в боте — по одной на чат. Позиции: slug, имя, цена
+ *  (конкретного варианта), количество. */
+export const tgCarts = pgTable("tg_carts", {
+  chatId: text("chat_id").primaryKey(),
+  items: jsonb("items")
+    .$type<{ slug: string; name: string; price: number; qty: number }[]>()
+    .notNull()
+    .default([]),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 /** Заявки на доставку из бота: телефон/адрес/список блюд — менеджер
  *  перезванивает и подтверждает. Продублировано уведомлением в рабочий чат. */
 export const deliveryRequests = pgTable(
