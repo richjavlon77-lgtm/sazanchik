@@ -216,7 +216,61 @@ async function main() {
   const [stock] = await sql`select stock from ingredients where id = ${ing.id}`;
   check("остаток 94 (списано 6)", Number(stock.stock) === 94, `got ${stock.stock}`);
 
-  step("Официант: PIN-логин и доска (браузер)");
+  step("Отзывы: оценка блюда и текстовый отзыв (API)");
+  const dishRate = await fetch(`${BASE}/api/reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating: 5, comment: "", dishSlug: "e2e-plov", dishName: "Плов E2E" }),
+  });
+  check("оценка блюда принята (201)", dishRate.status === 201, `got ${dishRate.status}`);
+  const textReview = await fetch(`${BASE}/api/reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating: 4, comment: "Очень вкусно!", guestName: "E2E" }),
+  });
+  check("текстовый отзыв принят (201)", textReview.status === 201, `got ${textReview.status}`);
+  const tooLong = await fetch(`${BASE}/api/reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating: 4, comment: "x".repeat(101) }),
+  });
+  check("комментарий >100 символов отклонён (422)", tooLong.status === 422, `got ${tooLong.status}`);
+  const ratings = await fetch(`${BASE}/api/dish-ratings`).then((r) => r.json());
+  check("агрегат рейтинга блюда виден", ratings["e2e-plov"]?.avg === 5, JSON.stringify(ratings));
+  const [rvCount] = await sql`select count(*)::int as n, bool_or(is_published) as pub from reviews`;
+  check("отзывы в БД и НЕ опубликованы до модерации", rvCount.n === 2 && rvCount.pub === false, JSON.stringify(rvCount));
+
+  step("Доставка (мини-апп): заказ с проверкой цен (API)");
+  const delOk = await fetch(`${BASE}/api/delivery-orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      phone: "+998901112233",
+      address: "Юнусабад, 12-34, подъезд 2",
+      comment: "",
+      lines: [
+        { slug: "e2e-plov", price: 50000, qty: 2 },
+        { slug: "e2e-soup", price: 35000, qty: 1 },
+      ],
+    }),
+  });
+  const delBody = await delOk.json().catch(() => ({}));
+  check("заказ доставки принят, итог посчитан сервером (135 000)", delOk.status === 201 && delBody.total === 135000, `got ${delOk.status}: ${JSON.stringify(delBody)}`);
+  const delCheat = await fetch(`${BASE}/api/delivery-orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      phone: "+998901112233",
+      address: "Юнусабад, 12-34",
+      lines: [{ slug: "e2e-plov", price: 1000, qty: 1 }],
+    }),
+  });
+  check("чужая цена в доставке отклонена (422)", delCheat.status === 422, `got ${delCheat.status}`);
+  const [dreq] = await sql`select items from delivery_requests order by created_at desc limit 1`;
+  const dreqNorm = (dreq?.items ?? "").replace(/\u00a0/g, " ");
+  check("заявка в БД с итогом", dreqNorm.includes("Итого: 135 000"), dreqNorm.slice(0, 80));
+
+    step("Официант: PIN-логин и доска (браузер)");
   const { chromium } = await import("playwright-core");
   const browser = await chromium.launch({ channel: "chrome" });
   cleanups.push(() => browser.close().catch(() => {}));

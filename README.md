@@ -34,6 +34,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ```bash
 npm test          # run the unit suite once (vitest)
+npm run e2e       # 22 end-to-end scenarios on a throwaway Postgres
 npm run test:watch
 npm run lint      # eslint
 npx tsc --noEmit  # typecheck

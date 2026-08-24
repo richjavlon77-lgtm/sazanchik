@@ -16,6 +16,8 @@ vitest. Прод: https://sazanchik.vercel.app
 | Бар / Кальян / Кухня / Холодный цех / Мангал | `/bar` `/hookah` `/kitchen` `/cold` `/meat` | своя роль | PIN (общий экран `/staff`) |
 | Менеджер | `/admin/**` | manager | пароль |
 | Signage | `/tv` (экран в зале), `/print` (меню для печати), `/print/qr` (QR-карточки) | `/print*` — manager | — |
+| Доставка | `/delivery` — мини-апп из Telegram-бота: без зала/официанта, корзина → заявка менеджеру | — | — |
+| Telegram-бот | @Sazanchik_city_bot — гость: меню/бронь/доставка; staff/admin/owner-команды по ролям | роли в `tg_users` | приглашения-коды |
 
 Защита в **три слоя**: `proxy.ts` (middleware) → гард страницы/лейаута
 (`lib/area-guard.ts`, route group `app/admin/(panel)`) → проверка роли внутри
@@ -46,13 +48,39 @@ vitest. Прод: https://sazanchik.vercel.app
 статический `data/menu.ts` — только аварийный фолбэк при недоступности БД
 (и исходник для сидинга). Не редактировать статику в расчёте на прод.
 
+## Два канала заказов
+
+- **Зал**: гость сканирует QR стола → сайт `/` → заказ на стол (сервис +20%),
+  несёт официант, счёт закрывается в панели официанта.
+- **Доставка**: бот → мини-апп `/delivery` (или корзина прямо в чате бота) →
+  телефон+адрес → заявка в `delivery_requests` + рабочий Telegram-чат с
+  позициями и итогом (цены сверяются с БД), менеджер перезванивает.
+
+## Отзывы
+
+- Общий отзыв: секция «Оцените нас» внизу главной — ⭐1–5 + комментарий
+  ≤100 симв.; публикация только через админку «Отзывы» (модерация).
+- Оценка блюда: «Оценить ★» в карточке — публикуется в средний рейтинг
+  блюда сразу (`/api/dish-ratings`, кэш 60с), Telegram не спамится.
+
+## Telegram-бот
+
+`lib/tg/`: handlers (роутер+роли), booking-fsm / delivery-fsm (чистые
+диалоги), delivery-menu (корзина в чате), menu-browser (витрина с фото),
+api (обёртка Bot API). Роли: guest → staff → admin → owner; приглашения —
+одноразовые deep-links (`/invite_staff`, `/invite_admin`), владелец — код
+`TG_OWNER_CODE`. Webhook `/api/telegram/webhook` (секрет в заголовке);
+переустановка: `node scripts/telegram-setup.mjs`.
+
 ## Печать и полиграфия
 
 - `/print` — люкс-меню (обложка без логотипа), `/print?lang=uz|en|tr`.
 - `/print/qr?count=35` — QR-карточки столов: трим 90×125 мм, вылеты 2 мм,
   метки реза, 2×2 на A4. VIP-кабины (33–35 → «VIP 1–3») — `lib/tables.ts`.
-- PDF из терминала: `node scripts/print-pdf.mjs menu|qr [count] [out.pdf]`
-  (нужен запущенный сервер; скрипт сам подписывает менеджерскую сессию).
+- PDF из терминала: `node scripts/print-pdf.mjs menu|qr [count] [out.pdf]`.
+  ⚠️ QR для типографии генерировать ТОЛЬКО с прода
+  (`BASE_URL=https://sazanchik.vercel.app`) — подпись стола зависит от
+  секрета сервера, локальная подпись в зале невалидна.
 
 ## Известные ограничения
 
@@ -77,14 +105,15 @@ vitest. Прод: https://sazanchik.vercel.app
 
 ```bash
 npm run dev / build / start
-npm test              # vitest, 135+ юнитов (деньги, QR-подпись, i18n, валидаторы)
+npm test              # vitest, 178 юнитов (деньги, QR, i18n, FSM бота, корзины)
 npm run lint && npx tsc --noEmit
 npm run seed          # сидинг БД из data/menu.ts
 npm run db:generate / db:push   # drizzle-kit
 node scripts/print-pdf.mjs menu # PDF меню (см. выше)
+npm run e2e           # 22 сценария на одноразовом Postgres (прод не трогается)
 ```
 
-CI (GitHub Actions): lint → typecheck → tests на каждый push/PR.
+CI (GitHub Actions): lint → typecheck → tests + e2e на каждый push/PR.
 
 ## Схема БД
 
