@@ -164,7 +164,7 @@ export default async function AdminDashboard() {
           alert={stops.n > 0}
         />
         <Pulse
-          href="/admin/reservations"
+          href="/admin/delivery"
           icon="🚚"
           label="Доставка"
           value={String(newDeliveries.n)}

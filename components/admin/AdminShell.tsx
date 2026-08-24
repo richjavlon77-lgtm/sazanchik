@@ -29,6 +29,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Заказы",
     items: [
       { href: "/admin/reservations", label: "Брони" },
+      { href: "/admin/delivery", label: "Доставка" },
       { href: "/admin/reviews", label: "Отзывы" },
       { href: "/admin/tables", label: "Столы" },
     ],

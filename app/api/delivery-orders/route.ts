@@ -6,6 +6,7 @@ import { deliveryRequests, dishes, dishVariants } from "@/db/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/client-ip";
 import { sendMessage } from "@/lib/tg/api";
+import { deliveryKeyboard } from "@/lib/delivery-status";
 
 const schema = z.object({
   phone: z
@@ -92,12 +93,15 @@ export async function POST(request: Request) {
   const itemsText =
     parts.join("\n") + `\n──────────────\nИтого: ${total.toLocaleString("ru-RU")} сум`;
 
-  await db.insert(deliveryRequests).values({
-    chatId: "webapp",
-    phone,
-    address,
-    items: comment ? `${itemsText}\n💬 ${comment}` : itemsText,
-  });
+  const [created] = await db
+    .insert(deliveryRequests)
+    .values({
+      chatId: "webapp",
+      phone,
+      address,
+      items: comment ? `${itemsText}\n💬 ${comment}` : itemsText,
+    })
+    .returning({ id: deliveryRequests.id });
 
   const workChat = process.env.TELEGRAM_CHAT_ID;
   if (workChat) {
@@ -105,7 +109,8 @@ export async function POST(request: Request) {
       workChat,
       `🚚 <b>ЗАКАЗ НА ДОСТАВКУ</b>\n📞 ${phone}\n📍 ${address}\n\n${itemsText}` +
         (comment ? `\n💬 ${comment}` : "") +
-        `\n\nПерезвоните клиенту в течение 10 минут!`
+        `\n\nПерезвоните для подтверждения суммы доставки. Жмите статус:`,
+      { inline: deliveryKeyboard(created.id, "new") }
     );
   }
 

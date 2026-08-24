@@ -99,11 +99,19 @@ export function sendPhoto(
   });
 }
 
-/** Убрать инлайн-кнопки у сообщения (после выбора), не трогая текст. */
-export function clearInlineKeyboard(chatId: string | number, messageId: number) {
+/** Заменить инлайн-кнопки сообщения (текст не трогается). */
+export function editMessageReplyMarkup(
+  chatId: string | number,
+  messageId: number,
+  inline: InlineButton[][]
+) {
   return call("editMessageReplyMarkup", {
     chat_id: chatId,
     message_id: messageId,
-    reply_markup: { inline_keyboard: [] },
+    reply_markup: { inline_keyboard: inline },
   });
 }
+
+/** Убрать инлайн-кнопки у сообщения (после выбора), не трогая текст. */
+export const clearInlineKeyboard = (chatId: string | number, messageId: number) =>
+  editMessageReplyMarkup(chatId, messageId, []);

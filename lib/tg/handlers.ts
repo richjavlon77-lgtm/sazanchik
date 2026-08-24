@@ -17,6 +17,7 @@ import {
   sendMessage,
   sendPhoto,
   editMessageText,
+  editMessageReplyMarkup,
   answerCallback,
   clearInlineKeyboard,
   type InlineButton,
@@ -54,6 +55,12 @@ import {
   type DeliveryData,
 } from "@/lib/tg/delivery-fsm";
 import { tableLabel } from "@/lib/tables";
+import {
+  applyDeliveryStatus,
+  deliveryKeyboard,
+  DELIVERY_STATUS_LABEL,
+  type DeliveryStatus,
+} from "@/lib/delivery-status";
 import { parseTashkentLocal } from "@/lib/tz";
 
 /**
@@ -334,6 +341,49 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
   if (update.callback_query) {
     const cq = update.callback_query;
     const chat = cq.message?.chat;
+
+    // Кнопки статуса доставки работают и в рабочем ГРУППОВОМ чате.
+    // Право — по роли нажавшего (from.id == его личный chat id).
+    if (cq.data?.startsWith("dstat_") && chat) {
+      const [actor] = await db
+        .select()
+        .from(tgUsers)
+        .where(eq(tgUsers.chatId, String(cq.from.id)));
+      if (!actor || actor.role === "guest") {
+        await answerCallback(cq.id, "Нет доступа — попросите владельца добавить вас в команду");
+        return;
+      }
+      const m = cq.data.match(/^dstat_([0-9a-f-]{36})_(confirmed|courier|done|cancelled)$/);
+      if (m) {
+        const id = m[1];
+        const status = m[2] as DeliveryStatus;
+        const byName = actor.name || `@${actor.username ?? cq.from.id}`;
+        const changed = await applyDeliveryStatus(id, status, {
+          name: byName,
+          role: actor.role,
+        });
+        await answerCallback(
+          cq.id,
+          changed ? `Статус: ${DELIVERY_STATUS_LABEL[status]}` : "Уже в этом статусе"
+        );
+        if (cq.message) {
+          await editMessageReplyMarkup(
+            String(chat.id),
+            cq.message.message_id,
+            deliveryKeyboard(id, status, byName)
+          );
+        }
+      } else {
+        await answerCallback(cq.id);
+      }
+      return;
+    }
+
+    if (cq.data === "noop") {
+      await answerCallback(cq.id);
+      return;
+    }
+
     if (!chat || chat.type !== "private") {
       await answerCallback(cq.id);
       return;
@@ -738,16 +788,24 @@ async function routeInput(
     if (res.done) {
       await clearDialog(chatId);
       const r = res.request;
-      await db.insert(deliveryRequests).values({
-        chatId,
-        phone: r.phone,
-        address: r.address,
-        items: r.items,
-      });
+      const [created] = await db
+        .insert(deliveryRequests)
+        .values({
+          chatId,
+          phone: r.phone,
+          address: r.address,
+          items: r.items,
+        })
+        .returning({ id: deliveryRequests.id });
       await saveCart(chatId, []);
-      await notifyWorkChat(
-        `🚚 <b>ЗАЯВКА НА ДОСТАВКУ</b>\n📞 ${r.phone}\n📍 ${r.address}\n🍽 ${r.items}\n\nПерезвоните клиенту в течение 10 минут!`
-      );
+      const workChat = process.env.TELEGRAM_CHAT_ID;
+      if (workChat) {
+        await sendMessage(
+          workChat,
+          `🚚 <b>ЗАЯВКА НА ДОСТАВКУ</b>\n📞 ${r.phone}\n📍 ${r.address}\n\n${r.items}\n\nЖмите статус — гость получит уведомление:`,
+          { inline: deliveryKeyboard(created.id, "new") }
+        );
+      }
       await sendFsmReply(chatId, res.reply);
       return;
     }

@@ -591,8 +591,9 @@ export const deliveryRequests = pgTable(
     phone: text("phone").notNull(),
     address: text("address").notNull(),
     items: text("items").notNull(),
+    /** new → confirmed → courier → done; cancelled — с любого шага */
     status: text("status")
-      .$type<"new" | "confirmed" | "done" | "cancelled">()
+      .$type<"new" | "confirmed" | "courier" | "done" | "cancelled">()
       .notNull()
       .default("new"),
     createdAt: timestamp("created_at", { withTimezone: true })

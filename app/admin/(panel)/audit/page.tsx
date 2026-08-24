@@ -14,6 +14,7 @@ const ACTION_LABEL: Record<string, { text: string; cls: string }> = {
   "expense.delete": { text: "Удалён расход", cls: "bg-red-500/15 text-red-400" },
   "dish.delete": { text: "Удалено блюдо", cls: "bg-orange-500/15 text-orange-400" },
   "review.delete": { text: "Удалён отзыв", cls: "bg-red-500/15 text-red-400" },
+  "delivery.cancel": { text: "Отмена доставки", cls: "bg-red-500/15 text-red-400" },
 };
 
 function fmt(d: Date) {
