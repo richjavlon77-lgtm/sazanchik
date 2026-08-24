@@ -223,13 +223,27 @@ body [class*="sonner"] {
   margin-bottom: -2.2mm;
 }
 
-/* ── Реклама бота доставки: только текст, по центру ── */
+/* ── Реклама бота доставки: иконка TG + текст ── */
 .qr-delivery {
   margin-top: 1mm;
   padding-top: 2.8mm;
   border-top: 1px solid rgba(197, 163, 92, 0.35);
   width: 100%;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.6mm;
+}
+
+.qr-tg-icon {
+  width: 7mm;
+  height: 7mm;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.qr-delivery-text {
+  text-align: left;
 }
 
 .qr-delivery-title {

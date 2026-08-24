@@ -92,11 +92,23 @@ export default async function QRPrintPage({
                     Наведите камеру · Kamerani qarating
                   </div>
 
-                  {/* Реклама доставки — только текстом, QR на карточке один */}
+                  {/* Реклама доставки: иконка Telegram + текст, QR один — стол */}
                   <div className="qr-delivery">
-                    <div className="qr-delivery-title">🚚 Доставка на дом</div>
-                    <div className="qr-delivery-handle">
-                      Telegram · @Sazanchik_city_bot
+                    <svg
+                      className="qr-tg-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden
+                    >
+                      <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.2" />
+                      <path
+                        d="M17.4 7.1 6.9 11.2c-.6.24-.58.86.05 1.05l2.6.8 1 3.1c.18.56.7.66 1.08.24l1.4-1.5 2.7 2c.44.32.98.1 1.1-.46l1.5-8.3c.13-.7-.4-1.1-.93-.93z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <div className="qr-delivery-text">
+                      <div className="qr-delivery-title">Доставка на дом 🚚</div>
+                      <div className="qr-delivery-handle">t.me/Sazanchik_city_bot</div>
                     </div>
                   </div>
                 </div>
