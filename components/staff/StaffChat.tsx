@@ -181,14 +181,16 @@ export function StaffChat() {
                         )}
                       >
                         {m.name}
-                        <span
-                          className={cn(
-                            "ml-1.5 text-[9px] uppercase tracking-wider",
-                            mine ? "text-primary-foreground/60" : "text-muted-foreground"
-                          )}
-                        >
-                          {m.role}
-                        </span>
+                        {m.role.toLowerCase() !== m.name.toLowerCase() && (
+                          <span
+                            className={cn(
+                              "ml-1.5 text-[9px] uppercase tracking-wider",
+                              mine ? "text-primary-foreground/60" : "text-muted-foreground"
+                            )}
+                          >
+                            {m.role}
+                          </span>
+                        )}
                       </div>
                       <div className="whitespace-pre-wrap break-words text-sm leading-snug">
                         {m.text}
