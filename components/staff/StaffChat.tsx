@@ -174,14 +174,22 @@ export function StaffChat() {
                           : "rounded-bl-md border border-border bg-background"
                       )}
                     >
-                      {!mine && (
-                        <div className="text-[11px] font-medium text-gold">
-                          {m.name}
-                          <span className="ml-1.5 text-[9px] uppercase tracking-wider text-muted-foreground">
-                            {m.role}
-                          </span>
-                        </div>
-                      )}
+                      <div
+                        className={cn(
+                          "text-[11px] font-medium",
+                          mine ? "text-right text-primary-foreground/90" : "text-gold"
+                        )}
+                      >
+                        {m.name}
+                        <span
+                          className={cn(
+                            "ml-1.5 text-[9px] uppercase tracking-wider",
+                            mine ? "text-primary-foreground/60" : "text-muted-foreground"
+                          )}
+                        >
+                          {m.role}
+                        </span>
+                      </div>
                       <div className="whitespace-pre-wrap break-words text-sm leading-snug">
                         {m.text}
                       </div>
