@@ -13,7 +13,7 @@ const ROLE_LABEL: Record<string, string> = {
   waiter: "Официант",
   bartender: "Бармен",
   hookah: "Кальянщик",
-  cook: "Кухня",
+  cook: "Повар",
   cold: "Холодный цех",
   meat: "Мангал",
 };
