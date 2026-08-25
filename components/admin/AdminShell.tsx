@@ -125,27 +125,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          {/* Tablet nav — grouped dropdown */}
-          <div className="hidden md:block lg:hidden">
-            <select
-              value={pathname}
-              onChange={(e) => {
-                if (e.target.value) window.location.href = e.target.value;
-              }}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-gold/60"
-            >
-              {NAV_GROUPS.map((group) => (
-                <optgroup key={group.label} label={group.label}>
-                  {group.items.map((item) => (
-                    <option key={item.href} value={item.href}>
-                      {item.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-
           <div className="flex items-center gap-2">
             <Link
               href="/"
@@ -163,10 +142,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <nav className="fixed bottom-0 left-0 right-0 z-50 max-h-[78vh] overflow-y-auto rounded-t-3xl border-t border-gold/25 bg-card px-4 pb-24 pt-3 shadow-2xl md:hidden">
+          <nav className="fixed bottom-0 left-0 right-0 z-50 max-h-[78vh] overflow-y-auto rounded-t-3xl border-t border-gold/25 bg-card px-4 pb-24 pt-3 pb-28 shadow-2xl lg:hidden">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/30" />
             {NAV_GROUPS.map((group) => (
               <div key={group.label} className="mb-4">
@@ -204,9 +183,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </>
       )}
 
-      {/* Мобильный нижний таб-бар: главное всегда под пальцем */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 pb-safe-1 backdrop-blur-md md:hidden">
-        <div className="grid grid-cols-5">
+      {/* Плавающая панель навигации — пилюля над контентом */}
+      <nav className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-full border border-gold/30 bg-card/90 p-1.5 shadow-[0_24px_60px_-18px_rgba(23,21,15,0.5)] backdrop-blur-xl lg:hidden">
+        <div className="flex items-stretch">
           {[
             { href: "/admin", icon: "◆", label: "Обзор" },
             { href: "/admin/menu", icon: "🍽", label: "Меню" },
@@ -218,13 +197,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               href={t.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex flex-1 flex-col items-center gap-0.5 rounded-full py-2 text-[10px] font-medium transition-colors",
                 isActive(pathname, t.href) && !mobileOpen
-                  ? "text-gold"
+                  ? "bg-gold/15 text-gold"
                   : "text-muted-foreground"
               )}
             >
-              <span className="text-xl leading-none" aria-hidden>
+              <span className="text-lg leading-none" aria-hidden>
                 {t.icon}
               </span>
               {t.label}
@@ -233,11 +212,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className={cn(
-              "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
-              mobileOpen ? "text-gold" : "text-muted-foreground"
+              "flex flex-1 flex-col items-center gap-0.5 rounded-full py-2 text-[10px] font-medium transition-colors",
+              mobileOpen ? "bg-gold/15 text-gold" : "text-muted-foreground"
             )}
           >
-            <span className="text-xl leading-none" aria-hidden>
+            <span className="text-lg leading-none" aria-hidden>
               ☰
             </span>
             Ещё
@@ -245,7 +224,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-6 md:py-8 md:pb-8">
+      <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-6 md:py-8 lg:pb-8">
         {children}
       </main>
       <StaffChat />

@@ -121,7 +121,7 @@ export function StaffChat() {
           setUnread(false);
         }}
         aria-label="Чат персонала"
-        className="fixed bottom-20 right-4 z-[60] flex size-12 items-center justify-center rounded-full border border-gold/40 bg-card text-xl shadow-[0_10px_30px_-10px_rgba(23,21,15,0.4)] transition-transform active:scale-90 md:bottom-6 md:right-6"
+        className="fixed bottom-24 right-4 z-[60] flex size-12 items-center justify-center rounded-full border border-gold/40 bg-card text-xl shadow-[0_10px_30px_-10px_rgba(23,21,15,0.4)] transition-transform active:scale-90 lg:bottom-6 lg:right-6"
       >
         💬
         {unread && (
