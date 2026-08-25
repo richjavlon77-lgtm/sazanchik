@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { SazanFish } from "@/components/icons/SazanFish";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 import { Toaster } from "@/components/ui/sonner";
+import { StaffChat } from "@/components/staff/StaffChat";
 import { cn } from "@/lib/utils";
 
 type NavGroup = {
@@ -247,6 +248,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-6 md:py-8 md:pb-8">
         {children}
       </main>
+      <StaffChat />
     </div>
   );
 }

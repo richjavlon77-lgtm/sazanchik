@@ -20,6 +20,7 @@ export async function GET(request: Request) {
   const encoder = new TextEncoder();
   const sql = postgres(DIRECT_URL, { max: 1 });
   let sub: { unlisten: () => Promise<void> } | null = null;
+  let chatSub: { unlisten: () => Promise<void> } | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
   let closed = false;
 
@@ -39,6 +40,8 @@ export async function GET(request: Request) {
 
       try {
         sub = await sql.listen("waiter_events", () => send("data: update\n\n"));
+        // Чат персонала — отдельное событие, доски заказов его игнорируют
+        chatSub = await sql.listen("staff_chat", () => send("data: chat\n\n"));
       } catch (e) {
         console.error("SSE listen failed:", e);
       }
@@ -51,6 +54,7 @@ export async function GET(request: Request) {
         if (heartbeat) clearInterval(heartbeat);
         try {
           await sub?.unlisten();
+          await chatSub?.unlisten();
         } catch {
           /* noop */
         }

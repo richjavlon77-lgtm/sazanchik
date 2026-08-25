@@ -306,7 +306,23 @@ async function main() {
   }
   check("счёт закрыт официантом", session?.status === "closed" && session?.closed_by === "E2E Официант", JSON.stringify(session));
 
-  step("Админ: гард без сессии и вход");
+  step("Чат персонала: официант пишет, менеджер читает, чужим нельзя");
+  // кука официанта из браузерного логина выше
+  const waiterCookies = await page.context().cookies();
+  const wcookie = waiterCookies
+    .filter((c) => c.name === "sazanchik_session")
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
+  const chatPost = await fetch(`${BASE}/api/staff/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie: wcookie },
+    body: JSON.stringify({ text: "Стол 5 просит счёт, кто рядом?" }),
+  });
+  check("официант отправил сообщение (201)", chatPost.status === 201, `got ${chatPost.status}`);
+  const anonChat = await fetch(`${BASE}/api/staff/chat`);
+  check("без сессии чат закрыт (401)", anonChat.status === 401, `got ${anonChat.status}`);
+
+    step("Админ: гард без сессии и вход");
   const anon = await fetch(`${BASE}/admin/finance`, { redirect: "manual" });
   check("без сессии — редирект на логин", anon.status >= 300 && anon.status < 400);
 
@@ -318,7 +334,15 @@ async function main() {
   const cookie = login.headers.get("set-cookie")?.split(";")[0] ?? "";
   check("логин менеджера прошёл", login.status === 200 && cookie.startsWith("sazanchik_session="));
 
-  step("Аудит-лог: закрытие счёта записано");
+  const mgrChat = await fetch(`${BASE}/api/staff/chat`, { headers: { cookie } });
+  const mgrChatData = await mgrChat.json().catch(() => ({}));
+  check(
+    "менеджер видит сообщение официанта",
+    mgrChat.status === 200 && mgrChatData.messages?.some((m) => m.text.includes("Стол 5 просит счёт")),
+    JSON.stringify(mgrChatData.messages?.slice(-1))
+  );
+
+    step("Аудит-лог: закрытие счёта записано");
   const [audit] = await sql`select actor, action from audit_log where action = 'bill.close' order by created_at desc limit 1`;
   check("bill.close от официанта в журнале", audit?.actor === "E2E Официант", JSON.stringify(audit));
   const auditPage = await fetch(`${BASE}/admin/audit`, { headers: { cookie } });

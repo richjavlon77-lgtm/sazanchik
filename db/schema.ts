@@ -521,6 +521,24 @@ export const reviews = pgTable(
   ]
 );
 
+/**
+ * Внутренний чат персонала: одна общая комната для всех залогиненных
+ * (официанты, цеха, менеджер). Публично недоступен — только под сессией.
+ */
+export const staffMessages = pgTable(
+  "staff_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorName: text("author_name").notNull(),
+    authorRole: text("author_role").notNull(),
+    text: text("text").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("staff_msg_created_idx").on(t.createdAt)]
+);
+
 // ============================================================================
 // Telegram-бот (@Sazanchik_city_bot)
 // ============================================================================
