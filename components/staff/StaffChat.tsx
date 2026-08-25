@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 
 type Msg = { id: string; name: string; role: string; text: string; at: string };
 
+const NAME_KEY = "sazanchik:chatName";
+
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("ru-RU", {
     timeZone: "Asia/Tashkent",
@@ -24,6 +26,8 @@ export function StaffChat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [me, setMe] = useState("");
+  const [canSetName, setCanSetName] = useState(false);
+  const [myName, setMyName] = useState("");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [unread, setUnread] = useState(false);
@@ -38,8 +42,18 @@ export function StaffChat() {
     try {
       const res = await fetch("/api/staff/chat", { cache: "no-store" });
       if (!res.ok) return false;
-      const data = (await res.json()) as { me: string; messages: Msg[] };
+      const data = (await res.json()) as {
+        me: string;
+        canSetName?: boolean;
+        messages: Msg[];
+      };
       setMe(data.me);
+      setCanSetName(!!data.canSetName);
+      try {
+        setMyName(localStorage.getItem(NAME_KEY) ?? "");
+      } catch {
+        /* приватный режим */
+      }
       setMessages((prev) => {
         // новые чужие сообщения при закрытой шторке → точка на кнопке
         if (prev.length && data.messages.length > prev.length && !openRef.current) {
@@ -99,7 +113,7 @@ export function StaffChat() {
       const res = await fetch("/api/staff/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: t }),
+        body: JSON.stringify({ text: t, name: myName || undefined }),
       });
       if (res.ok) {
         setText("");
@@ -140,13 +154,29 @@ export function StaffChat() {
             className="fixed bottom-0 right-0 z-[70] flex h-[72vh] w-full flex-col rounded-t-3xl border-t border-gold/25 bg-card shadow-2xl md:bottom-6 md:right-6 md:h-[560px] md:w-[380px] md:rounded-3xl md:border"
             aria-label="Чат персонала"
           >
-            <header className="flex items-center justify-between border-b border-border px-4 py-3">
-              <div>
+            <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+              <div className="min-w-0">
                 <div className="font-heading text-lg">Чат персонала</div>
                 <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
                   видят только сотрудники
                 </div>
               </div>
+              {canSetName && (
+                <input
+                  value={myName}
+                  onChange={(e) => {
+                    const v = e.target.value.slice(0, 40);
+                    setMyName(v);
+                    try {
+                      localStorage.setItem(NAME_KEY, v);
+                    } catch {
+                      /* ок */
+                    }
+                  }}
+                  placeholder="Ваше имя"
+                  className="w-28 shrink-0 rounded-full border border-gold/40 bg-background px-3 py-1.5 text-center text-xs outline-none focus:border-gold"
+                />
+              )}
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Закрыть"
@@ -163,7 +193,7 @@ export function StaffChat() {
                 </p>
               )}
               {messages.map((m) => {
-                const mine = m.name === me;
+                const mine = m.name === (myName || me);
                 return (
                   <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                     <div

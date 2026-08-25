@@ -35,6 +35,8 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       me: session.name ?? ROLE_LABEL[session.role] ?? session.role,
+      // менеджерский вход безличный (общий пароль) — UI даст представиться
+      canSetName: session.role === "manager" && !session.name,
       messages: rows.reverse().map((m) => ({
         id: m.id,
         name: m.authorName,
@@ -51,17 +53,25 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const author = session.name ?? ROLE_LABEL[session.role] ?? session.role;
-  if (!checkRateLimit(`chat:${author}`, { limit: 20, windowMs: 60_000 }).allowed) {
-    return NextResponse.json({ error: "Слишком часто" }, { status: 429 });
-  }
-
-  let body: { text?: string };
+  let body: { text?: string; name?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+
+  // Имена персонала приходят из PIN-сессии (не подделать); безликий
+  // менеджер подписывается сам — имя из поля в шапке чата.
+  const customName =
+    session.role === "manager" && !session.name
+      ? (body.name ?? "").trim().slice(0, 40)
+      : "";
+  const author =
+    customName || session.name || ROLE_LABEL[session.role] || session.role;
+  if (!checkRateLimit(`chat:${author}`, { limit: 20, windowMs: 60_000 }).allowed) {
+    return NextResponse.json({ error: "Слишком часто" }, { status: 429 });
+  }
+
   const text = (body.text ?? "").trim().slice(0, 500);
   if (!text) return NextResponse.json({ error: "Пустое сообщение" }, { status: 422 });
 
