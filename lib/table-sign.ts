@@ -9,14 +9,26 @@ import { createHmac, timingSafeEqual } from "crypto";
 function secret(): string {
   // Отдельный ключ для QR столов: печатные карточки живут годами, и
   // ротация SESSION_SECRET (сессии/пароли) не должна их убивать.
-  // Фолбэк на SESSION_SECRET — совместимость со старыми окружениями.
   const s = process.env.TABLE_QR_SECRET || process.env.SESSION_SECRET;
   if (!s) throw new Error("TABLE_QR_SECRET / SESSION_SECRET is not set");
   return s;
 }
 
+/** Ключи, которыми могли быть подписаны УЖЕ розданные/напечатанные QR.
+ *  Новые подписи — только первым ключом; проверка — по всем, чтобы смена
+ *  ключа никогда не убивала карточки, которые уже в зале или в Telegram. */
+function verifySecrets(): string[] {
+  return [process.env.TABLE_QR_SECRET, process.env.SESSION_SECRET].filter(
+    (v): v is string => !!v
+  );
+}
+
+function sigWith(num: string, key: string): string {
+  return createHmac("sha256", key).update(`table:${num}`).digest("hex").slice(0, 16);
+}
+
 function sig(num: string): string {
-  return createHmac("sha256", secret()).update(`table:${num}`).digest("hex").slice(0, 16);
+  return sigWith(num, secret());
 }
 
 export function signTable(num: string): string {
@@ -30,11 +42,12 @@ export function verifyTableToken(token: string): string | null {
   const num = token.slice(0, dot);
   const provided = token.slice(dot + 1);
   if (!/^\d{1,6}$/.test(num)) return null;
-  const expected = sig(num);
   const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) return null;
-  return timingSafeEqual(a, b) ? num : null;
+  for (const key of verifySecrets()) {
+    const b = Buffer.from(sigWith(num, key));
+    if (a.length === b.length && timingSafeEqual(a, b)) return num;
+  }
+  return null;
 }
 
 /**
