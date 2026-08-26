@@ -7,8 +7,11 @@ import { createHmac, timingSafeEqual } from "crypto";
  * Verification happens server-side on order / call / reservation.
  */
 function secret(): string {
-  const s = process.env.SESSION_SECRET;
-  if (!s) throw new Error("SESSION_SECRET is not set");
+  // Отдельный ключ для QR столов: печатные карточки живут годами, и
+  // ротация SESSION_SECRET (сессии/пароли) не должна их убивать.
+  // Фолбэк на SESSION_SECRET — совместимость со старыми окружениями.
+  const s = process.env.TABLE_QR_SECRET || process.env.SESSION_SECRET;
+  if (!s) throw new Error("TABLE_QR_SECRET / SESSION_SECRET is not set");
   return s;
 }
 
