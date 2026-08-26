@@ -14,6 +14,29 @@ type Msg = { id: string; name: string; role: string; text: string; at: string };
 
 const NAME_KEY = "sazanchik:chatName";
 
+/** Мягкий «дзынь» без аудиофайлов — два коротких тона Web Audio. */
+function chime() {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new Ctx();
+    [880, 1320].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + i * 0.12 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.12 + 0.25);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+    });
+    setTimeout(() => ctx.close().catch(() => {}), 900);
+  } catch {
+    /* без звука — не критично */
+  }
+}
+
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("ru-RU", {
     timeZone: "Asia/Tashkent",
@@ -55,9 +78,12 @@ export function StaffChat() {
         /* приватный режим */
       }
       setMessages((prev) => {
-        // новые чужие сообщения при закрытой шторке → точка на кнопке
+        // новые чужие сообщения при закрытой шторке → точка + звук
         if (prev.length && data.messages.length > prev.length && !openRef.current) {
+          const fresh = data.messages.slice(prev.length - data.messages.length);
+          const foreign = fresh.some((m) => !prev.some((p2) => p2.id === m.id) && m.name !== (data.me ?? ""));
           setUnread(true);
+          if (foreign) chime();
         }
         return data.messages;
       });

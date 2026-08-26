@@ -1,5 +1,6 @@
 import { loadFinance } from "@/lib/finance-data";
 import { FinanceManager } from "@/components/admin/FinanceManager";
+import { AbcAnalysis } from "@/components/admin/AbcAnalysis";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function FinancePage() {
         </p>
       </div>
       <FinanceManager data={data} />
+      <AbcAnalysis />
     </div>
   );
 }

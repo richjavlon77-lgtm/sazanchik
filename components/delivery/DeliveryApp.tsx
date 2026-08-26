@@ -14,6 +14,7 @@ import type { MenuCategory, MenuItem, Localized } from "@/types/menu";
 type CartLine = { slug: string; name: string; price: number; qty: number };
 
 const CART_KEY = "sazanchik:deliveryCart";
+const LAST_ORDER_KEY = "sazanchik:lastDelivery";
 const ru = (v: Localized | undefined) => v?.ru ?? "";
 const money = (n: number) => `${n.toLocaleString("ru-RU")} сум`;
 const PHONE_RE = /^\+?[\d\s()-]{7,20}$/;
@@ -197,6 +198,11 @@ function Checkout({
         setError(data.error ?? "Не получилось отправить — попробуйте ещё раз");
         return;
       }
+      try {
+        localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(lines));
+      } catch {
+        /* необязательно */
+      }
       saveCart([]);
       onDone();
     } catch {
@@ -275,6 +281,31 @@ export function DeliveryApp({ menu }: { menu: MenuCategory[] }) {
   const lines = useCartLines();
   const [screen, setScreen] = useState<"menu" | "checkout" | "done">("menu");
   const [activeCat, setActiveCat] = useState(menu[0]?.id ?? "");
+  const [query, setQuery] = useState("");
+
+  // Прошлый заказ — для «повторить в один тап»
+  const lastRaw = useLocalString(LAST_ORDER_KEY);
+  const lastOrder = useMemo<CartLine[]>(() => {
+    try {
+      return lastRaw ? (JSON.parse(lastRaw) as CartLine[]) : [];
+    } catch {
+      return [];
+    }
+  }, [lastRaw]);
+
+  // Поиск по всему меню (имя блюда, без учёта регистра)
+  const found = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return null;
+    const out: { item: MenuItem }[] = [];
+    for (const c of menu) {
+      for (const item of c.items) {
+        if ((item.name.ru ?? "").toLowerCase().includes(q)) out.push({ item });
+        if (out.length >= 20) return out;
+      }
+    }
+    return out;
+  }, [menu, query]);
 
   const total = lines.reduce((s, l) => s + l.price * l.qty, 0);
   const count = lines.reduce((s, l) => s + l.qty, 0);
@@ -329,6 +360,44 @@ export function DeliveryApp({ menu }: { menu: MenuCategory[] }) {
         </p>
       </header>
 
+      {/* Поиск по меню */}
+      <div className="mx-auto max-w-lg px-4 pt-4">
+        <div className="relative">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Найти блюдо…"
+            className="w-full rounded-full border border-border bg-white/70 px-5 py-2.5 pr-10 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-gold/50"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              aria-label="Очистить поиск"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* Повторить прошлый заказ */}
+        {lastOrder.length > 0 && lines.length === 0 && !query && (
+          <button
+            onClick={() => saveCart(lastOrder)}
+            className="mt-2 w-full rounded-2xl border border-gold/40 bg-gold/[0.07] px-4 py-2.5 text-left text-sm transition-colors hover:border-gold"
+          >
+            🔁 Повторить прошлый заказ
+            <span className="ml-1 text-muted-foreground">
+              · {lastOrder.map((l) => l.name.split(" (")[0]).slice(0, 3).join(", ")}
+              {lastOrder.length > 3 ? "…" : ""} ·{" "}
+            </span>
+            <span className="font-heading text-gold">
+              {money(lastOrder.reduce((s2, l) => s2 + l.price * l.qty, 0))}
+            </span>
+          </button>
+        )}
+      </div>
+
       {/* Категории */}
       <nav className="scrollbar-none sticky top-0 z-20 mt-4 overflow-x-auto border-b border-border/60 bg-background/95 px-3 py-2 backdrop-blur">
         <div className="flex w-max gap-1.5">
@@ -352,11 +421,23 @@ export function DeliveryApp({ menu }: { menu: MenuCategory[] }) {
         </div>
       </nav>
 
-      {/* Блюда активного раздела */}
+      {/* Результаты поиска или блюда активного раздела */}
       <section className="mx-auto max-w-lg px-4 pt-2">
-        {active?.items.map((item) => (
-          <DishRow key={item.id} item={item} lines={lines} onChange={saveCart} />
-        ))}
+        {found ? (
+          found.length ? (
+            found.map(({ item }) => (
+              <DishRow key={item.id} item={item} lines={lines} onChange={saveCart} />
+            ))
+          ) : (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Ничего не нашли по «{query}» 🐟
+            </p>
+          )
+        ) : (
+          active?.items.map((item) => (
+            <DishRow key={item.id} item={item} lines={lines} onChange={saveCart} />
+          ))
+        )}
       </section>
 
       {/* Корзина-бар */}
