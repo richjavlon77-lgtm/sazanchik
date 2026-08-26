@@ -1,0 +1,35 @@
+# Внешний надзор за продом: GitHub Actions (вне Vercel!) пингует сайт и
+# при падении шлёт тревогу в рабочий Telegram-чат. Пока прод жив — молчит.
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Проверка сайта и БД
+        id: check
+        run: |
+          code=$(curl -s -o /tmp/health -w "%{http_code}" --max-time 25 https://sazanchik.vercel.app/api/health || echo "000")
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          cat /tmp/health || true
+          if [ "$code" != "200" ]; then
+            echo "status=down" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=up" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Тревога в Telegram
+        if: steps.check.outputs.status == 'down'
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\", \"parse_mode\": \"HTML\", \"text\": \"🚨 <b>САЙТ НЕДОСТУПЕН</b>\nsazanchik.vercel.app → HTTP ${{ steps.check.outputs.code }}\nГости не могут заказывать — проверьте Vercel/Neon.\"}"
+
+      - name: Фейлим job при падении (видно в Actions)
+        if: steps.check.outputs.status == 'down'
+        run: exit 1
