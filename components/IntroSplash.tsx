@@ -5,7 +5,9 @@ import { SazanFish } from "@/components/icons/SazanFish";
 import { useLocale, t, UI_STRINGS } from "@/lib/i18n";
 
 const STORAGE_KEY = "sazanchik:intro-seen";
-const INTRO_DURATION = 2200; // ms
+// Короткое приветствие: красота не должна стоить гостю секунд на 4G —
+// LCP-бюджет заставки 1.2s (было 2.5s)
+const INTRO_DURATION = 1200; // ms
 
 export function IntroSplash() {
   const { locale } = useLocale();
