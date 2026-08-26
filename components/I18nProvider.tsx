@@ -1,7 +1,7 @@
 "use client";
 
 import { I18nContext, DEFAULT_LOCALE } from "@/lib/i18n";
-import { useHydrated, useLocalString, writeLocal } from "@/lib/local-store";
+import { useLocalString, writeLocal } from "@/lib/local-store";
 import type { Locale } from "@/types/menu";
 
 const STORAGE_KEY = "sazanchik:locale";
@@ -11,7 +11,6 @@ function isLocale(v: string | null): v is Locale {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const mounted = useHydrated();
   const saved = useLocalString(STORAGE_KEY);
   const locale: Locale = isLocale(saved) ? saved : DEFAULT_LOCALE;
 
@@ -45,9 +44,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <I18nContext.Provider value={{ locale, setLocale }}>
-      <div style={{ visibility: mounted ? "visible" : "hidden" }}>
-        {children}
-      </div>
+      {/* Контент виден СРАЗУ (LCP), не ждёт гидрации. Цена: у гостя с
+          сохранённой не-RU локалью язык докрутится после загрузки JS —
+          это секунда у меньшинства против пустого экрана у всех. */}
+      {children}
     </I18nContext.Provider>
   );
 }
