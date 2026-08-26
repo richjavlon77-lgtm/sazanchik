@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { writeLocal, useLocalString } from "@/lib/local-store";
 import { cn } from "@/lib/utils";
 import type { MenuCategory, MenuItem, Localized } from "@/types/menu";
+import { getRecommendations } from "@/lib/pairings";
 
 /**
  * Приложение доставки (мини-апп из Telegram-бота и /delivery).
@@ -42,6 +43,57 @@ function bump(lines: CartLine[], key: { slug: string; price: number }, delta: nu
   return lines
     .map((l, idx) => (idx === i ? { ...l, qty: l.qty + delta } : l))
     .filter((l) => l.qty > 0);
+}
+
+/**
+ * Допродажи «к этому берут»: сперва кураторские пары (lib/pairings),
+ * при нехватке — добор недорогих позиций из категорий-компаньонов
+ * (салаты/напитки/хлеб), которых ещё нет в корзине.
+ */
+function buildUpsell(menu: MenuCategory[], lines: CartLine[], limit = 4) {
+  const inCart = new Set(lines.map((l) => l.slug));
+  const cartCats = new Set<string>();
+  for (const c of menu) {
+    if (c.items.some((i) => inCart.has(i.id))) cartCats.add(c.id);
+  }
+
+  const picks: { item: MenuItem; price: number }[] = [];
+  const seen = new Set<string>();
+  const push = (item: MenuItem) => {
+    if (inCart.has(item.id) || seen.has(item.id)) return;
+    const price = Array.isArray(item.price)
+      ? Math.min(...item.price.map((v) => v.price))
+      : (item.price as number);
+    seen.add(item.id);
+    picks.push({ item, price });
+  };
+
+  // 1) кураторские пары
+  for (const r of getRecommendations(menu, inCart, cartCats, limit)) {
+    for (const c of menu) {
+      const item = c.items.find((i) => i.id === r.id);
+      if (item) push(item);
+    }
+  }
+  // 2) добор из компаньонов — дешёвые и по возможности с фото
+  if (picks.length < limit) {
+    const companions = menu.filter((c) =>
+      /салат|напит|лимонад|фреш|чай|хлеб/i.test(c.name.ru ?? "")
+    );
+    const pool = companions
+      .flatMap((c) => c.items)
+      .filter((i) => !Array.isArray(i.price))
+      .sort(
+        (a, b) =>
+          Number(!!b.image) - Number(!!a.image) ||
+          (a.price as number) - (b.price as number)
+      );
+    for (const item of pool) {
+      if (picks.length >= limit) break;
+      push(item);
+    }
+  }
+  return picks.slice(0, limit);
 }
 
 // ── Кнопка +/− у блюда ──────────────────────────────────────────
@@ -157,13 +209,16 @@ function DishRow({
 
 function Checkout({
   lines,
+  menu,
   onBack,
   onDone,
 }: {
   lines: CartLine[];
+  menu: MenuCategory[];
   onBack: () => void;
   onDone: () => void;
 }) {
+  const upsell = useMemo(() => buildUpsell(menu, lines), [menu, lines]);
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [comment, setComment] = useState("");
@@ -237,6 +292,49 @@ function Checkout({
           Стоимость доставки сообщит менеджер при подтверждении.
         </p>
       </div>
+
+      {/* Допродажи: к этому берут */}
+      {upsell.length > 0 && (
+        <div className="mt-4">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-gold">
+            — К этому берут —
+          </div>
+          <div className="scrollbar-none -mx-4 mt-2 flex gap-2.5 overflow-x-auto px-4 pb-1">
+            {upsell.map(({ item, price }) => (
+              <button
+                key={item.id}
+                onClick={() =>
+                  saveCart(
+                    bump(lines, { slug: item.id, price }, 1, item.name.ru ?? item.id)
+                  )
+                }
+                className="w-36 shrink-0 rounded-2xl border border-border bg-white/70 p-2.5 text-left transition-colors hover:border-gold/60"
+              >
+                {item.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.image}
+                    alt=""
+                    loading="lazy"
+                    className="mb-2 h-20 w-full rounded-xl object-cover"
+                  />
+                )}
+                <div className="line-clamp-2 text-xs leading-snug">
+                  {item.name.ru}
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="font-heading text-sm tabular-nums text-gold">
+                    {money(price)}
+                  </span>
+                  <span className="flex size-6 items-center justify-center rounded-full border border-gold/50 text-sm leading-none text-gold">
+                    +
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 space-y-2.5">
         <input
@@ -337,6 +435,7 @@ export function DeliveryApp({ menu }: { menu: MenuCategory[] }) {
       <main className="min-h-[100svh] bg-background">
         <Checkout
           lines={lines}
+          menu={menu}
           onBack={() => setScreen("menu")}
           onDone={() => setScreen("done")}
         />

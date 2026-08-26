@@ -523,6 +523,36 @@ export async function handleUpdate(update: TgUpdate): Promise<void> {
         await sendMessage(chatId, await makeInvite("staff", chatId));
         return;
 
+      case "/broadcast": {
+        if (role !== "admin" && role !== "owner") break;
+        const text2 = arg.trim();
+        if (!text2) {
+          await sendMessage(
+            chatId,
+            "📣 Рассылка всем гостям бота.\n\nФормат: <code>/broadcast текст</code>\n" +
+              "Например: /broadcast 🐟 В пятницу — новое блюдо от шефа! Заказ: /delivery"
+          );
+          return;
+        }
+        const [{ n }] = (await db.execute(
+          dsql`select count(*)::int as n from tg_users where role = 'guest'`
+        )) as unknown as { n: number }[];
+        await setDialog(chatId, "bc:confirm", { text: text2 });
+        await sendMessage(
+          chatId,
+          `📣 <b>Предпросмотр рассылки</b> · получателей: ${n}\n\n${text2}\n\nОтправляем?`,
+          {
+            inline: [
+              [
+                { text: `📤 Отправить (${n})`, callback_data: "bc_ok" },
+                { text: "✖ Отмена", callback_data: "bc_cancel" },
+              ],
+            ],
+          }
+        );
+        return;
+      }
+
       // ── owner ──
       case "/invite_admin":
         if (role !== "owner") break;
@@ -730,6 +760,33 @@ async function routeInput(
       );
       return;
     }
+  }
+
+  // Подтверждение рассылки
+  if (input.kind === "callback" && (input.data === "bc_ok" || input.data === "bc_cancel")) {
+    const [d] = await db.select().from(tgDialogs).where(eq(tgDialogs.chatId, chatId));
+    await clearDialog(chatId);
+    if (input.data === "bc_cancel" || !d || d.state !== "bc:confirm") {
+      await sendMessage(chatId, "Рассылка отменена.");
+      return;
+    }
+    // право проверяем ещё раз — вдруг роль сняли между шагами
+    const [me] = await db.select().from(tgUsers).where(eq(tgUsers.chatId, chatId));
+    if (!me || (me.role !== "admin" && me.role !== "owner")) {
+      await sendMessage(chatId, "Нет доступа.");
+      return;
+    }
+    const text = String((d.data as { text?: string }).text ?? "");
+    const guests = await db.select().from(tgUsers).where(eq(tgUsers.role, "guest"));
+    let sent = 0;
+    for (const g of guests) {
+      const ok = await sendMessage(g.chatId, text);
+      if (ok) sent++;
+      // бережём лимиты Telegram (~30 msg/s)
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    await sendMessage(chatId, `📣 Готово: доставлено ${sent} из ${guests.length}.`);
+    return;
   }
 
   const [dialog] = await db.select().from(tgDialogs).where(eq(tgDialogs.chatId, chatId));
