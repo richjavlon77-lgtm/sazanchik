@@ -2,6 +2,8 @@ import { MENU as STATIC_MENU } from "@/data/menu";
 import { applyIntros } from "@/data/category-intros";
 import { enrichMenuWithDiet } from "@/lib/auto-diet";
 import { getMenuFromDb } from "@/lib/menu-from-db";
+import { db } from "@/db";
+import { restaurant } from "@/db/schema";
 import { DeliveryApp } from "@/components/delivery/DeliveryApp";
 import { TelegramMiniApp } from "@/components/TelegramMiniApp";
 import type { MenuCategory } from "@/types/menu";
@@ -32,10 +34,24 @@ export default async function DeliveryPage() {
     .map((c) => ({ ...c, items: c.items.filter((i) => !i.outOfStock) }))
     .filter((c) => c.items.length > 0);
 
+  let terms = { minOrder: null as number | null, fee: null as number | null, freeFrom: null as number | null };
+  try {
+    const [r] = await db.select().from(restaurant);
+    if (r) {
+      terms = {
+        minOrder: r.deliveryMinOrder,
+        fee: r.deliveryFee,
+        freeFrom: r.deliveryFreeFrom,
+      };
+    }
+  } catch {
+    /* условия не критичны */
+  }
+
   return (
     <>
       <TelegramMiniApp />
-      <DeliveryApp menu={forDelivery} />
+      <DeliveryApp menu={forDelivery} terms={terms} />
     </>
   );
 }

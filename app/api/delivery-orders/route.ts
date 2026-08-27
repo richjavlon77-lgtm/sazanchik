@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { deliveryRequests, dishes, dishVariants } from "@/db/schema";
+import { deliveryRequests, dishes, dishVariants, restaurant } from "@/db/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/client-ip";
 import { sendMessage } from "@/lib/tg/api";
@@ -90,8 +90,22 @@ export async function POST(request: Request) {
     total += l.price * l.qty;
     parts.push(`${name} ×${l.qty} — ${(l.price * l.qty).toLocaleString("ru-RU")} сум`);
   }
+  // Условия доставки — сервер не доверяет клиенту
+  const [r] = await db.select().from(restaurant);
+  if (r?.deliveryMinOrder != null && total < r.deliveryMinOrder) {
+    return NextResponse.json(
+      { error: `Минимальный заказ — ${r.deliveryMinOrder.toLocaleString("ru-RU")} сум` },
+      { status: 422 }
+    );
+  }
+  const freeDelivery = r?.deliveryFreeFrom != null && total >= r.deliveryFreeFrom;
+  const fee = r?.deliveryFee != null && !freeDelivery ? r.deliveryFee : 0;
+
   const itemsText =
-    parts.join("\n") + `\n──────────────\nИтого: ${total.toLocaleString("ru-RU")} сум`;
+    parts.join("\n") +
+    (fee ? `\nДоставка — ${fee.toLocaleString("ru-RU")} сум` : "") +
+    (freeDelivery ? "\nДоставка — бесплатно" : "") +
+    `\n──────────────\nИтого: ${(total + fee).toLocaleString("ru-RU")} сум`;
 
   const [created] = await db
     .insert(deliveryRequests)
@@ -114,5 +128,5 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true, total }, { status: 201 });
+  return NextResponse.json({ ok: true, total: total + fee }, { status: 201 });
 }

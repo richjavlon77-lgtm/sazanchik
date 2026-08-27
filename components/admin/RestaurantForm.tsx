@@ -87,6 +87,57 @@ export function RestaurantForm({ initial }: { initial: RestaurantInput }) {
         <input value={form.instagram} onChange={(e) => set("instagram", e.target.value)} className={input} placeholder="@sazanchik" />
       </Section>
 
+      <Section title="Условия доставки">
+        <p className="mb-3 text-xs text-muted-foreground">
+          Показываются гостю в мини-аппе доставки и проверяются при заказе.
+          Пустое поле — условие не действует.
+        </p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <label className="block">
+            <span className="mb-1 block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Мин. заказ (сум)
+            </span>
+            <input
+              type="number"
+              value={form.deliveryMinOrder ?? ""}
+              onChange={(e) =>
+                set("deliveryMinOrder", e.target.value ? Number(e.target.value) : null)
+              }
+              className={input}
+              placeholder="100 000"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Доставка (сум)
+            </span>
+            <input
+              type="number"
+              value={form.deliveryFee ?? ""}
+              onChange={(e) =>
+                set("deliveryFee", e.target.value ? Number(e.target.value) : null)
+              }
+              className={input}
+              placeholder="20 000"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Бесплатно от (сум)
+            </span>
+            <input
+              type="number"
+              value={form.deliveryFreeFrom ?? ""}
+              onChange={(e) =>
+                set("deliveryFreeFrom", e.target.value ? Number(e.target.value) : null)
+              }
+              className={input}
+              placeholder="300 000"
+            />
+          </label>
+        </div>
+      </Section>
+
       <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-gold/20 bg-card/95 p-4 backdrop-blur-md">
         <button
           type="submit"

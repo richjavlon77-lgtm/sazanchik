@@ -288,6 +288,9 @@ export async function saveRestaurant(input: {
   hoursUz: string;
   hoursEn: string;
   instagram: string;
+  deliveryMinOrder?: number | null;
+  deliveryFee?: number | null;
+  deliveryFreeFrom?: number | null;
 }) {
   await requireManager();
   await db

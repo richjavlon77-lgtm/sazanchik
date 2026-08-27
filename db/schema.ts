@@ -143,6 +143,10 @@ export const restaurant = pgTable(
     hoursEn: text("hours_en").notNull().default(""),
     hoursTr: text("hours_tr").notNull().default(""),
     instagram: text("instagram").notNull().default(""),
+    /** Условия доставки (сумы); null — условие не показывается */
+    deliveryMinOrder: integer("delivery_min_order"),
+    deliveryFee: integer("delivery_fee"),
+    deliveryFreeFrom: integer("delivery_free_from"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

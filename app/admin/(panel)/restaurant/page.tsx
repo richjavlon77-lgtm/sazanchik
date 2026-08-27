@@ -21,6 +21,9 @@ export default async function AdminRestaurantPage() {
     hoursUz: r?.hoursUz ?? "",
     hoursEn: r?.hoursEn ?? "",
     instagram: r?.instagram ?? "",
+    deliveryMinOrder: r?.deliveryMinOrder ?? null,
+    deliveryFee: r?.deliveryFee ?? null,
+    deliveryFreeFrom: r?.deliveryFreeFrom ?? null,
   };
 
   return (

@@ -210,11 +210,13 @@ function DishRow({
 function Checkout({
   lines,
   menu,
+  terms,
   onBack,
   onDone,
 }: {
   lines: CartLine[];
   menu: MenuCategory[];
+  terms: DeliveryTerms;
   onBack: () => void;
   onDone: () => void;
 }) {
@@ -225,6 +227,9 @@ function Checkout({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const total = lines.reduce((s, l) => s + l.price * l.qty, 0);
+  const freeDelivery = terms.freeFrom != null && total >= terms.freeFrom;
+  const fee = terms.fee != null && !freeDelivery ? terms.fee : 0;
+  const belowMin = terms.minOrder != null && total < terms.minOrder;
 
   const submit = async () => {
     if (!PHONE_RE.test(phone.trim())) {
@@ -284,13 +289,29 @@ function Checkout({
             <span className="font-heading tabular-nums text-gold">{money(l.price * l.qty)}</span>
           </div>
         ))}
+        {terms.fee != null && (
+          <div className="mt-1 flex items-baseline justify-between text-sm">
+            <span className="text-muted-foreground">Доставка</span>
+            <span className={freeDelivery ? "text-emerald-600" : "tabular-nums"}>
+              {freeDelivery ? "бесплатно 🎉" : money(fee)}
+            </span>
+          </div>
+        )}
         <div className="mt-2 flex items-baseline justify-between border-t border-border/60 pt-3">
           <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Итого</span>
-          <span className="font-heading text-xl tabular-nums text-gold">{money(total)}</span>
+          <span className="font-heading text-xl tabular-nums text-gold">{money(total + fee)}</span>
         </div>
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          Стоимость доставки сообщит менеджер при подтверждении.
-        </p>
+        {terms.fee == null && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Стоимость доставки сообщит менеджер при подтверждении.
+          </p>
+        )}
+        {!freeDelivery && terms.freeFrom != null && terms.fee != null && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Бесплатная доставка от {money(terms.freeFrom)} — не хватает{" "}
+            {money(terms.freeFrom - total)}
+          </p>
+        )}
       </div>
 
       {/* Допродажи: к этому берут */}
@@ -362,12 +383,18 @@ function Checkout({
 
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
 
+      {belowMin && (
+        <p className="mt-3 rounded-2xl border border-gold/40 bg-gold/[0.07] px-4 py-2.5 text-sm">
+          Минимальный заказ на доставку — {money(terms.minOrder as number)}.
+          Добавьте ещё на {money((terms.minOrder as number) - total)} 🙂
+        </p>
+      )}
       <button
         onClick={submit}
-        disabled={sending}
+        disabled={sending || belowMin}
         className="mt-4 w-full rounded-full bg-gold py-3.5 text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {sending ? "Отправляем…" : `Заказать · ${money(total)}`}
+        {sending ? "Отправляем…" : `Заказать · ${money(total + fee)}`}
       </button>
     </div>
   );
@@ -375,7 +402,19 @@ function Checkout({
 
 // ── Приложение ──────────────────────────────────────────────────
 
-export function DeliveryApp({ menu }: { menu: MenuCategory[] }) {
+export type DeliveryTerms = {
+  minOrder: number | null;
+  fee: number | null;
+  freeFrom: number | null;
+};
+
+export function DeliveryApp({
+  menu,
+  terms,
+}: {
+  menu: MenuCategory[];
+  terms: DeliveryTerms;
+}) {
   const lines = useCartLines();
   const [screen, setScreen] = useState<"menu" | "checkout" | "done">("menu");
   const [activeCat, setActiveCat] = useState(menu[0]?.id ?? "");
@@ -436,6 +475,7 @@ export function DeliveryApp({ menu }: { menu: MenuCategory[] }) {
         <Checkout
           lines={lines}
           menu={menu}
+          terms={terms}
           onBack={() => setScreen("menu")}
           onDone={() => setScreen("done")}
         />
@@ -457,6 +497,18 @@ export function DeliveryApp({ menu }: { menu: MenuCategory[] }) {
         <p className="mt-1 text-xs text-muted-foreground">
           Привезём горячим · менеджер подтвердит заказ звонком
         </p>
+        {(terms.minOrder || terms.fee) && (
+          <p className="mt-1.5 text-[11px] text-gold">
+            {[
+              terms.minOrder ? `Мин. заказ ${money(terms.minOrder)}` : "",
+              terms.fee
+                ? `Доставка ${money(terms.fee)}${terms.freeFrom ? ` · бесплатно от ${money(terms.freeFrom)}` : ""}`
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        )}
       </header>
 
       {/* Поиск по меню */}
